@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
 from getTeamMembers import get_team_members
+from utils.models import DeveloperMetrics, MilestoneData
 
 from utils.queryRunner import run_graphql_query
 
@@ -51,18 +51,6 @@ organization(login: $owner) {
 }
 
 """
-
-
-@dataclass
-class DeveloperMetrics:
-    pointsClosed: float = 0
-    percentContribution: float = 0  # points / (totalPoints) * %100
-
-
-@dataclass
-class MilestoneData:
-    totalPointsClosed: float = 0
-    devMetrics: dict[str, DeveloperMetrics] = field(default_factory=dict)
 
 
 def getTeamMetricsForMilestone(
