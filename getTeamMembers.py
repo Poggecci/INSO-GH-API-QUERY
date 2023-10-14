@@ -22,7 +22,7 @@ params = {
 	"team": "College Toolbox"
 }
 
-def getTeamMembers(organization, team)->list[str]:
+def get_team_members(organization, team)->list[str]:
     params = {
         	"owner": organization,
 	        "team": team
@@ -38,5 +38,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         exit(0)
     _, org, team, *_ = sys.argv
-    print(getTeamMembers(org, team))
+    print(get_team_members(org, team))
     
