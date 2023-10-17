@@ -7,8 +7,14 @@ This script generates team metrics for a specified milestone in a GitHub organiz
 ```bash
 poetry install
 ```
-2. Add you Github PAT to the `constants.py` file
-3. Run the script from the command line:
+2. You must create a GitHub classic personal access token with the permissions `read:org`
+   and `read:project`. 
+3. Assign your Github classic PAT to the environment variable `GITHUB_API_TOKEN`. This
+   allows you to keep the token in an encrypted file.  For example,
+```
+export GITHUB_API_TOKEN=`pass show GitHub/uprm-inso4116-2023-2024-s1`
+```
+4. Run the script from the command line:
 ```
 poetry run python exportMetricsForCourseMilestone.py <organization> <milestone>
 ```
