@@ -1,9 +1,10 @@
 import requests
-from utils.constants import token
+from utils.constants import getToken
 def run_graphql_query(query, variables=None):
 
     # GitHub GraphQL API endpoint
     url = "https://api.github.com/graphql"
+    token = getToken()
 
     # Set up the request headers
     headers = {
