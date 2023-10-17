@@ -1,4 +1,5 @@
 import csv
+import json
 from generateTeamMetrics import getTeamMetricsForMilestone
 from getTeamMembers import get_team_members
 
@@ -19,21 +20,31 @@ def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: st
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         exit(0)
-    _, org, milestone, *_ = sys.argv
+    _, course_config_file, *_ = sys.argv
     # idk why this isn't working, so hardcode for now. Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
-    teams_and_managers = {"College Toolbox": ["EdwinC1339", "Ryan8702"]}
+    with open(course_config_file) as course_config:
+        course_data = json.load(course_config)
+    organization = course_data['organization']
+    milestone = course_data['milestone']
+    teams_and_managers = course_data['teams']
+    print("Organization: ", course_data['organization'])
+    print("Milestone: ", course_data['milestone'])
+
     team_metrics = {}
     for team, managers in teams_and_managers.items():
-        members = get_team_members(org, team)
+        print("Team: ", team)
+        print("Managers: ", managers)
+        members = get_team_members(organization, team)
         team_metrics[team] = getTeamMetricsForMilestone(
-            org=org,
+            org=organization,
             team=team,
             milestone=milestone,
             members=members,
             managers=managers,
         )
     for team, metrics in team_metrics.items():
-        write_milestone_data_to_csv(metrics, f"{milestone}-{team}-{org}.csv")
+        write_milestone_data_to_csv(metrics,
+                                    f"{milestone}-{team}-{organization}.csv")
