@@ -1,6 +1,6 @@
 from getTeamMembers import get_team_members
 from utils.models import DeveloperMetrics, MilestoneData
-
+from datetime import datetime
 from utils.queryRunner import run_graphql_query
 
 
@@ -54,11 +54,12 @@ organization(login: $owner) {
 
 
 def getTeamMetricsForMilestone(
-    org: str, team: str, milestone: str, members: list[str], managers: list[str]
+    org: str, team: str, milestone: str, members: list[str], 
+    managers: list[str], startDate: datetime, endDate: datetime
 ) -> MilestoneData:
+    exponentialRatio = 1/(endDate-startDate).days
     milestoneData = MilestoneData()
     milestoneData.devMetrics = {member: DeveloperMetrics() for member in members}
-
     params = {"owner": org, "team": team}
     hasAnotherPage = True
     while hasAnotherPage:
@@ -84,20 +85,30 @@ def getTeamMetricsForMilestone(
             workedOnlyByManager = True
             # attribute points to correct developer
             for dev in issue["content"]["assignees"]["nodes"]:
-                if dev["login"] not in members:
-                    raise Exception(
-                        "Task assigned to developer not belonging to the team"
-                    )
+                try:
+                    if dev["login"] not in members:
+                        raise Exception(
+                            "Task assigned to developer not belonging to the team"
+                        )
+                except Exception as e:
+                    print(e)
+                    continue
                 if dev["login"] not in managers:
                     workedOnlyByManager = False
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
+                # P = Po(1-r)^t
+                # Po = initial point value
+                # r = 1/<how many days to complete milestone>
+                # t = <amount of days from when issue was created vs the start date of milestone>
+                createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
+                timePower = createdAt - startDate
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
-                    issue["difficulty"]["number"] * issue["urgency"]["number"]
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"])*pow(1-exponentialRatio, timePower.days)
                 )
             if not workedOnlyByManager:
                 milestoneData.totalPointsClosed += (
-                    issue["difficulty"]["number"] * issue["urgency"]["number"]
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"])*pow(1-exponentialRatio, timePower.days)
                 )
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
@@ -121,7 +132,6 @@ if __name__ == "__main__":
     # idk why this isn't working, so hardcode for now. Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
     teams_and_managers = {"College Toolbox": ["EdwinC1339", "Ryan8702"]}
-
     for team, managers in teams_and_managers.items():
         print(f"Team: {team}")
         print(f"Managers: {managers}")

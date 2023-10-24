@@ -1,0 +1,22 @@
+{
+    "data": [
+                {  
+                    "organization": "uprm-inso4116-2023-2024-S1",
+                    "milestones": [
+                        {
+                            "name": "Milestone #1",
+                            "startDate": "2023-08-01T00:00:00Z",
+                            "endDate": "2023-10-27T00:00:00Z",
+                            "teams":{
+                                "College Toolbox":[
+                                    "EdwinC1339",
+                                    "Ryan8702"
+                                ]
+                            }
+                            
+                        }
+                    ]
+                }
+            ]
+
+}

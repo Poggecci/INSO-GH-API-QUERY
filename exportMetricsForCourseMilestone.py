@@ -1,5 +1,6 @@
 import csv
 import json
+from datetime import datetime
 from generateTeamMetrics import getTeamMetricsForMilestone
 from getTeamMembers import get_team_members
 
@@ -19,19 +20,20 @@ def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: st
 
 if __name__ == "__main__":
     import sys
-
-    if len(sys.argv) < 2:
-        exit(0)
-    _, course_config_file, *_ = sys.argv
+    # if len(sys.argv) < 2:
+    #     exit(0)
+    # _, course_config_file, *_ = sys.argv
     # idk why this isn't working, so hardcode for now. Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
-    with open(course_config_file) as course_config:
+    with open("./data/courseConfig.json") as course_config:
         course_data = json.load(course_config)
-    organization = course_data['organization']
-    milestone = course_data['milestone']
-    teams_and_managers = course_data['teams']
-    print("Organization: ", course_data['organization'])
-    print("Milestone: ", course_data['milestone'])
+    organization = course_data['data'][0]['organization']
+    milestone = course_data['data'][0]['milestones'][0]['name']
+    teams_and_managers = course_data['data'][0]['milestones'][0]['teams']
+    startDate = datetime.fromisoformat(course_data['data'][0]['milestones'][0]['startDate'])
+    endDate = datetime.fromisoformat(course_data['data'][0]['milestones'][0]['endDate'])
+    print("Organization: ", organization)
+    print("Milestone: ", milestone)
 
     team_metrics = {}
     for team, managers in teams_and_managers.items():
@@ -44,6 +46,8 @@ if __name__ == "__main__":
             milestone=milestone,
             members=members,
             managers=managers,
+            startDate=startDate,
+            endDate=endDate,
         )
     for team, metrics in team_metrics.items():
         write_milestone_data_to_csv(metrics,
