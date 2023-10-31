@@ -21,11 +21,11 @@ export GITHUB_API_TOKEN=`pass show GitHub/uprm-inso4116-2023-2024-s1`
      "Milestone #1", "Milestone #2", etc., but if one team uses e.g. "Milestone #1" and
      that's the name on the milestone field, then only milestone data for a milestone of
      that name will be collected.
-   - `teams` this field is a list of key/value pairs. The key of each pair is the name of
-     the project board of a team from which the closed issues, with their urgency and
-     difficulty can be collected. The value of each pair is the list of logins that should
-     be counted as managers and therefore do not get any points for closing issues, even
-     if they were assigned to them.
+   - `teams` this field is a list of key/value pairs. The key of each pair is the team
+     name. It must also be the name of the project board owned by that team from which the
+     closed issues, with their urgency and difficulty can be collected. The value of each
+     pair is the list of logins that should be counted as managers and therefore do not
+     get any points for closing issues, even if they were assigned to them.
 5. Run the script from the command line:
 ```
 poetry run python exportMetricsForCourseMilestone.py <organization> <milestone>
