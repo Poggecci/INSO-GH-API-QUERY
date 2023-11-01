@@ -5,51 +5,48 @@ from utils.queryRunner import run_graphql_query
 
 
 get_team_issues = """
-query QueryProjectItemsForTeam($owner: String!, $team: String!, $nextPage: String)
-{
-organization(login: $owner) {
-      projectsV2(query: $team, first: 100) {
-				nodes{
-				title
-					items(first: 100, after: $nextPage) {
-						pageInfo {
-							endCursor
-							hasNextPage
-						}
-						nodes {
-							content {
-								... on Issue {
-									createdAt
-									closed
-											milestone {
-												title
-											}
-											assignees(first:20) {
-												nodes{
-													login
-													}
-												}
-										}
-									}
-							urgency: fieldValueByName(name:"Urgency") {
-								 ... on ProjectV2ItemFieldNumberValue {
-									number
-								}
-							}
-							difficulty: fieldValueByName(name:"Difficulty") {
-								 ... on ProjectV2ItemFieldNumberValue {
-									number
-								}
-								
-							}
-					 }
-					}
-				}
-  
-			}
-		}
+query QueryProjectItemsForTeam($owner: String!, $team: String!,
+                               $nextPage: String) {
+  organization(login: $owner) {
+    projectsV2(query: $team, first: 100) {
+      nodes{
+        title
+        items(first: 100, after: $nextPage) {
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+          nodes {
+            content {
+              ... on Issue {
+                createdAt
+                closed
+                milestone {
+                  title
+                }
+                assignees(first:20) {
+                  nodes{
+                    login
+                  }
+                }
+              }
+            }
+            urgency: fieldValueByName(name:"Urgency") {
+              ... on ProjectV2ItemFieldNumberValue {
+                number
+              }
+            }
+            difficulty: fieldValueByName(name:"Difficulty") {
+              ... on ProjectV2ItemFieldNumberValue {
+                number
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
-
 """
 
 
@@ -68,7 +65,8 @@ def getTeamMetricsForMilestone(
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:
             raise Exception(
-                "Project not found in org. Likely means the project board doesn't share the same name as the team."
+                "Project not found in org. Likely means the project board"
+                " doesn't share the same name as the team."
             )
         ### Extract data
         issues = project["items"]["nodes"]
@@ -80,6 +78,8 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["difficulty"] is None or issue["urgency"] is None:
                 continue
+            if not issue["difficulty"] or not issue["urgency"]:
+                continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
             workedOnlyByManager = True
@@ -88,7 +88,8 @@ def getTeamMetricsForMilestone(
                 try:
                     if dev["login"] not in members:
                         raise Exception(
-                            "Task assigned to developer not belonging to the team"
+                            f"Task assigned to developer {dev['login']} not"
+                            " belonging to the team"
                         )
                 except Exception as e:
                     print(e)
