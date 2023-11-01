@@ -84,6 +84,7 @@ def getTeamMetricsForMilestone(
                 continue
             workedOnlyByManager = True
             # attribute points to correct developer
+            numberAssignees = len(issue["content"]["assignees"]["nodes"])
             for dev in issue["content"]["assignees"]["nodes"]:
                 try:
                     if dev["login"] not in members:
@@ -105,7 +106,7 @@ def getTeamMetricsForMilestone(
                 createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
                 timePower = createdAt - startDate
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
-                    (issue["difficulty"]["number"] * issue["urgency"]["number"])*pow(1-exponentialRatio, timePower.days)
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"])*pow(1-exponentialRatio, timePower.days) / numberAssignees
                 )
             if not workedOnlyByManager:
                 milestoneData.totalPointsClosed += (
