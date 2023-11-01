@@ -3,7 +3,6 @@ from utils.models import DeveloperMetrics, MilestoneData
 from datetime import datetime
 from utils.queryRunner import run_graphql_query
 
-
 get_team_issues = """
 query QueryProjectItemsForTeam($owner: String!, $team: String!,
                                $nextPage: String) {
@@ -51,7 +50,7 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
 
 
 def getTeamMetricsForMilestone(
-    org: str, team: str, milestone: str, members: list[str], 
+    org: str, team: str, milestone: str, members: list[str],
     managers: list[str], startDate: datetime, endDate: datetime
 ) -> MilestoneData:
     exponentialRatio = 1/(endDate-startDate).days
@@ -61,14 +60,16 @@ def getTeamMetricsForMilestone(
     hasAnotherPage = True
     while hasAnotherPage:
         response = run_graphql_query(get_team_issues, params)
-        projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
+        projects: list[dict] = (
+            response["data"]["organization"]["projectsV2"]["nodes"]
+        )
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:
             raise Exception(
                 "Project not found in org. Likely means the project board"
                 " doesn't share the same name as the team."
             )
-        ### Extract data
+        # Extract data
         issues = project["items"]["nodes"]
         for issue in issues:
             # don't count open issues
@@ -106,7 +107,8 @@ def getTeamMetricsForMilestone(
                 createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
                 timePower = createdAt - startDate
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
-                    (issue["difficulty"]["number"] * issue["urgency"]["number"])*pow(1-exponentialRatio, timePower.days) / numberAssignees
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"])
+                    *pow(1-exponentialRatio, timePower.days) / numberAssignees
                 )
             if not workedOnlyByManager:
                 milestoneData.totalPointsClosed += (
@@ -131,7 +133,8 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         exit(0)
     _, org, milestone, *_ = sys.argv
-    # idk why this isn't working, so hardcode for now. Kinda had to anyway cuz managers are hard coded rn
+    # idk why this isn't working, so hardcode for now.
+    # Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
     teams_and_managers = {"College Toolbox": ["EdwinC1339", "Ryan8702"]}
     for team, managers in teams_and_managers.items():
