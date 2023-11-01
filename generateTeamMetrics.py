@@ -79,6 +79,8 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["difficulty"] is None or issue["urgency"] is None:
                 continue
+            if not issue["difficulty"] or not issue["urgency"]:
+                continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
             workedOnlyByManager = True
@@ -86,7 +88,7 @@ def getTeamMetricsForMilestone(
             for dev in issue["content"]["assignees"]["nodes"]:
                 if dev["login"] not in members:
                     raise Exception(
-                        "Task assigned to developer not belonging to the team"
+                        f"Task assigned to developer {dev['login']} not belonging to the team"
                     )
                 if dev["login"] not in managers:
                     workedOnlyByManager = False
