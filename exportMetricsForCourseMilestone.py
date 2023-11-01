@@ -49,6 +49,5 @@ if __name__ == "__main__":
             startDate=startDate,
             endDate=endDate,
         )
-    for team, metrics in team_metrics.items():
-        write_milestone_data_to_csv(metrics,
+        write_milestone_data_to_csv(team_metrics[team],
                                     f"{milestone}-{team}-{organization}.csv")
