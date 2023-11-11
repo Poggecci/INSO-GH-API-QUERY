@@ -20,6 +20,7 @@ def get_teams(organization: str)->list[str]:
     }
     response = run_graphql_query(get_teams_query, params)
     teams = response['data']['organization']['teams']['nodes']
+    print([team['name'] for team in teams])
     return [team['name'] for team in teams]
     
     
