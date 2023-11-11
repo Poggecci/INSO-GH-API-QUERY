@@ -20,34 +20,34 @@ def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: st
 
 if __name__ == "__main__":
     import sys
-    # if len(sys.argv) < 2:
-    #     exit(0)
-    # _, course_config_file, *_ = sys.argv
+    if len(sys.argv) < 2:
+        exit(0)
+    _, course_config_file, *_ = sys.argv
     # idk why this isn't working, so hardcode for now. Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
-    with open("./data/courseConfig.json") as course_config:
+    with open(course_config_file) as course_config:
         course_data = json.load(course_config)
-    organization = course_data['data'][0]['organization']
-    milestone = course_data['data'][0]['milestones'][0]['name']
-    teams_and_managers = course_data['data'][0]['milestones'][0]['teams']
-    startDate = datetime.fromisoformat(course_data['data'][0]['milestones'][0]['startDate'])
-    endDate = datetime.fromisoformat(course_data['data'][0]['milestones'][0]['endDate'])
+    print(course_data)
+    organization = course_data['organization']
+    teams_and_teamdata = course_data['teams']
+    startDate = datetime.fromisoformat(course_data['milestoneStartsOn'])
+    endDate = datetime.fromisoformat(course_data['milestoneEndsOn'])
     print("Organization: ", organization)
-    print("Milestone: ", milestone)
 
     team_metrics = {}
-    for team, managers in teams_and_managers.items():
+    for team, teamdata in teams_and_teamdata.items():
         print("Team: ", team)
-        print("Managers: ", managers)
+        print("Managers: ", teamdata['managers'])
+        print("Milestone: ", teamdata['milestone'])
         members = get_team_members(organization, team)
         team_metrics[team] = getTeamMetricsForMilestone(
             org=organization,
             team=team,
-            milestone=milestone,
+            milestone=teamdata['milestone'],
             members=members,
-            managers=managers,
+            managers=teamdata["managers"],
             startDate=startDate,
             endDate=endDate,
         )
         write_milestone_data_to_csv(team_metrics[team],
-                                    f"{milestone}-{team}-{organization}.csv")
+                                    f"{teamdata['milestone']}-{team}-{organization}.csv")
