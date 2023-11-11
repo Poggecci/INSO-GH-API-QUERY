@@ -113,10 +113,13 @@ def getTeamMetricsForMilestone(
             params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
 
     for member in members:
-        pointsClosed = milestoneData.devMetrics[member].pointsClosed
-        milestoneData.devMetrics[member].percentContribution = (
-            pointsClosed / milestoneData.totalPointsClosed * 100
-        )
+        if milestoneData.totalPointsClosed == 0:
+            milestoneData.devMetrics[member].percentContribution = 0
+        else:
+            pointsClosed = milestoneData.devMetrics[member].pointsClosed
+            milestoneData.devMetrics[member].percentContribution = (
+                pointsClosed / milestoneData.totalPointsClosed * 100
+            )
     return milestoneData
 
 
