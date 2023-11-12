@@ -16,23 +16,20 @@ export GITHUB_API_TOKEN=`pass show GitHub/uprm-inso4116-2023-2024-s1`
 ```
 4. The course is described in a JSON file. The fields of the JSON file are
    - `organization` this will be used as the name of the organization
-   - `milestone` this is the name of the milestone to use, all teams and projects must use
-     the same milestone names. For example, "Milestone 1", "Milestone 2", etc. or
-     "Milestone #1", "Milestone #2", etc., but if one team uses e.g. "Milestone #1" and
-     that's the name on the milestone field, then only milestone data for a milestone of
-     that name will be collected.
    - `teams` this field is a list of key/value pairs. The key of each pair is the team
-     name. It must also be the name of the project board owned by that team from which the
+     name. It _must_ also be the name of the project board owned by that team from which the
      closed issues, with their urgency and difficulty can be collected. The value of each
-     pair is the list of logins that should be counted as managers and therefore do not
-     get any points for closing issues, even if they were assigned to them.
-5. Run the script from the command line:
+     pair is a JSON with the fields 
+     - `managers` which contains a list of the GitHub logins that belong to the managers
+       of the team
+     - `milestone` which must be the name of the milestone to use, so that different
+       projects can use different milestone names
+  5. Run the script from the command line:
 ```
-poetry run python exportMetricsForCourseMilestone.py <organization> <milestone>
+poetry run python exportMetricsForCourseMilestone.py <some course desctiption>.json
 ```
-Replace `<organization>` with the name of your GitHub organization and `<milestone>` with the desired milestone.
 ### Example:
 ```
-poetry run python exportMetricsForCourseMilestone.py "uprm-inso4116-2023-2024-s1" "Milestone #1"
+poetry run python exportMetricsForCourseMilestone.py uprm-inso4116-2023-2024-s1.json
 ```
 The script will generate CSV files containing team metrics for each specified team. The CSV files will be named `<milestone>-<team>-<organization>.csv`.
