@@ -41,6 +41,11 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
                 number
               }
             }
+            modifier: fieldValueByName(name:"Modifier") {
+              ... on ProjectV2ItemFieldNumberValue {
+                number
+              }
+            }
           }
         }
       }
@@ -86,6 +91,9 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
+            if issue["modifier"] is None or not issue["modifier"]:
+                issue["modifier"] = {"number": 0}
+            print(issue["modifier"]["number"])
             workedOnlyByManager = True
             # attribute points to correct developer
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
@@ -100,12 +108,14 @@ def getTeamMetricsForMilestone(
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
-                    issue["difficulty"]["number"] * issue["urgency"]["number"]
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"]
+                     + issue["modifier"]["number"])
                     / numberAssignees
                 )
             if not workedOnlyByManager:
                 milestoneData.totalPointsClosed += (
                     issue["difficulty"]["number"] * issue["urgency"]["number"]
+                    + issue["modifier"]["number"]
                 )
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
