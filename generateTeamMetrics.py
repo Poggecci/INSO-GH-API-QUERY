@@ -40,6 +40,11 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
                 number
               }
             }
+            modifier: fieldValueByName(name:"Modifier") {
+              ... on ProjectV2ItemFieldNumberValue {
+                number
+              }
+            }
           }
         }
       }
@@ -83,6 +88,9 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
+            if issue["modifier"] is None or not issue["modifier"]:
+                issue["modifier"] = {"number": 0}
+            print(issue["modifier"]["number"])
             workedOnlyByManager = True
             # attribute points to correct developer
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
@@ -107,12 +115,15 @@ def getTeamMetricsForMilestone(
                 createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
                 timePower = createdAt - startDate
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
-                    (issue["difficulty"]["number"] * issue["urgency"]["number"])
-                    *pow(1-exponentialRatio, timePower.days) / numberAssignees
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"]
+                     + issue["modifier"]["number"])
+                    * pow(1-exponentialRatio, timePower.days) / numberAssignees
                 )
             if not workedOnlyByManager:
                 milestoneData.totalPointsClosed += (
-                    (issue["difficulty"]["number"] * issue["urgency"]["number"])*pow(1-exponentialRatio, timePower.days)
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"]
+                     + issue["modifier"]["number"])
+                    * pow(1-exponentialRatio, timePower.days)
                 )
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
