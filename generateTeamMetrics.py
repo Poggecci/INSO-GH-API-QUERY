@@ -52,20 +52,16 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
 
 
 def getTeamMetricsForMilestone(
-    org: str, team: str, milestone: str,
-    members: list[str], managers: list[str]
+    org: str, team: str, milestone: str, members: list[str], managers: list[str]
 ) -> MilestoneData:
     milestoneData = MilestoneData()
-    milestoneData.devMetrics = {member: DeveloperMetrics()
-                                for member in members}
+    milestoneData.devMetrics = {member: DeveloperMetrics() for member in members}
 
     params = {"owner": org, "team": team}
     hasAnotherPage = True
     while hasAnotherPage:
         response = run_graphql_query(get_team_issues, params)
-        projects: list[dict] = (
-            response["data"]["organization"]["projectsV2"]["nodes"]
-        )
+        projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:
             raise Exception(
@@ -100,7 +96,8 @@ def getTeamMetricsForMilestone(
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
-                    issue["difficulty"]["number"] * issue["urgency"]["number"]
+                    issue["difficulty"]["number"]
+                    * issue["urgency"]["number"]
                     / numberAssignees
                 )
             if not workedOnlyByManager:

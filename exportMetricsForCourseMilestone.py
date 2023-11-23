@@ -27,11 +27,11 @@ if __name__ == "__main__":
     # teams = get_teams(org)
     with open(course_config_file) as course_config:
         course_data = json.load(course_config)
-    organization = course_data['organization']
-    milestone = course_data['milestone']
-    teams_and_managers = course_data['teams']
-    print("Organization: ", course_data['organization'])
-    print("Milestone: ", course_data['milestone'])
+    organization = course_data["organization"]
+    milestone = course_data["milestone"]
+    teams_and_managers = course_data["teams"]
+    print("Organization: ", course_data["organization"])
+    print("Milestone: ", course_data["milestone"])
 
     team_metrics = {}
     for team, managers in teams_and_managers.items():
@@ -45,5 +45,6 @@ if __name__ == "__main__":
             members=members,
             managers=managers,
         )
-        write_milestone_data_to_csv(team_metrics[team],
-                                    f"{milestone}-{team}-{organization}.csv")
+        write_milestone_data_to_csv(
+            team_metrics[team], f"{milestone}-{team}-{organization}.csv"
+        )

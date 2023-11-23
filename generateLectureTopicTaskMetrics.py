@@ -1,4 +1,3 @@
-from getTeamMembers import get_team_members
 from utils.models import LectureTopicTaskData
 
 from utils.queryRunner import run_graphql_query
@@ -65,7 +64,7 @@ def getLectureTopicTaskMetrics(
             if not issue["content"].get("closed", False):
                 continue
             # Expect LTTs to be properly titled as such
-            if not "[Lecture Topic Task]" in issue["content"].get("title", ""):
+            if "[Lecture Topic Task]" not in issue["content"].get("title", ""):
                 continue
             lectureTopicTaskData.totalLectureTopicTasks += 1
             for dev in issue["content"]["assignees"]["nodes"]:

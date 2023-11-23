@@ -1,21 +1,20 @@
 import csv
 import json
 from generateLectureTopicTaskMetrics import getLectureTopicTaskMetrics
-from generateTeamMetrics import getTeamMetricsForMilestone
 from getTeamMembers import get_team_members
 
 from utils.models import LectureTopicTaskData
 
 
-def write_lecture_topic_task_data_to_csv(ltt_data: LectureTopicTaskData, csv_file_path: str, task_quota: int):
+def write_lecture_topic_task_data_to_csv(
+    ltt_data: LectureTopicTaskData, csv_file_path: str, task_quota: int
+):
     with open(csv_file_path, mode="w", newline="") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(["Developer", "Lecture Topic Tasks Completed", "Met Quota"])
         writer.writerow(["Total", ltt_data.totalLectureTopicTasks, "N/A"])
         for developer, tasks_closed in ltt_data.lectureTopicTasksByDeveloper.items():
-            writer.writerow(
-                [developer, tasks_closed,  tasks_closed >= task_quota]
-            )
+            writer.writerow([developer, tasks_closed, tasks_closed >= task_quota])
 
 
 if __name__ == "__main__":
@@ -28,20 +27,20 @@ if __name__ == "__main__":
     # teams = get_teams(org)
     with open(course_config_file) as course_config:
         course_data = json.load(course_config)
-    organization = course_data['organization']
-    teams_and_managers = course_data['teams']
-    lecture_topic_task_quota = course_data['lecture_topic_task_quota']
-    print("Organization: ", course_data['organization'])
+    organization = course_data["organization"]
+    teams_and_managers = course_data["teams"]
+    lecture_topic_task_quota = course_data["lecture_topic_task_quota"]
+    print("Organization: ", course_data["organization"])
     lecture_topic_task_metrics_by_team = {}
     for team, managers in teams_and_managers.items():
         print("Team: ", team)
         print("Managers: ", managers)
         members = get_team_members(organization, team)
         lecture_topic_task_metrics_by_team[team] = getLectureTopicTaskMetrics(
-            org=organization,
-            team=team,
-            members=members
+            org=organization, team=team, members=members
         )
-        write_lecture_topic_task_data_to_csv(lecture_topic_task_metrics_by_team[team],
-                                    f"Lecture Topic Tasks-{team}-{organization}.csv",
-                                    lecture_topic_task_quota)
+        write_lecture_topic_task_data_to_csv(
+            lecture_topic_task_metrics_by_team[team],
+            f"Lecture Topic Tasks-{team}-{organization}.csv",
+            lecture_topic_task_quota,
+        )
