@@ -17,7 +17,7 @@ poetry install
 3. Assign your Github classic PAT to the environment variable `GITHUB_API_TOKEN`. This
    allows you to keep the token in an encrypted file.  For example,
 
-```
+```bash
 export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
 ```
 
@@ -37,13 +37,13 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
      get any points for closing issues, even if they were assigned to them.
 2. Run the script from the command line:
 
-```
+```bash
 poetry run python exportMetricsForCourseMilestone.py <json_config_file_path>
 ```
 
 #### Example
 
-```
+```bash
 poetry run python exportMetricsForCourseMilestone.py course_config.json
 ```
 
@@ -57,16 +57,16 @@ The script will generate CSV files containing team metrics for each specified te
      name. It must also be the name of the project board owned by that team from which the
      closed issues can be collected. The value of each
      pair is the list of logins that should be counted as managers.
-   - `lecture_topic_tasks_quota` this field specifies how many lecture topic tasks each member of the team is expected to complete.
+   - `lecture_topic_task_quota` this field specifies how many lecture topic tasks each member of the team is expected to complete.
 2. Run the script from the command line:
 
-```
+```bash
 poetry run python exportMetricsForLectureTopicTasks.py <json_config_file_path>
 ```
 
 #### Example
 
-```
+```bash
 poetry run python exportMetricsForLectureTopicTasks.py course_config.json
 ```
 

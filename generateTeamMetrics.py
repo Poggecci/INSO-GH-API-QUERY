@@ -54,9 +54,8 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
 def getTeamMetricsForMilestone(
     org: str, team: str, milestone: str, members: list[str], managers: list[str]
 ) -> MilestoneData:
-    milestoneData = MilestoneData()
-    milestoneData.devMetrics = {member: DeveloperMetrics() for member in members}
-
+    developers = [member for member in members if member not in managers]
+    devPointsClosed = {dev: 0.0 for dev in developers}
     params = {"owner": org, "team": team}
     hasAnotherPage = True
     while hasAnotherPage:
@@ -82,7 +81,6 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
-            workedOnlyByManager = True
             # attribute points to correct developer
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
             for dev in issue["content"]["assignees"]["nodes"]:
@@ -91,28 +89,28 @@ def getTeamMetricsForMilestone(
                         f"Task assigned to developer {dev['login']} not"
                         " belonging to the team"
                     )
-                if dev["login"] not in managers:
-                    workedOnlyByManager = False
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
-                milestoneData.devMetrics[dev["login"]].pointsClosed += (
+                devPointsClosed[dev["login"]] += (
                     issue["difficulty"]["number"]
                     * issue["urgency"]["number"]
                     / numberAssignees
-                )
-            if not workedOnlyByManager:
-                milestoneData.totalPointsClosed += (
-                    issue["difficulty"]["number"] * issue["urgency"]["number"]
                 )
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
             params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
-
-    for member in members:
-        pointsClosed = milestoneData.devMetrics[member].pointsClosed
-        milestoneData.devMetrics[member].percentContribution = (
-            pointsClosed / milestoneData.totalPointsClosed * 100
+    trimmedList = sorted(devPointsClosed.values())[1:-1]
+    trimmedMeanPointsClosed = sum(trimmedList) / len(trimmedList)
+    totalPointsClosed = sum(devPointsClosed.values())
+    milestoneData = MilestoneData()
+    for dev in developers:
+        milestoneData.devMetrics[dev] = DeveloperMetrics(
+            pointsClosed=devPointsClosed[dev],
+            percentContribution=devPointsClosed[dev] / totalPointsClosed * 100.0,
+            expectedGrade=min(
+                devPointsClosed[dev] / trimmedMeanPointsClosed * 100.0, 100.0
+            ),
         )
     return milestoneData
 

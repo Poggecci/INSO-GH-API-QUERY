@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 @dataclass
 class DeveloperMetrics:
     pointsClosed: float = 0
-    percentContribution: float = 0  # points / (totalPoints) * %100
+    percentContribution: float = 0  # pointsClosed / (totalPoints) * %100
+    expectedGrade: float = 0  # floor((pointsClosed / trimmedMean) * %100 , %100)
 
 
 @dataclass
