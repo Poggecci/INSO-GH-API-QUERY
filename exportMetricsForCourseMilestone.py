@@ -17,7 +17,7 @@ def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: st
             writer.writerow(
                 [
                     developer,
-                    metrics.pointsClosed,
+                    round(metrics.pointsClosed, 1),
                     round(metrics.percentContribution, 1),
                     round(metrics.expectedGrade, 1),
                 ]
