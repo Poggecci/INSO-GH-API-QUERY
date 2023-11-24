@@ -90,7 +90,6 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["modifier"] is None or not issue["modifier"]:
                 issue["modifier"] = {"number": 0}
-            print(issue["modifier"]["number"])
             workedOnlyByManager = True
             # attribute points to correct developer
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
