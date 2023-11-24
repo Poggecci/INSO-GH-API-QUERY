@@ -117,14 +117,15 @@ def getTeamMetricsForMilestone(
                 timePower = createdAt - startDate
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
                     (issue["difficulty"]["number"] * issue["urgency"]["number"]
+                     * pow(1-exponentialRatio, timePower.days)
                      + issue["modifier"]["number"])
-                    * pow(1-exponentialRatio, timePower.days) / numberAssignees
+                    / numberAssignees
                 )
             if not workedOnlyByManager:
                 milestoneData.totalPointsClosed += (
                     (issue["difficulty"]["number"] * issue["urgency"]["number"]
+                     * pow(1-exponentialRatio, timePower.days)
                      + issue["modifier"]["number"])
-                    * pow(1-exponentialRatio, timePower.days)
                 )
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
