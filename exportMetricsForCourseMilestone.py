@@ -27,7 +27,6 @@ if __name__ == "__main__":
     # teams = get_teams(org)
     with open(course_config_file) as course_config:
         course_data = json.load(course_config)
-    print(course_data)
     organization = course_data['organization']
     teams_and_teamdata = course_data['teams']
     startDate = datetime.fromisoformat(course_data['milestoneStartsOn'])
