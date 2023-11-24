@@ -2,36 +2,31 @@ from utils.queryRunner import run_graphql_query
 
 member_fetching_query = \
 """
-query GetTeamMembers($owner: String!, $team: String!) {
-	organization(login: $owner){
-		teams(query: $team, first:1){
+query GetTeamMembers($owner: String!) {
+  organization(login: $owner) {
+		membersWithRole(first: 100) {
 			nodes{
-				members {
-					nodes{
-						login	
-					}
-					
-				}
+				login
 			}
 		}
-	}
+    }
 }
 """
 params = {
-	"owner": "uprm-inso4116-2023-2024-s1", # organization name
-	"team": "College Toolbox"
+	"owner": "uprm-inso4116-2023-2024-s1" # organization name
+	# "team": "College Toolbox"
 }
 
 def get_team_members(organization, team)->list[str]:
     params = {
-        	"owner": organization,
-	        "team": team
+        	"owner": organization
+	        # "team": team
     }
     response = run_graphql_query(member_fetching_query, params)
-    teams = response['data']['organization']['teams']['nodes']
+    teams = response['data']['organization']['membersWithRole']['nodes']
     if len(teams) < 1:
         return []
-    return [member['login'] for member in teams[0]['members']['nodes']]
+    return [member['login'] for member in teams]
 
 if __name__ == "__main__":
     import sys

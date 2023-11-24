@@ -1,12 +1,11 @@
 from getTeamMembers import get_team_members
 from utils.models import DeveloperMetrics, MilestoneData
-
+from datetime import datetime
 from utils.queryRunner import run_graphql_query
 
 get_team_issues = """
 query QueryProjectItemsForTeam($owner: String!, $team: String!,
-  $nextPage: String)
-{
+                               $nextPage: String) {
   organization(login: $owner) {
     projectsV2(query: $team, first: 100) {
       nodes{
@@ -52,14 +51,14 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
     }
   }
 }
-
 """
 
 
 def getTeamMetricsForMilestone(
-    org: str, team: str, milestone: str,
-    members: list[str], managers: list[str]
+    org: str, team: str, milestone: str, members: list[str],
+    managers: list[str], startDate: datetime, endDate: datetime
 ) -> MilestoneData:
+    exponentialRatio = 1/(endDate-startDate).days
     milestoneData = MilestoneData()
     milestoneData.devMetrics = {member: DeveloperMetrics()
                                 for member in members}
@@ -74,8 +73,8 @@ def getTeamMetricsForMilestone(
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:
             raise Exception(
-                "Project not found in org. Likely means the project"
-                " board doesn't share the same name as the team."
+                "Project not found in org. Likely means the project board"
+                " doesn't share the same name as the team."
             )
         # Extract data
         issues = project["items"]["nodes"]
@@ -93,29 +92,39 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["modifier"] is None or not issue["modifier"]:
                 issue["modifier"] = {"number": 0}
-            print(issue["modifier"]["number"])
             workedOnlyByManager = True
             # attribute points to correct developer
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
             for dev in issue["content"]["assignees"]["nodes"]:
-                if dev["login"] not in members:
-                    raise Exception(
-                        f"Task assigned to developer {dev['login']} not"
-                        " belonging to the team"
-                    )
+                try:
+                    if dev["login"] not in members:
+                        raise Exception(
+                            f"Task assigned to developer {dev['login']} not"
+                            " belonging to the team"
+                        )
+                except Exception as e:
+                    print(e)
+                    continue
                 if dev["login"] not in managers:
                     workedOnlyByManager = False
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
+                # P = Po(1-r)^t
+                # Po = initial point value
+                # r = 1/<how many days to complete milestone>
+                # t = <amount of days from when issue was created vs the start date of milestone>
+                createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
+                timePower = createdAt - startDate
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
                     (issue["difficulty"]["number"] * issue["urgency"]["number"]
                      + issue["modifier"]["number"])
-                    / numberAssignees
+                    * pow(1-exponentialRatio, timePower.days) / numberAssignees
                 )
             if not workedOnlyByManager:
                 milestoneData.totalPointsClosed += (
-                    issue["difficulty"]["number"] * issue["urgency"]["number"]
-                    + issue["modifier"]["number"]
+                    (issue["difficulty"]["number"] * issue["urgency"]["number"]
+                     + issue["modifier"]["number"])
+                    * pow(1-exponentialRatio, timePower.days)
                 )
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
@@ -143,7 +152,6 @@ if __name__ == "__main__":
     # Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
     teams_and_managers = {"College Toolbox": ["EdwinC1339", "Ryan8702"]}
-
     for team, managers in teams_and_managers.items():
         print(f"Team: {team}")
         print(f"Managers: {managers}")
