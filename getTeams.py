@@ -22,6 +22,3 @@ def get_teams(organization: str)->list[str]:
     teams = response['data']['organization']['teams']['nodes']
     print([team['name'] for team in teams])
     return [team['name'] for team in teams]
-    
-    
-    
