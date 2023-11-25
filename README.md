@@ -17,6 +17,10 @@ export GITHUB_API_TOKEN=`pass show GitHub/uprm-inso4116-2023-2024-s1`
 ### Points Closed Team Metrics
 1. The course is described in a JSON file. The fields of the JSON file are
    - `organization` this will be used as the name of the organization
+   - `milestoneStartsOn` the `datetime` at which the milestone starts
+   - `milestoneEndsOn` the `datetime` at which the milestone ends
+      if either one of `milestoneStartsOn` or `milestoneEndsOn` is missing then there will
+      not be any use of the decay function in the calculation of the score of issues
    - `teams` this field is a list of key/value pairs. The key of each pair is the team
      name. It _must_ also be the name of the project board owned by that team from which the
      closed issues, with their urgency and difficulty can be collected. The value of each

@@ -29,8 +29,20 @@ if __name__ == "__main__":
         course_data = json.load(course_config)
     organization = course_data['organization']
     teams_and_teamdata = course_data['teams']
-    startDate = datetime.fromisoformat(course_data['milestoneStartsOn'])
-    endDate = datetime.fromisoformat(course_data['milestoneEndsOn'])
+    if (course_data.get("milestoneStartsOn", None) is None
+        or not course_data["milestoneStartsOn"]
+        or course_data["milestoneStartsOn"] is None
+        or course_data.get("milestoneEndsOn", None) is None
+        or course_data["milestoneEndsOn"] is None
+        or not course_data["milestoneEndsOn"]):
+        startDate = datetime.now()
+        endDate = datetime.now()
+        useDecay = False
+    else:
+        startDate = datetime.fromisoformat(course_data['milestoneStartsOn'])
+        endDate = datetime.fromisoformat(course_data['milestoneEndsOn'])
+        useDecay = True
+        
     print("Organization: ", organization)
 
     team_metrics = {}
@@ -47,6 +59,7 @@ if __name__ == "__main__":
             managers=teamdata["managers"],
             startDate=startDate,
             endDate=endDate,
+            useDecay=useDecay,
         )
         write_milestone_data_to_csv(team_metrics[team],
                                     f"{teamdata['milestone']}-{team}-{organization}.csv")

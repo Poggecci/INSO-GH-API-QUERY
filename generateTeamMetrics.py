@@ -54,11 +54,24 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
 """
 
 
+def decay(milestoneStart: datetime, milestoneEnd: datetime,
+          issueCreated: datetime) -> float:
+    duration = (milestoneEnd - milestoneStart).days
+    issueLateness = max(0, (issueCreated - milestoneStart).days)
+    decayBase = 1 + 1/duration
+    difference = pow(decayBase, 3 * duration) - pow(decayBase, 0)
+    finalDecrease = 0.7
+    translate = 1 + finalDecrease / difference
+    return max(0, translate
+               - finalDecrease * pow(decayBase, 3 * issueLateness)
+               / difference)
+
+
 def getTeamMetricsForMilestone(
-    org: str, team: str, milestone: str, members: list[str],
-    managers: list[str], startDate: datetime, endDate: datetime
+        org: str, team: str, milestone: str, members: list[str],
+        managers: list[str], startDate: datetime, endDate: datetime,
+        useDecay: bool
 ) -> MilestoneData:
-    exponentialRatio = 1/(endDate-startDate).days
     milestoneData = MilestoneData()
     milestoneData.devMetrics = {member: DeveloperMetrics()
                                 for member in members}
@@ -109,24 +122,17 @@ def getTeamMetricsForMilestone(
                     workedOnlyByManager = False
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
-                # P = Po(1-r)^t
-                # Po = initial point value
-                # r = 1/<how many days to complete milestone>
-                # t = <amount of days from when issue was created vs the start date of milestone>
                 createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
-                timePower = createdAt - startDate
+                issueScore = (issue["difficulty"]["number"]
+                              * issue["urgency"]["number"]
+                              * (decay(startDate, endDate, createdAt)
+                                 if useDecay else 1)
+                              + issue["modifier"]["number"])
                 milestoneData.devMetrics[dev["login"]].pointsClosed += (
-                    (issue["difficulty"]["number"] * issue["urgency"]["number"]
-                     * pow(1-exponentialRatio, timePower.days)
-                     + issue["modifier"]["number"])
-                    / numberAssignees
+                    issueScore / numberAssignees
                 )
             if not workedOnlyByManager:
-                milestoneData.totalPointsClosed += (
-                    (issue["difficulty"]["number"] * issue["urgency"]["number"]
-                     * pow(1-exponentialRatio, timePower.days)
-                     + issue["modifier"]["number"])
-                )
+                milestoneData.totalPointsClosed += issueScore
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
