@@ -44,7 +44,7 @@ poetry run python exportMetricsForCourseMilestone.py <json_config_file_path>
 #### Example
 
 ```bash
-poetry run python exportMetricsForCourseMilestone.py course_config.json
+poetry run python exportMetricsForCourseMilestone.py exampleConfig.json
 ```
 
 The script will generate CSV files containing team metrics for each specified team. The CSV files will be named `<milestone>-<team>-<organization>.csv`.
@@ -67,7 +67,7 @@ poetry run python exportMetricsForLectureTopicTasks.py <json_config_file_path>
 #### Example
 
 ```bash
-poetry run python exportMetricsForLectureTopicTasks.py course_config.json
+poetry run python exportMetricsForLectureTopicTasks.py exampleConfig.json
 ```
 
 The script will generate CSV files containing team metrics for each specified team. The CSV files will be named `Lecture Topic Tasks-<team>-<organization>.csv`.
