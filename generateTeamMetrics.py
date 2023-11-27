@@ -68,11 +68,11 @@ def decay(milestoneStart: datetime, milestoneEnd: datetime,
 
 
 def getTeamMetricsForMilestone(
-        org: str, team: str, milestone: str, developers: list[str],
+        org: str, team: str, milestone: str, members: list[str],
         managers: list[str], startDate: datetime, endDate: datetime,
         useDecay: bool
 ) -> MilestoneData:
-    developers = [member for member in developers if member not in managers]
+    developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
     totalPointsClosed = 0.0
     params = {"owner": org, "team": team}
