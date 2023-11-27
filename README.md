@@ -25,16 +25,19 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
 
 1. The course is described in a JSON file. The fields of the JSON file are
    - `organization` this will be used as the name of the organization
-   - `milestone` this is the name of the milestone to use, all teams and projects must use
-     the same milestone names. For example, "Milestone 1", "Milestone 2", etc. or
-     "Milestone #1", "Milestone #2", etc., but if one team uses e.g. "Milestone #1" and
-     that's the name on the milestone field, then only milestone data for a milestone of
-     that name will be collected.
+   - `milestoneStartsOn` the `datetime` at which the milestone starts
+   - `milestoneEndsOn` the `datetime` at which the milestone ends
+      if either one of `milestoneStartsOn` or `milestoneEndsOn` is missing then there will
+      not be any use of the decay function in the calculation of the score of issues
    - `teams` this field is a list of key/value pairs. The key of each pair is the team
-     name. It must also be the name of the project board owned by that team from which the
+     name. It _must_ also be the name of the project board owned by that team from which the
      closed issues, with their urgency and difficulty can be collected. The value of each
-     pair is the list of logins that should be counted as managers and therefore do not
-     get any points for closing issues, even if they were assigned to them.
+     pair is a JSON with the fields 
+     - `managers` which contains a list of the GitHub logins that belong to the managers
+       of the team and therefore do not get any points for closing issues, even if they 
+       were assigned to them.
+     - `milestone` which must be the name of the milestone to use, so that different
+       projects can use different milestone names
 2. Run the script from the command line:
 
 ```bash

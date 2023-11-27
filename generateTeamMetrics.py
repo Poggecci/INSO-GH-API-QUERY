@@ -1,12 +1,11 @@
 from getTeamMembers import get_team_members
 from utils.models import DeveloperMetrics, MilestoneData
-
+from datetime import datetime
 from utils.queryRunner import run_graphql_query
 
 get_team_issues = """
 query QueryProjectItemsForTeam($owner: String!, $team: String!,
-  $nextPage: String)
-{
+                               $nextPage: String) {
   organization(login: $owner) {
     projectsV2(query: $team, first: 100) {
       nodes{
@@ -41,21 +40,41 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
                 number
               }
             }
+            modifier: fieldValueByName(name:"Modifier") {
+              ... on ProjectV2ItemFieldNumberValue {
+                number
+              }
+            }
           }
         }
       }
     }
   }
 }
-
 """
 
 
+def decay(milestoneStart: datetime, milestoneEnd: datetime,
+          issueCreated: datetime) -> float:
+    duration = (milestoneEnd - milestoneStart).days
+    issueLateness = max(0, (issueCreated - milestoneStart).days)
+    decayBase = 1 + 1/duration
+    difference = pow(decayBase, 3 * duration) - pow(decayBase, 0)
+    finalDecrease = 0.7
+    translate = 1 + finalDecrease / difference
+    return max(0, translate
+               - finalDecrease * pow(decayBase, 3 * issueLateness)
+               / difference)
+
+
 def getTeamMetricsForMilestone(
-    org: str, team: str, milestone: str, members: list[str], managers: list[str]
+        org: str, team: str, milestone: str, members: list[str],
+        managers: list[str], startDate: datetime, endDate: datetime,
+        useDecay: bool
 ) -> MilestoneData:
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
+    totalPointsClosed = 0.0
     params = {"owner": org, "team": team}
     hasAnotherPage = True
     while hasAnotherPage:
@@ -64,8 +83,8 @@ def getTeamMetricsForMilestone(
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:
             raise Exception(
-                "Project not found in org. Likely means the project"
-                " board doesn't share the same name as the team."
+                "Project not found in org. Likely means the project board"
+                " doesn't share the same name as the team."
             )
         # Extract data
         issues = project["items"]["nodes"]
@@ -81,25 +100,41 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
+            if issue["modifier"] is None or not issue["modifier"]:
+                issue["modifier"] = {"number": 0}
+            workedOnlyByManager = True
             # attribute points to correct developer
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
             for dev in issue["content"]["assignees"]["nodes"]:
-                if dev["login"] not in members:
-                    raise Exception(
-                        f"Task assigned to developer {dev['login']} not"
-                        " belonging to the team"
-                    )
+                try:
+                    if dev["login"] not in developers:
+                        raise Exception(
+                            f"Task assigned to developer {dev['login']} not"
+                            " belonging to the team"
+                        )
+                except Exception as e:
+                    print(e)
+                    continue
+                if dev["login"] not in managers:
+                    workedOnlyByManager = False
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
+                createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
+                issueScore = (issue["difficulty"]["number"]
+                              * issue["urgency"]["number"]
+                              * (decay(startDate, endDate, createdAt)
+                                 if useDecay else 1)
+                              + issue["modifier"]["number"])
                 devPointsClosed[dev["login"]] += (
-                    issue["difficulty"]["number"]
-                    * issue["urgency"]["number"]
-                    / numberAssignees
+                    issueScore / numberAssignees
                 )
+            if not workedOnlyByManager:
+                totalPointsClosed += issueScore
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
             params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
+
     trimmedList = sorted(devPointsClosed.values())[1:-1]
     trimmedMeanPointsClosed = sum(trimmedList) / len(trimmedList)
     totalPointsClosed = sum(devPointsClosed.values())
@@ -125,7 +160,6 @@ if __name__ == "__main__":
     # Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
     teams_and_managers = {"College Toolbox": ["EdwinC1339", "Ryan8702"]}
-
     for team, managers in teams_and_managers.items():
         print(f"Team: {team}")
         print(f"Managers: {managers}")
@@ -135,7 +169,7 @@ if __name__ == "__main__":
                 org=org,
                 team=team,
                 milestone=milestone,
-                members=members,
+                developers=members,
                 managers=managers,
             )
         )
