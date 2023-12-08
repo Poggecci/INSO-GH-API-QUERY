@@ -38,7 +38,7 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
        were assigned to them.
      - `milestone` which must be the name of the milestone to use, so that different
        projects can use different milestone names
-     - `milestoneGrade` which specifies the maximum grade achievable for this milestone.
+     - `milestoneGrade` which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.).
 2. Run the script from the command line:
 
 ```bash
