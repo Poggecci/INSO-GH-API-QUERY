@@ -15,7 +15,7 @@ poetry install
 2. You must create a GitHub classic personal access token with the permissions `read:org`
    and `read:project`.
 3. Assign your Github classic PAT to the environment variable `GITHUB_API_TOKEN`. This
-   allows you to keep the token in an encrypted file.  For example,
+   allows you to keep the token in an encrypted file. For example,
 
 ```bash
 export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
@@ -27,17 +27,18 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
    - `organization` this will be used as the name of the organization
    - `milestoneStartsOn` the `datetime` at which the milestone starts
    - `milestoneEndsOn` the `datetime` at which the milestone ends
-      if either one of `milestoneStartsOn` or `milestoneEndsOn` is missing then there will
-      not be any use of the decay function in the calculation of the score of issues
+     if either one of `milestoneStartsOn` or `milestoneEndsOn` is missing then there will
+     not be any use of the decay function in the calculation of the score of issues
    - `teams` this field is a list of key/value pairs. The key of each pair is the team
      name. It _must_ also be the name of the project board owned by that team from which the
      closed issues, with their urgency and difficulty can be collected. The value of each
-     pair is a JSON with the fields 
+     pair is a JSON with the fields
      - `managers` which contains a list of the GitHub logins that belong to the managers
-       of the team and therefore do not get any points for closing issues, even if they 
+       of the team and therefore do not get any points for closing issues, even if they
        were assigned to them.
      - `milestone` which must be the name of the milestone to use, so that different
        projects can use different milestone names
+     - `milestoneGrade` which specifies the maximum grade achievable for this milestone.
 2. Run the script from the command line:
 
 ```bash
@@ -55,15 +56,14 @@ The script will generate CSV files containing team metrics for each specified te
 ### Lecture Topic Tasks
 
 1. The course is described in a JSON file. The fields of the JSON file are
+
    - `organization` this will be used as the name of the organization
    - `teams` this field is a list of key/value pairs. The key of each pair is the team name. It must also be the name of the project board owned by that team from which the closed issues, with their urgency and difficulty can be collected. The value of each pair is a JSON with the fields
 
-    - `managers` which contains a list of the GitHub logins that belong to the managers
-    of the team and therefore do not get any points for closing issues, even if they
-    were assigned to them.
-    - `milestone` which must be the name of the milestone to use, so that different
-    projects can use different milestone names
-    - `milestoneGrade` which specifies the maximum grade achievable for this milestone.
+   - `managers` which contains a list of the GitHub logins that belong to the managers
+     of the team and therefore do not get any points for closing issues, even if they
+     were assigned to them.
+
 2. Run the script from the command line:
 
 ```bash
