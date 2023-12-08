@@ -1,3 +1,4 @@
+import json
 from getTeamMembers import get_team_members
 from utils.models import DeveloperMetrics, MilestoneData
 from datetime import datetime
@@ -54,23 +55,40 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
 """
 
 
-def decay(milestoneStart: datetime, milestoneEnd: datetime,
-          issueCreated: datetime) -> float:
+def decay(
+    milestoneStart: datetime, milestoneEnd: datetime, issueCreated: datetime
+) -> float:
     duration = (milestoneEnd - milestoneStart).days
     issueLateness = max(0, (issueCreated - milestoneStart).days)
-    decayBase = 1 + 1/duration
+    decayBase = 1 + 1 / duration
     difference = pow(decayBase, 3 * duration) - pow(decayBase, 0)
     finalDecrease = 0.7
     translate = 1 + finalDecrease / difference
-    return max(0, translate
-               - finalDecrease * pow(decayBase, 3 * issueLateness)
-               / difference)
+    return max(
+        0, translate - finalDecrease * pow(decayBase, 3 * issueLateness) / difference
+    )
+
+
+# Expects each score to be [0,inf)
+def outliersRemovedAverage(scores: list) -> float:
+    non_zero_lst = [x for x in scores if x > 0]
+    smallest_non_zero = min(non_zero_lst, default=0)
+    largestVal = max(scores, default=0)
+    newLength = len(scores) - (largestVal != 0) - (smallest_non_zero != 0)
+    total = sum(scores) - largestVal - smallest_non_zero
+    return total / newLength
 
 
 def getTeamMetricsForMilestone(
-        org: str, team: str, milestone: str, members: list[str],
-        managers: list[str], startDate: datetime, endDate: datetime,
-        useDecay: bool
+    org: str,
+    team: str,
+    milestone: str,
+    members: list[str],
+    managers: list[str],
+    startDate: datetime,
+    endDate: datetime,
+    useDecay: bool,
+    milestoneGrade: float,
 ) -> MilestoneData:
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
@@ -120,14 +138,13 @@ def getTeamMetricsForMilestone(
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
                 createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
-                issueScore = (issue["difficulty"]["number"]
-                              * issue["urgency"]["number"]
-                              * (decay(startDate, endDate, createdAt)
-                                 if useDecay else 1)
-                              + issue["modifier"]["number"])
-                devPointsClosed[dev["login"]] += (
-                    issueScore / numberAssignees
+                issueScore = (
+                    issue["difficulty"]["number"]
+                    * issue["urgency"]["number"]
+                    * (decay(startDate, endDate, createdAt) if useDecay else 1)
+                    + issue["modifier"]["number"]
                 )
+                devPointsClosed[dev["login"]] += issueScore / numberAssignees
             if not workedOnlyByManager:
                 totalPointsClosed += issueScore
 
@@ -135,17 +152,17 @@ def getTeamMetricsForMilestone(
         if hasAnotherPage:
             params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
 
-    trimmedList = sorted(devPointsClosed.values())[1:-1]
-    trimmedMeanPointsClosed = sum(trimmedList) / len(trimmedList)
-    totalPointsClosed = sum(devPointsClosed.values())
+    untrimmedAverage = totalPointsClosed / len(devPointsClosed)
+    trimmedAverage = outliersRemovedAverage(devPointsClosed.values())
+    devBenchmark = min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
     milestoneData = MilestoneData()
+    milestoneData.totalPointsClosed = totalPointsClosed
     for dev in developers:
+        contribution = devPointsClosed[dev] / totalPointsClosed
         milestoneData.devMetrics[dev] = DeveloperMetrics(
             pointsClosed=devPointsClosed[dev],
-            percentContribution=devPointsClosed[dev] / totalPointsClosed * 100.0,
-            expectedGrade=min(
-                devPointsClosed[dev] / trimmedMeanPointsClosed * 100.0, 100.0
-            ),
+            percentContribution=contribution * 100.0,
+            expectedGrade=min((devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0),
         )
     return milestoneData
 
@@ -153,23 +170,45 @@ def getTeamMetricsForMilestone(
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         exit(0)
-    _, org, milestone, *_ = sys.argv
-    # idk why this isn't working, so hardcode for now.
-    # Kinda had to anyway cuz managers are hard coded rn
-    # teams = get_teams(org)
-    teams_and_managers = {"College Toolbox": ["EdwinC1339", "Ryan8702"]}
-    for team, managers in teams_and_managers.items():
-        print(f"Team: {team}")
-        print(f"Managers: {managers}")
-        members = get_team_members(org, team)
-        print(
-            getTeamMetricsForMilestone(
-                org=org,
-                team=team,
-                milestone=milestone,
-                developers=members,
-                managers=managers,
-            )
-        )
+    _, course_config_file, *_ = sys.argv
+    with open(course_config_file) as course_config:
+        course_data = json.load(course_config)
+    organization = course_data["organization"]
+    teams_and_teamdata = course_data["teams"]
+    if (
+        course_data.get("milestoneStartsOn", None) is None
+        or not course_data["milestoneStartsOn"]
+        or course_data["milestoneStartsOn"] is None
+        or course_data.get("milestoneEndsOn", None) is None
+        or course_data["milestoneEndsOn"] is None
+        or not course_data["milestoneEndsOn"]
+    ):
+        startDate = datetime.now()
+        endDate = datetime.now()
+        useDecay = False
+    else:
+        startDate = datetime.fromisoformat(course_data["milestoneStartsOn"])
+        endDate = datetime.fromisoformat(course_data["milestoneEndsOn"])
+        useDecay = True
+
+    print("Organization: ", organization)
+
+    team_metrics = {}
+    for team, teamdata in teams_and_teamdata.items():
+        print("Team: ", team)
+        print("Managers: ", teamdata["managers"])
+        print("Milestone: ", teamdata["milestone"])
+        members = get_team_members(organization, team)
+        print(getTeamMetricsForMilestone(
+            org=organization,
+            team=team,
+            milestone=teamdata["milestone"],
+            milestoneGrade=teamdata["milestoneGrade"],
+            members=members,
+            managers=teamdata["managers"],
+            startDate=startDate,
+            endDate=endDate,
+            useDecay=useDecay,
+        ))

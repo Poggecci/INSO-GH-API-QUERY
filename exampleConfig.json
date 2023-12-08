@@ -1,6 +1,11 @@
 {
   "organization": "uprm-inso4116-2023-2024-S1",
-  "teams": { "College Toolbox": ["Ryan8702", "EdwinC1339"] },
-  "milestone": "Milestone #3",
-  "lecture_topic_task_quota": 4
+  "teams": {
+    "College Toolbox": {
+      "managers": ["Ryan8702", "EdwinC1339"],
+      "milestone": "Milestone #3",
+      "milestoneGrade": 100.0
+    }
+  },
+  "lectureTopicTaskQuota": 4
 }

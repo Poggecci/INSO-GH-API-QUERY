@@ -29,7 +29,7 @@ if __name__ == "__main__":
         course_data = json.load(course_config)
     organization = course_data["organization"]
     teams_and_managers = course_data["teams"]
-    lecture_topic_task_quota = course_data["lecture_topic_task_quota"]
+    lecture_topic_task_quota = course_data["lectureTopicTaskQuota"]
     print("Organization: ", course_data["organization"])
     lecture_topic_task_metrics_by_team = {}
     for team, managers in teams_and_managers.items():

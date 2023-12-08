@@ -56,11 +56,14 @@ The script will generate CSV files containing team metrics for each specified te
 
 1. The course is described in a JSON file. The fields of the JSON file are
    - `organization` this will be used as the name of the organization
-   - `teams` this field is a list of key/value pairs. The key of each pair is the team
-     name. It must also be the name of the project board owned by that team from which the
-     closed issues can be collected. The value of each
-     pair is the list of logins that should be counted as managers.
-   - `lecture_topic_task_quota` this field specifies how many lecture topic tasks each member of the team is expected to complete.
+   - `teams` this field is a list of key/value pairs. The key of each pair is the team name. It must also be the name of the project board owned by that team from which the closed issues, with their urgency and difficulty can be collected. The value of each pair is a JSON with the fields
+
+    - `managers` which contains a list of the GitHub logins that belong to the managers
+    of the team and therefore do not get any points for closing issues, even if they
+    were assigned to them.
+    - `milestone` which must be the name of the milestone to use, so that different
+    projects can use different milestone names
+    - `milestoneGrade` which specifies the maximum grade achievable for this milestone.
 2. Run the script from the command line:
 
 ```bash
