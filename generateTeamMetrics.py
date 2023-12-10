@@ -59,6 +59,8 @@ def decay(
     milestoneStart: datetime, milestoneEnd: datetime, issueCreated: datetime
 ) -> float:
     duration = (milestoneEnd - milestoneStart).days
+    if issueCreated > milestoneEnd:
+        issueCreated = milestoneEnd
     issueLateness = max(0, (issueCreated - milestoneStart).days)
     decayBase = 1 + 1 / duration
     difference = pow(decayBase, 3 * duration) - pow(decayBase, 0)
@@ -123,6 +125,7 @@ def getTeamMetricsForMilestone(
             workedOnlyByManager = True
             # attribute points to correct developer
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
+            print(issue)
             for dev in issue["content"]["assignees"]["nodes"]:
                 try:
                     if dev["login"] not in developers:
