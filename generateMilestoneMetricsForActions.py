@@ -35,8 +35,8 @@ if __name__ == "__main__":
     with open(course_config_file) as course_config:
         course_data: dict = json.load(course_config)
     team = course_data["projectName"]
-    organization = os.environ.get("ORGANIZATION")
-    milestone = course_data["milestoneName"]
+    organization = "uprm-inso4116-2023-2024-S1"
+    milestone: str = course_data["milestoneName"]
     managers = course_data["managers"]
     print("Team: ", team)
     print("Managers: ", managers)
@@ -57,4 +57,4 @@ if __name__ == "__main__":
         useDecay=useDecay,
         expectedLectureTopicTasks=course_data.get("lectureTopicTaskQuota", 0),
     )
-    write_milestone_data_to_md(team_metrics, f"{milestone}-{team}-{organization}.md")
+    write_milestone_data_to_md(team_metrics, f"{milestone.replace(" ","")}-{team}-{organization}.md")
