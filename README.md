@@ -50,8 +50,17 @@ mkdir .github/workflows
 3. Commit and push the changes.
 
 You should now see a new Workflow on the **Actions** tab on Github. This will run daily, but can be triggered manually.
----------------------------------------------------------------------------------------------------------------------------
-***END OF ACTIONS SETUP***
+
+# ***End of Actions Setup***
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
 
 ### Local Run Setup
 When running locally, you can setup your config file to generate metrics for multiple teams, but remember that you will only be able to see the issues and thus metrics of teams you have permissions to view or are a part of.
