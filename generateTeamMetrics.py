@@ -89,9 +89,11 @@ def getTeamMetricsForMilestone(
     endDate: datetime,
     useDecay: bool,
     milestoneGrade: float,
+    expectedLectureTopicTasks: int = 0,
 ) -> MilestoneData:
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
+    devLectureTopicTasks = {dev: 0 for dev in developers}
     totalPointsClosed = 0.0
     params = {"owner": org, "team": team}
     hasAnotherPage = True
@@ -133,6 +135,9 @@ def getTeamMetricsForMilestone(
                 except Exception as e:
                     print(e)
                     continue
+                # attribute Lecture topic tasks even if they are a manager
+                if "[Lecture Topic Task]" in issue["content"].get("title", ""):
+                    devLectureTopicTasks[dev["login"]] += 1
                 if dev["login"] not in managers:
                     workedOnlyByManager = False
                 if dev["login"] in managers:
@@ -157,12 +162,16 @@ def getTeamMetricsForMilestone(
     devBenchmark = min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
     milestoneData = MilestoneData()
     milestoneData.totalPointsClosed = totalPointsClosed
+    milestoneData.expectedLectureTopicTasks = expectedLectureTopicTasks
     for dev in developers:
         contribution = devPointsClosed[dev] / totalPointsClosed
         milestoneData.devMetrics[dev] = DeveloperMetrics(
             pointsClosed=devPointsClosed[dev],
             percentContribution=contribution * 100.0,
-            expectedGrade=min((devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0),
+            expectedGrade=min(
+                (devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0
+            ),
+            lectureTopicTasksClosed=devLectureTopicTasks[dev],
         )
     return milestoneData
 
@@ -201,14 +210,16 @@ if __name__ == "__main__":
         print("Managers: ", teamdata["managers"])
         print("Milestone: ", teamdata["milestone"])
         members = get_team_members(organization, team)
-        print(getTeamMetricsForMilestone(
-            org=organization,
-            team=team,
-            milestone=teamdata["milestone"],
-            milestoneGrade=teamdata["milestoneGrade"],
-            members=members,
-            managers=teamdata["managers"],
-            startDate=startDate,
-            endDate=endDate,
-            useDecay=useDecay,
-        ))
+        print(
+            getTeamMetricsForMilestone(
+                org=organization,
+                team=team,
+                milestone=teamdata["milestone"],
+                milestoneGrade=teamdata["milestoneGrade"],
+                members=members,
+                managers=teamdata["managers"],
+                startDate=startDate,
+                endDate=endDate,
+                useDecay=useDecay,
+            )
+        )

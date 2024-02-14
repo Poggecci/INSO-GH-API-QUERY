@@ -6,10 +6,12 @@ class DeveloperMetrics:
     pointsClosed: float = 0
     percentContribution: float = 0  # pointsClosed / (totalPoints) * %100
     expectedGrade: float = 0  # floor((pointsClosed / trimmedMean) * %100 , %100)
+    lectureTopicTasksClosed: int = 0
 
 
 @dataclass
 class MilestoneData:
+    expectedLectureTopicTasks: int = 0
     totalPointsClosed: float = 0
     devMetrics: dict[str, DeveloperMetrics] = field(default_factory=dict)
 
