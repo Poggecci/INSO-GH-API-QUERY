@@ -1,10 +1,57 @@
 # Team Metrics Generator
 
-This script generates team metrics for a specified milestone in a GitHub organization. It collects data on points closed and percent contribution for each developer in the specified teams and outputs the results to CSV files.
+This script generates team metrics for a specified milestone in a GitHub organization. It collects data on points closed and percent contribution for each developer in the specified teams and outputs the results to CSV files. You can now also use Github Actions generate the metrics as a Markdown that is stored in a separate branch of your repository.
 
 ## Usage
 
-### Setup
+### Github Actions
+
+When using this repo through actions, the generated metrics will be placed in a `metrics/` folder in your repository on the `inso-metrics` branch. If you have the repository permissions to let Actions create pull requests, the workflow will also create a pull request to merge the metrics onto the main branch.
+
+#### Setup
+
+##### Secrets Setup
+
+1. Go to `https://github.com/settings/tokens` and generate a _Classic_ Personal Access Token (PAT).
+2. Name the token something meaningful like "INSO Metrics Generation Token"
+3. Ensure the token has the `read:org` and `read:project` permissions.
+4. Set your expiration to the final date you expect to require the metrics (or set no expiration, though this is not recommended).
+5. Copy the token somewhere private, we will be utilizing it promptly
+6. Navigate to the repository you would like to generate metrics for
+7. Go to the **Settings** page.
+8. On the sidebar, press the _Secrets and variables_ dropdown, and select **Actions**.
+9. Press the **New Repository Secret** button.
+10. Create a secret with the name `GH_API_TOKEN` and put the PAT you generated as the value.
+
+##### Config File Setup
+
+1. On the main branch of your repository, create a file named `gh_metrics_config.json`.
+2. Populate the .json file with the following fields: (An example can be found in the `exampleActionsConfig.json` file in this repo)
+
+- `projectName` : Name of the Github Project associated with your repository
+- `managers` : a list of the GitHub logins (usernames) that belong to the managers
+- `milestoneName` : name of the current milestone
+- `projectedMilestoneGroupGrade` which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.).
+- "milestoneStartDate" : start date of the current milestone
+- "milestoneEndDate": end date of the current milestone
+- "lectureTopicTaskQuota": number of lecture topic tasks expected to be completed by each developer this milestone
+
+3. If working locally, push the changes onto the remote such that they are visible on the main branch from the Github page for the repository
+
+##### Workflow setup
+
+1. On your repository's main branch, create the directory .github/workflows
+
+```bash
+mkdir .github/workflows
+```
+
+2. Copy the `dev-metrics.yml` file from this repo onto the `.github/workflows` directory from your repository.
+3. Commit and push the changes.
+
+You should now see a new Workflow on the **Actions** tab on Github. This will run daily, but can be triggered manually.
+
+### Local Run Setup
 
 1. Ensure you have the necessary dependencies installed:
 
