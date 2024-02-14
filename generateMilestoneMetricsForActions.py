@@ -57,4 +57,7 @@ if __name__ == "__main__":
         useDecay=useDecay,
         expectedLectureTopicTasks=course_data.get("lectureTopicTaskQuota", 0),
     )
-    write_milestone_data_to_md(team_metrics, f"{milestone.replace(" ","")}-{team}-{organization}.md")
+    strippedMilestoneName = milestone.replace(" ", "")
+    write_milestone_data_to_md(
+        team_metrics, f"{strippedMilestoneName}-{team}-{organization}.md"
+    )
