@@ -32,9 +32,9 @@ When using this repo through actions, the generated metrics will be placed in a 
 - `managers` : a list of the GitHub logins (usernames) that belong to the managers
 - `milestoneName` : name of the current milestone
 - `projectedMilestoneGroupGrade` which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.).
-- "milestoneStartDate" : start date of the current milestone
-- "milestoneEndDate": end date of the current milestone
-- "lectureTopicTaskQuota": number of lecture topic tasks expected to be completed by each developer this milestone
+- `milestoneStartDate` : start date of the current milestone in the format YYYY-MM-DD
+- `milestoneEndDate` : end date of the current milestone in the format YYYY-MM-DD
+- `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer this milestone
 
 3. If working locally, push the changes onto the remote such that they are visible on the main branch from the Github page for the repository
 
@@ -51,7 +51,19 @@ mkdir .github/workflows
 
 You should now see a new Workflow on the **Actions** tab on Github. This will run daily, but can be triggered manually.
 
+# ***End of Actions Setup***
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
+</br>
+
 ### Local Run Setup
+When running locally, you can setup your config file to generate metrics for multiple teams, but remember that you will only be able to see the issues and thus metrics of teams you have permissions to view or are a part of.
 
 1. Ensure you have the necessary dependencies installed:
 
