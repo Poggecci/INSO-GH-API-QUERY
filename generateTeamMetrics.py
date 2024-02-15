@@ -160,7 +160,7 @@ def getTeamMetricsForMilestone(
         if hasAnotherPage:
             params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
 
-    untrimmedAverage = totalPointsClosed / len(devPointsClosed)
+    untrimmedAverage = totalPointsClosed / max(1, len(devPointsClosed))
     trimmedAverage = outliersRemovedAverage(devPointsClosed.values())
     devBenchmark = min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
     milestoneData = MilestoneData()
