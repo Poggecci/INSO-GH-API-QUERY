@@ -35,7 +35,7 @@ if __name__ == "__main__":
     with open(course_config_file) as course_config:
         course_data: dict = json.load(course_config)
     team = course_data["projectName"]
-    organization = "uprm-inso4116-2023-2024-S1"
+    organization = os.environ["ORGANIZATION"]
     milestone: str = course_data["milestoneName"]
     managers = course_data["managers"]
     print("Team: ", team)
