@@ -78,7 +78,7 @@ def outliersRemovedAverage(scores: list) -> float:
     largestVal = max(scores, default=0)
     newLength = len(scores) - (largestVal != 0) - (smallest_non_zero != 0)
     total = sum(scores) - largestVal - smallest_non_zero
-    return total / newLength
+    return total / max(1, newLength)
 
 
 def getTeamMetricsForMilestone(
