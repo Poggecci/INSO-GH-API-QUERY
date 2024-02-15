@@ -15,10 +15,6 @@ query GetTeamMembers($owner: String!, $team: String!) {
   }
 }
 """
-params = {
-    "owner": "uprm-inso4116-2023-2024-s1",  # organization name
-    "team": "College Toolbox",
-}
 
 
 def get_team_members(organization, team) -> list[str]:
