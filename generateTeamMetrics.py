@@ -145,7 +145,9 @@ def getTeamMetricsForMilestone(
                     workedOnlyByManager = False
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
-                createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
+                createdAt = datetime.fromisoformat(
+                    issue["content"]["createdAt"]
+                ).replace(tzinfo=None)
                 issueScore = (
                     issue["difficulty"]["number"]
                     * issue["urgency"]["number"]
