@@ -1,4 +1,4 @@
-xname: Daily Project Metrics Generation
+name: Daily Project Metrics Generation
 
 on:
   schedule:
