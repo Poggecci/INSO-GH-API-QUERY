@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 from generateTeamMetrics import getTeamMetricsForMilestone
@@ -42,9 +43,15 @@ if __name__ == "__main__":
     print("Managers: ", managers)
     print("Milestone: ", milestone)
     members = get_team_members(organization, team)
-    startDate = course_data.get("milestoneStartDate")
-    endDate = course_data.get("milestoneEndDate")
-    useDecay = startDate is not None and endDate is not None
+
+    try:
+        startDate = datetime.fromisoformat(course_data.get("milestoneStartDate"))
+        endDate = datetime.fromisoformat(course_data.get("milestoneEndDate"))
+        useDecay = True
+    except Exception:
+        startDate = datetime.now()
+        endDate = datetime.now()
+        useDecay = False
     team_metrics = getTeamMetricsForMilestone(
         org=organization,
         team=team,
