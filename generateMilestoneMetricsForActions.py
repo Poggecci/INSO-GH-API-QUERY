@@ -45,8 +45,12 @@ if __name__ == "__main__":
     members = get_team_members(organization, team)
 
     try:
-        startDate = datetime.fromisoformat(course_data.get("milestoneStartDate"))
-        endDate = datetime.fromisoformat(course_data.get("milestoneEndDate"))
+        startDate = datetime.fromisoformat(
+            f"{course_data.get('milestoneStartDate')}T00:00:00.000Z"
+        )
+        endDate = datetime.fromisoformat(
+            f"{course_data.get('milestoneEndDate')}T23:59:59.000Z"
+        )
         useDecay = True
     except Exception:
         startDate = datetime.now()
