@@ -5,11 +5,18 @@ from datetime import datetime
 from utils.queryRunner import run_graphql_query
 
 get_team_issues = """
-query QueryProjectItemsForTeam($owner: String!, $team: String!,
-                               $nextPage: String) {
+query QueryProjectItemsForTeam(
+  $owner: String!
+  $team: String!
+  $nextPage: String
+) {
   organization(login: $owner) {
-    projectsV2(query: $team, first: 100) {
-      nodes{
+    projectsV2(
+      query: $team
+      first: 1
+      orderBy: { field: CREATED_AT, direction: ASC }
+    ) {
+      nodes {
         title
         items(first: 100, after: $nextPage) {
           pageInfo {
@@ -19,29 +26,53 @@ query QueryProjectItemsForTeam($owner: String!, $team: String!,
           nodes {
             content {
               ... on Issue {
+								author {
+									login
+								}
                 createdAt
                 closed
                 milestone {
                   title
                 }
-                assignees(first:20) {
-                  nodes{
+                assignees(first: 20) {
+                  nodes {
                     login
+                  }
+                }
+                reactions(first: 10, content: HOORAY) {
+                  nodes {
+                    user {
+                      login
+                    }
+                  }
+                }
+                comments(first: 30) {
+                  nodes {
+                    author {
+                      login
+                    }
+                    reactions(first: 10, content: HOORAY) {
+                      nodes {
+                        user {
+                          login
+                        }
+                      }
+                    }
                   }
                 }
               }
             }
-            urgency: fieldValueByName(name:"Urgency") {
+            urgency: fieldValueByName(name: "Urgency") {
               ... on ProjectV2ItemFieldNumberValue {
                 number
               }
             }
-            difficulty: fieldValueByName(name:"Difficulty") {
+            difficulty: fieldValueByName(name: "Difficulty") {
               ... on ProjectV2ItemFieldNumberValue {
                 number
               }
             }
-            modifier: fieldValueByName(name:"Modifier") {
+            modifier: fieldValueByName(name: "Modifier") {
               ... on ProjectV2ItemFieldNumberValue {
                 number
               }
@@ -125,9 +156,49 @@ def getTeamMetricsForMilestone(
             if issue["modifier"] is None or not issue["modifier"]:
                 issue["modifier"] = {"number": 0}
             workedOnlyByManager = True
-            # attribute points to correct developer
+
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
             print(issue)
+            createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
+            issueScore = (
+                issue["difficulty"]["number"]
+                * issue["urgency"]["number"]
+                * (decay(startDate, endDate, createdAt) if useDecay else 1)
+                + issue["modifier"]["number"]
+            )
+            # attribute documentation bonus is a manager has reacted with 🎉
+            documentationBonus = issueScore * 0.1
+            if any(
+                map(
+                    (lambda reaction: (reaction["user"]["login"] in managers)),
+                    issue["content"]["reactions"]["nodes"],
+                )
+            ):
+                if issue["content"]["author"]["login"] not in managers:
+                    devPointsClosed[
+                        issue["content"]["author"]["login"]
+                    ] += documentationBonus
+            else:
+                for comment in issue["content"]["comments"]["nodes"]:
+                    if (
+                        any(
+                            map(
+                                (
+                                    lambda reaction: (
+                                        reaction["user"]["login"] in managers
+                                    )
+                                ),
+                                comment["reactions"]["nodes"],
+                            )
+                        )
+                        and issue["content"]["author"]["login"] not in managers
+                    ):
+                        devPointsClosed[
+                            comment["author"]["login"]
+                        ] += documentationBonus
+                        break  # only attribute the bonus once and to the earliest comment
+
+            # attribute points to correct developer
             for dev in issue["content"]["assignees"]["nodes"]:
                 try:
                     if dev["login"] not in developers:
@@ -145,13 +216,6 @@ def getTeamMetricsForMilestone(
                     workedOnlyByManager = False
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
-                createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
-                issueScore = (
-                    issue["difficulty"]["number"]
-                    * issue["urgency"]["number"]
-                    * (decay(startDate, endDate, createdAt) if useDecay else 1)
-                    + issue["modifier"]["number"]
-                )
                 devPointsClosed[dev["login"]] += issueScore / numberAssignees
             if not workedOnlyByManager:
                 totalPointsClosed += issueScore
