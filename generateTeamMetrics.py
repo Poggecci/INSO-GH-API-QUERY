@@ -162,7 +162,9 @@ def getTeamMetricsForMilestone(
 
     untrimmedAverage = totalPointsClosed / max(1, len(devPointsClosed))
     trimmedAverage = outliersRemovedAverage(devPointsClosed.values())
-    devBenchmark = min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
+    devBenchmark = max(
+        1, min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
+    )
     milestoneData = MilestoneData()
     milestoneData.totalPointsClosed = totalPointsClosed
     milestoneData.expectedLectureTopicTasks = expectedLectureTopicTasks
