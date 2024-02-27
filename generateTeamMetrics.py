@@ -167,7 +167,7 @@ def getTeamMetricsForMilestone(
     milestoneData.totalPointsClosed = totalPointsClosed
     milestoneData.expectedLectureTopicTasks = expectedLectureTopicTasks
     for dev in developers:
-        contribution = devPointsClosed[dev] / totalPointsClosed
+        contribution = devPointsClosed[dev] / max(totalPointsClosed, 1)
         milestoneData.devMetrics[dev] = DeveloperMetrics(
             pointsClosed=devPointsClosed[dev],
             percentContribution=contribution * 100.0,
