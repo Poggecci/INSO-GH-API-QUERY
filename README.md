@@ -62,7 +62,7 @@ You should now see a new Workflow on the **Actions** tab on Github. This will ru
 </br>
 </br>
 
-### Local Run Setup
+### Local Run Setup (TBU: Currently out of date)
 When running locally, you can setup your config file to generate metrics for multiple teams, but remember that you will only be able to see the issues and thus metrics of teams you have permissions to view or are a part of.
 
 1. Ensure you have the necessary dependencies installed:
