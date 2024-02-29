@@ -76,6 +76,7 @@ if __name__ == "__main__":
         endDate=endDate,
         useDecay=useDecay,
         expectedLectureTopicTasks=course_data.get("lectureTopicTaskQuota", 0),
+        countOpenIssues=course_data.get("countOpenIssues", False),
     )
     strippedMilestoneName = milestone.replace(" ", "")
     write_milestone_data_to_md(
