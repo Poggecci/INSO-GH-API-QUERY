@@ -43,6 +43,12 @@ if __name__ == "__main__":
     print("Managers: ", managers)
     print("Milestone: ", milestone)
     members = get_team_members(organization, team)
+    if len(members) == 0:
+        print(
+            "Warning: No team members found. This likely means your projectName isn't "
+            "the same as your Team name on Github. Remember both the Github Project and "
+            "The Github Team need to have the same name (this is whitespace and case sensitive!)."
+        )
 
     try:
         startDate = datetime.fromisoformat(
@@ -53,6 +59,9 @@ if __name__ == "__main__":
         )
         useDecay = True
     except Exception:
+        print(
+            "Warning: milestoneStartDate and/or milestoneEndDate couldn't be interpreted, proceeding without decay."
+        )
         startDate = datetime.now()
         endDate = datetime.now()
         useDecay = False

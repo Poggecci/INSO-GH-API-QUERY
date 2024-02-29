@@ -147,10 +147,14 @@ def getTeamMetricsForMilestone(
             if not countOpenIssues and not issue["content"].get("closed", False):
                 continue
             if issue["content"].get("milestone", None) is None:
-                print(f"Warning: Issue {issue["content"]["title"]} is not associated with a milestone.")
+                print(
+                    f"Warning: Issue {issue['content']['title']} is not associated with a milestone."
+                )
                 continue
             if issue["difficulty"] is None or issue["urgency"] is None:
-                print(f"Warning: Issue {issue["content"]["title"]} does not have the Urgency and/or Difficulty fields populated")
+                print(
+                    f"Warning: Issue {issue['content']['title']} does not have the Urgency and/or Difficulty fields populated"
+                )
                 continue
             if not issue["difficulty"] or not issue["urgency"]:
                 continue
@@ -180,7 +184,9 @@ def getTeamMetricsForMilestone(
                     devPointsClosed[
                         issue["content"]["author"]["login"]
                     ] += documentationBonus
-                    print(f"Documentation Bonus given to {issue["content"]["author"]["login"]} on Issue {issue["content"]["title"]}")
+                    print(
+                        f"Documentation Bonus given to {issue['content']['author']['login']} on Issue {issue['content']['title']}"
+                    )
             else:
                 for comment in issue["content"]["comments"]["nodes"]:
                     if (
@@ -205,12 +211,11 @@ def getTeamMetricsForMilestone(
             for dev in issue["content"]["assignees"]["nodes"]:
                 try:
                     if dev["login"] in managers:
-                        raise Exception(
-                            f"Task assigned to manager {dev['login']}"
-                        )
+                        raise Exception(f"Task assigned to manager {dev['login']}")
                     elif dev["login"] not in developers:
-                       raise Exception(
-                            f"Warning: Task assigned to developer {dev['login']} not belonging to the team.")
+                        raise Exception(
+                            f"Warning: Task assigned to developer {dev['login']} not belonging to the team."
+                        )
                 except Exception as e:
                     print(e)
                     continue

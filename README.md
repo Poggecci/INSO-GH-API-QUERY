@@ -28,13 +28,14 @@ When using this repo through actions, the generated metrics will be placed in a 
 1. On the main branch of your repository, create a file named `gh_metrics_config.json`.
 2. Populate the .json file with the following fields: (An example can be found in the `exampleActionsConfig.json` file in this repo)
 
-- `projectName` : Name of the Github Project associated with your repository
-- `managers` : a list of the GitHub logins (usernames) that belong to the managers
-- `milestoneName` : name of the current milestone
-- `projectedMilestoneGroupGrade` which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.).
+- `projectName` : Name of the Github Project associated with your repository. **Must** also be the name of the team on Github (case-sensitive).
+- `managers` : a list of the GitHub logins (usernames) that belong to the managers (case-sensitive).
+- `milestoneName` : name of the current milestone (case-sensitive).
+- `projectedMilestoneGroupGrade` which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.). Defaults to `100.0`.
 - `milestoneStartDate` : start date of the current milestone in the format YYYY-MM-DD
 - `milestoneEndDate` : end date of the current milestone in the format YYYY-MM-DD
-- `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer this milestone
+- `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer this milestone. Defaults to `0`
+- `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
 
 3. If working locally, push the changes onto the remote such that they are visible on the main branch from the Github page for the repository
 
@@ -51,7 +52,8 @@ mkdir .github/workflows
 
 You should now see a new Workflow on the **Actions** tab on Github. This will run daily, but can be triggered manually.
 
-# ***End of Actions Setup***
+# **_End of Actions Setup_**
+
 </br>
 </br>
 </br>
@@ -63,6 +65,7 @@ You should now see a new Workflow on the **Actions** tab on Github. This will ru
 </br>
 
 ### Local Run Setup
+
 When running locally, you can setup your config file to generate metrics for multiple teams, but remember that you will only be able to see the issues and thus metrics of teams you have permissions to view or are a part of.
 
 1. Ensure you have the necessary dependencies installed:
