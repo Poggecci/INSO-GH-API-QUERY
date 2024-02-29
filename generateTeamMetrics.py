@@ -26,6 +26,7 @@ query QueryProjectItemsForTeam(
           nodes {
             content {
               ... on Issue {
+								title
 								author {
 									login
 								}
@@ -123,6 +124,7 @@ def getTeamMetricsForMilestone(
     useDecay: bool,
     milestoneGrade: float,
     expectedLectureTopicTasks: int = 0,
+    countOpenIssues: bool = False,
 ) -> MilestoneData:
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
@@ -142,12 +144,13 @@ def getTeamMetricsForMilestone(
         # Extract data
         issues = project["items"]["nodes"]
         for issue in issues:
-            # don't count open issues
-            if not issue["content"].get("closed", False):
+            if not countOpenIssues and not issue["content"].get("closed", False):
                 continue
             if issue["content"].get("milestone", None) is None:
+                print(f"Warning: Issue {issue["content"]["title"]} is not associated with a milestone.")
                 continue
             if issue["difficulty"] is None or issue["urgency"] is None:
+                print(f"Warning: Issue {issue["content"]["title"]} does not have the Urgency and/or Difficulty fields populated")
                 continue
             if not issue["difficulty"] or not issue["urgency"]:
                 continue
@@ -156,7 +159,6 @@ def getTeamMetricsForMilestone(
             if issue["modifier"] is None or not issue["modifier"]:
                 issue["modifier"] = {"number": 0}
             workedOnlyByManager = True
-
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
             print(issue)
             createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
@@ -178,6 +180,7 @@ def getTeamMetricsForMilestone(
                     devPointsClosed[
                         issue["content"]["author"]["login"]
                     ] += documentationBonus
+                    print(f"Documentation Bonus given to {issue["content"]["author"]["login"]} on Issue {issue["content"]["title"]}")
             else:
                 for comment in issue["content"]["comments"]["nodes"]:
                     if (
@@ -201,11 +204,13 @@ def getTeamMetricsForMilestone(
             # attribute points to correct developer
             for dev in issue["content"]["assignees"]["nodes"]:
                 try:
-                    if dev["login"] not in developers:
+                    if dev["login"] in managers:
                         raise Exception(
-                            f"Task assigned to developer {dev['login']} not"
-                            " belonging to the team"
+                            f"Task assigned to manager {dev['login']}"
                         )
+                    elif dev["login"] not in developers:
+                       raise Exception(
+                            f"Warning: Task assigned to developer {dev['login']} not belonging to the team.")
                 except Exception as e:
                     print(e)
                     continue
