@@ -123,7 +123,6 @@ def getTeamMetricsForMilestone(
     endDate: datetime,
     useDecay: bool,
     milestoneGrade: float,
-    expectedLectureTopicTasks: int = 0,
     countOpenIssues: bool = False,
 ) -> MilestoneData:
     developers = [member for member in members if member not in managers]
@@ -241,7 +240,6 @@ def getTeamMetricsForMilestone(
     )
     milestoneData = MilestoneData()
     milestoneData.totalPointsClosed = totalPointsClosed
-    milestoneData.expectedLectureTopicTasks = expectedLectureTopicTasks
     for dev in developers:
         contribution = devPointsClosed[dev] / max(totalPointsClosed, 1)
         milestoneData.devMetrics[dev] = DeveloperMetrics(

@@ -20,7 +20,7 @@ def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str)
         for developer, metrics in milestone_data.devMetrics.items():
             totalLectureTopicTasks += metrics.lectureTopicTasksClosed
             md_file.write(
-                f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% | {totalLectureTopicTasks}/{milestone_data.expectedLectureTopicTasks} |\n"
+                f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% | {totalLectureTopicTasks} |\n"
             )
         md_file.write(
             f"| Total | {milestone_data.totalPointsClosed} | /100% | /100% | {totalLectureTopicTasks} |\n"
@@ -58,7 +58,8 @@ if __name__ == "__main__":
             f"{course_data.get('milestoneEndDate')}T23:59:59.000Z"
         )
         useDecay = True
-    except Exception:
+    except Exception as e:
+        print(f"Error while parsing milestone dates: {e}")
         print(
             "Warning: milestoneStartDate and/or milestoneEndDate couldn't be interpreted, proceeding without decay."
         )
@@ -75,7 +76,6 @@ if __name__ == "__main__":
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
-        expectedLectureTopicTasks=course_data.get("lectureTopicTaskQuota", 0),
         countOpenIssues=course_data.get("countOpenIssues", False),
     )
     strippedMilestoneName = milestone.replace(" ", "")

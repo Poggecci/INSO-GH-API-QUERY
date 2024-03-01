@@ -11,7 +11,6 @@ class DeveloperMetrics:
 
 @dataclass
 class MilestoneData:
-    expectedLectureTopicTasks: int = 0
     totalPointsClosed: float = 0
     devMetrics: dict[str, DeveloperMetrics] = field(default_factory=dict)
 
