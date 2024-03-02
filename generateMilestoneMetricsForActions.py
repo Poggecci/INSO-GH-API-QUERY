@@ -20,7 +20,7 @@ def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str)
         for developer, metrics in milestone_data.devMetrics.items():
             totalLectureTopicTasks += metrics.lectureTopicTasksClosed
             md_file.write(
-                f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% | {totalLectureTopicTasks} |\n"
+                f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% | {metrics.lectureTopicTasksClosed} |\n"
             )
         md_file.write(
             f"| Total | {milestone_data.totalPointsClosed} | /100% | /100% | {totalLectureTopicTasks} |\n"
