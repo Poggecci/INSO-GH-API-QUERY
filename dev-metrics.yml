@@ -49,7 +49,7 @@ jobs:
           ORGANIZATION: ${{ github.repository_owner }}
       - name: Move Generated Metrics to Source Repo
         run: |
-          mkdir ./metrics
+          mkdir -p ./metrics
           mv inso-gh-query-metrics/*${{ github.repository_owner }}.md metrics/
         shell: bash
       - name: Auto Commit Results
