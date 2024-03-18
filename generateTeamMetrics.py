@@ -14,7 +14,7 @@ query QueryProjectItemsForTeam(
     projectsV2(
       query: $team
       first: 1
-      orderBy: { field: CREATED_AT, direction: ASC }
+      orderBy: { field: TITLE, direction: ASC }
     ) {
       nodes {
         title
