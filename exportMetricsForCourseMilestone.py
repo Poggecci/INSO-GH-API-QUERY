@@ -36,6 +36,7 @@ if __name__ == "__main__":
     with open(course_config_file) as course_config:
         course_data = json.load(course_config)
     organization = course_data["organization"]
+    metricsDirectory = course_data["metricsDirectory"]
     teams_and_teamdata = course_data["teams"]
     if (
         course_data.get("milestoneStartsOn", None) is None
@@ -73,5 +74,5 @@ if __name__ == "__main__":
             useDecay=useDecay,
         )
         write_milestone_data_to_csv(
-            team_metrics[team], f"{teamdata['milestone']}-{team}-{organization}.csv"
+            team_metrics[team], f"{metricsDirectory}/{teamdata['milestone']}-{team}-{organization}.csv"
         )
