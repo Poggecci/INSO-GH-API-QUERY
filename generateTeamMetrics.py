@@ -147,12 +147,12 @@ def getTeamMetricsForMilestone(
                 continue
             if issue["content"].get("milestone", None) is None:
                 print(
-                    f"Warning: Issue {issue['content']['title']} is not associated with a milestone."
+                    f"Warning: Issue {issue['content'].get('title')} is not associated with a milestone."
                 )
                 continue
             if issue["difficulty"] is None or issue["urgency"] is None:
                 print(
-                    f"Warning: Issue {issue['content']['title']} does not have the Urgency and/or Difficulty fields populated"
+                    f"Warning: Issue {issue['content'].get('title')} does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
             if not issue["difficulty"] or not issue["urgency"]:
