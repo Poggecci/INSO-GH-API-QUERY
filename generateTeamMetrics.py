@@ -162,8 +162,17 @@ def getTeamMetricsForMilestone(
         # Extract data
         issues = project["items"]["nodes"]
         for issue in issues:
-            if not shouldCountOpenIssues and not issue["content"].get("closed", False):
-                continue
+            if not shouldCountOpenIssues:
+                if not issue["content"].get("closed", False):
+                    continue
+                closedByList = issue["content"]["timelineItems"]["nodes"]  # should always have a length of 1 if the issue was closed
+                closedBy = closedByList[0]["actor"]["login"] if len(closedByList) == 1 else None 
+                if closedBy is None:
+                    logger.warning(f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} is marked as closed but doesn't have an user who closed it.")
+                    continue
+                if closedBy not in managers:
+                    logger.warning(f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} was closed by non-manager {closedBy}. Only issues closed by managers are accredited.")
+                    continue
             if issue["content"].get("milestone", None) is None:
                 logger.warning(f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} is not associated with a milestone.")
                 continue
