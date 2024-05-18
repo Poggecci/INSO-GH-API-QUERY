@@ -76,7 +76,7 @@ if __name__ == "__main__":
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
-        countOpenIssues=course_data.get("countOpenIssues", False),
+        shouldCountOpenIssues=course_data.get("countOpenIssues", False),
     )
     strippedMilestoneName = milestone.replace(" ", "")
     write_milestone_data_to_md(

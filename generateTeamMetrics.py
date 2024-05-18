@@ -123,7 +123,7 @@ def getTeamMetricsForMilestone(
     endDate: datetime,
     useDecay: bool,
     milestoneGrade: float,
-    countOpenIssues: bool = False,
+    shouldCountOpenIssues: bool = False,
 ) -> MilestoneData:
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
@@ -143,7 +143,7 @@ def getTeamMetricsForMilestone(
         # Extract data
         issues = project["items"]["nodes"]
         for issue in issues:
-            if not countOpenIssues and not issue["content"].get("closed", False):
+            if not shouldCountOpenIssues and not issue["content"].get("closed", False):
                 continue
             if issue["content"].get("milestone", None) is None:
                 print(
