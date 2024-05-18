@@ -6,7 +6,7 @@ from datetime import datetime
 from utils.queryRunner import run_graphql_query
 
 logger = logging.getLogger()
-logging.basicConfig(filename='std.log', filemode='w', format='%(levelname)s: %(message)s')
+logging.basicConfig(filename='generateTeamMetrics.log', filemode='w', format='%(levelname)s: %(message)s')
 
 
 get_team_issues = """
@@ -31,10 +31,11 @@ query QueryProjectItemsForTeam(
           nodes {
             content {
               ... on Issue {
-                            title
-                            author {
-                                login
-                            }
+                number
+                title
+                author {
+                    login
+                }
                 createdAt
                 closed
                 milestone {
@@ -65,6 +66,15 @@ query QueryProjectItemsForTeam(
                       }
                     }
                   }
+                }
+                timelineItems(last: 1, itemTypes : [CLOSED_EVENT]){
+                    nodes {
+                        ... on ClosedEvent {
+                                actor {
+                                    login
+                                }
+                        }
+                    }
                 }
               }
             }
@@ -155,16 +165,16 @@ def getTeamMetricsForMilestone(
             if not shouldCountOpenIssues and not issue["content"].get("closed", False):
                 continue
             if issue["content"].get("milestone", None) is None:
-                logger.warning(f"Warning: Issue {issue['content'].get('title')} is not associated with a milestone.")
+                logger.warning(f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} is not associated with a milestone.")
                 continue
             if issue["difficulty"] is None or issue["urgency"] is None:
                 logger.warning(
-                    f"Warning: Issue {issue['content'].get('title')} does not have the Urgency and/or Difficulty fields populated"
+                    f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
             if not issue["difficulty"] or not issue["urgency"]:
                 logger.warning(
-                    f"Warning: Issue {issue['content'].get('title')} does not have the Urgency and/or Difficulty fields populated"
+                    f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
