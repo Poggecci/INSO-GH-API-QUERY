@@ -31,6 +31,7 @@ query QueryProjectItemsForTeam(
           nodes {
             content {
               ... on Issue {
+                url
                 number
                 title
                 author {
@@ -168,22 +169,22 @@ def getTeamMetricsForMilestone(
                 closedByList = issue["content"]["timelineItems"]["nodes"]  # should always have a length of 1 if the issue was closed
                 closedBy = closedByList[0]["actor"]["login"] if len(closedByList) == 1 else None 
                 if closedBy is None:
-                    logger.warning(f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} is marked as closed but doesn't have an user who closed it.")
+                    logger.warning(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) is marked as closed but doesn't have an user who closed it.")
                     continue
                 if closedBy not in managers:
-                    logger.warning(f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} was closed by non-manager {closedBy}. Only issues closed by managers are accredited.")
+                    logger.warning(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) was closed by non-manager {closedBy}. Only issues closed by managers are accredited.")
                     continue
             if issue["content"].get("milestone", None) is None:
-                logger.warning(f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} is not associated with a milestone.")
+                logger.warning(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) is not associated with a milestone.")
                 continue
             if issue["difficulty"] is None or issue["urgency"] is None:
                 logger.warning(
-                    f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} does not have the Urgency and/or Difficulty fields populated"
+                    f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
             if not issue["difficulty"] or not issue["urgency"]:
                 logger.warning(
-                    f"Issue #{issue['content'].get('number')}: {issue['content'].get('title')} does not have the Urgency and/or Difficulty fields populated"
+                    f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
@@ -213,7 +214,7 @@ def getTeamMetricsForMilestone(
                         issue["content"]["author"]["login"]
                     ] += documentationBonus
                     logger.info(
-                        f"Documentation Bonus given to {issue['content']['author']['login']} on Issue {issue['content']['title']}"
+                        f"Documentation Bonus given to [Issue #{issue['content'].get('number')}]({issue['content'].get('url')})"
                     )
             else:
                 for comment in issue["content"]["comments"]["nodes"]:
@@ -238,11 +239,11 @@ def getTeamMetricsForMilestone(
             # attribute points to correct developer
             for dev in issue["content"]["assignees"]["nodes"]:
                 if dev["login"] in managers:
-                    logger.info(f"Task assigned to manager {dev['login']}")
+                    logger.info(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to manager {dev['login']}")
                     continue
                 if dev["login"] not in developers:
                     logger.warning(
-                        f"Warning: Task assigned to developer {dev['login']} not belonging to the team."
+                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to developer {dev['login']} not belonging to the team."
                     )
                     continue
                 

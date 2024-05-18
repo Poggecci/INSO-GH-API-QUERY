@@ -27,6 +27,16 @@ def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str)
         )
 
 
+def write_log_data_to_md(log_file_path: str, md_file_path: str):
+    with open(log_file_path, mode="r") as log_file:
+        with open(md_file_path, mode="a") as md_file:
+            md_file.write("# Metrics Generation Logs\n\n")
+            md_file.write("| Message |\n")
+            md_file.write("| ----------------------------------------------------- |\n")
+            for log_message in log_file.readlines():
+                md_file.write(f"| {log_message} |\n")
+
+
 if __name__ == "__main__":
     import sys
 
@@ -79,6 +89,8 @@ if __name__ == "__main__":
         shouldCountOpenIssues=course_data.get("countOpenIssues", False),
     )
     strippedMilestoneName = milestone.replace(" ", "")
+    output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
     write_milestone_data_to_md(
-        team_metrics, f"{strippedMilestoneName}-{team}-{organization}.md"
+        milestone_data=team_metrics, md_file_path=output_markdown_path
     )
+    write_log_data_to_md(log_file_path="generateTeamMetrics.log", md_file_path=output_markdown_path)
