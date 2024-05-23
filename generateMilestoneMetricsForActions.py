@@ -34,9 +34,9 @@ def write_log_data_to_md(log_file_path: str, md_file_path: str):
         with open(md_file_path, mode="a") as md_file:
             md_file.write("# Metrics Generation Logs\n\n")
             md_file.write("| Message |\n")
-            md_file.write("| ----------------------------------------------------- |\n")
+            md_file.write("| ------- |\n")
             for log_message in log_file.readlines():
-                md_file.write(f"| {log_message} |\n")
+                md_file.write("| "+log_message.strip('\n')+" |\n")
 
 
 if __name__ == "__main__":
