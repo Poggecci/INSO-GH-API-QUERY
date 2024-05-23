@@ -164,11 +164,11 @@ def getTeamMetricsForMilestone(
         for issue in issues:
             if issue["content"].get("milestone", None) is None:
                 issueNumber = issue['content'].get('number')
-                issueText = f"Issue{' #'+issueNumber if issueNumber else ''}"
-                logger.warning(
-                        f"[{issueText}]({issue['content'].get('url')}) is not associated with a milestone."
-                    )
-
+                issueUrl = issue['content'].get('url')
+                if issueUrl:
+                    logger.warning(
+                            f"[Issue #{issueNumber}]({issueUrl}) is not associated with a milestone."
+                        )
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
