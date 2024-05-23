@@ -47,20 +47,10 @@ jobs:
         env:
           GITHUB_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
           ORGANIZATION: ${{ github.repository_owner }}
-      - name: Fetch and Checkout INSO Metrics Branch
-        run: |
-            git fetch origin inso-metrics:refs/remotes/origin/inso-metrics
-            git checkout -B inso-metrics --track origin/inso-metrics || git checkout -b inso-metrics
-        shell: bash
-      - name: Preserve Previous Metrics
-        run: |
-            git config pull.rebase true
-            git pull origin inso-metrics
-            mkdir -p metrics
-        shell: bash
       - name: Move Generated Metrics to Source Repo
         run: |
-            mv inso-gh-query-metrics/*${{ github.repository_owner }}.md metrics/
+          mkdir -p ./metrics
+          mv inso-gh-query-metrics/*${{ github.repository_owner }}.md metrics/
         shell: bash
       - name: Auto Commit Results
         uses: stefanzweifel/git-auto-commit-action@v4
