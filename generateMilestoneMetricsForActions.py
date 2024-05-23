@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 import os
-from generateTeamMetrics import getTeamMetricsForMilestone
+from generateTeamMetrics import getTeamMetricsForMilestone, logger
 
 from getTeamMembers import get_team_members
 from utils.models import MilestoneData
@@ -59,6 +59,10 @@ if __name__ == "__main__":
             "the same as your Team name on Github. Remember both the Github Project and "
             "The Github Team need to have the same name (this is whitespace and case sensitive!)."
         )
+        logger.critical(
+            "No team members found. This likely means your projectName isn't "
+            "the same as your Team name on Github. Remember both the Github Project and "
+            "The Github Team need to have the same name (this is whitespace and case sensitive!).")
 
     try:
         startDate = datetime.fromisoformat(
@@ -73,21 +77,28 @@ if __name__ == "__main__":
         print(
             "Warning: milestoneStartDate and/or milestoneEndDate couldn't be interpreted, proceeding without decay."
         )
+        logger.error(
+            f"Error while parsing milestone dates: {e}")
+        logger.warning("Warning: milestoneStartDate and/or milestoneEndDate couldn't be interpreted, proceeding without decay.")
         startDate = datetime.now()
         endDate = datetime.now()
         useDecay = False
-    team_metrics = getTeamMetricsForMilestone(
-        org=organization,
-        team=team,
-        milestone=milestone,
-        milestoneGrade=course_data.get("projectedMilestoneGroupGrade", 100.0),
-        members=members,
-        managers=managers,
-        startDate=startDate,
-        endDate=endDate,
-        useDecay=useDecay,
-        shouldCountOpenIssues=course_data.get("countOpenIssues", False),
-    )
+    team_metrics = MilestoneData()
+    try:
+        team_metrics = getTeamMetricsForMilestone(
+            org=organization,
+            team=team,
+            milestone=milestone,
+            milestoneGrade=course_data.get("projectedMilestoneGroupGrade", 100.0),
+            members=members,
+            managers=managers,
+            startDate=startDate,
+            endDate=endDate,
+            useDecay=useDecay,
+            shouldCountOpenIssues=course_data.get("countOpenIssues", False),
+        )
+    except Exception as e:
+        logger.critical(e)
     strippedMilestoneName = milestone.replace(" ", "")
     output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
     write_milestone_data_to_md(
