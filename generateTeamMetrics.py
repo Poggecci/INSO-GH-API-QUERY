@@ -5,10 +5,6 @@ from utils.models import DeveloperMetrics, MilestoneData
 from datetime import datetime
 from utils.queryRunner import run_graphql_query
 
-logger = logging.getLogger()
-logging.basicConfig(filename='generateTeamMetrics.log', filemode='w', format='%(levelname)s: %(message)s')
-
-
 get_team_issues = """
 query QueryProjectItemsForTeam(
   $owner: String!
@@ -140,7 +136,10 @@ def getTeamMetricsForMilestone(
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
+    logger: logging.Logger = None,
 ) -> MilestoneData:
+    if logger is None:
+        logger = logging.getLogger(__name__)
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
     devLectureTopicTasks = {dev: 0 for dev in developers}
@@ -163,20 +162,35 @@ def getTeamMetricsForMilestone(
         # Extract data
         issues = project["items"]["nodes"]
         for issue in issues:
+            if issue["content"].get("milestone", None) is None:
+                logger.warning(
+                    f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) is not associated with a milestone."
+                )
+                continue
+            if issue["content"]["milestone"]["title"] != milestone:
+                continue
             if not shouldCountOpenIssues:
                 if not issue["content"].get("closed", False):
                     continue
-                closedByList = issue["content"]["timelineItems"]["nodes"]  # should always have a length of 1 if the issue was closed
-                closedBy = closedByList[0]["actor"]["login"] if len(closedByList) == 1 else None 
+                closedByList = issue["content"]["timelineItems"][
+                    "nodes"
+                ]  # should always have a length of 1 if the issue was closed
+                closedBy = (
+                    closedByList[0]["actor"]["login"]
+                    if len(closedByList) == 1
+                    else None
+                )
                 if closedBy is None:
-                    logger.warning(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) is marked as closed but doesn't have an user who closed it.")
+                    logger.warning(
+                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) is marked as closed but doesn't have an user who closed it."
+                    )
                     continue
                 if closedBy not in managers:
-                    logger.warning(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) was closed by non-manager {closedBy}. Only issues closed by managers are accredited.")
+                    logger.warning(
+                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) was closed by non-manager {closedBy}. Only issues closed by managers are accredited."
+                    )
                     continue
-            if issue["content"].get("milestone", None) is None:
-                logger.warning(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) is not associated with a milestone.")
-                continue
+
             if issue["difficulty"] is None or issue["urgency"] is None:
                 logger.warning(
                     f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
@@ -187,8 +201,7 @@ def getTeamMetricsForMilestone(
                     f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
-            if issue["content"]["milestone"]["title"] != milestone:
-                continue
+
             if issue["modifier"] is None or not issue["modifier"]:
                 issue["modifier"] = {"number": 0}
             workedOnlyByManager = True
@@ -239,14 +252,16 @@ def getTeamMetricsForMilestone(
             # attribute points to correct developer
             for dev in issue["content"]["assignees"]["nodes"]:
                 if dev["login"] in managers:
-                    logger.info(f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to manager {dev['login']}")
+                    logger.info(
+                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to manager {dev['login']}"
+                    )
                     continue
                 if dev["login"] not in developers:
                     logger.warning(
                         f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to developer {dev['login']} not belonging to the team."
                     )
                     continue
-                
+
                 # attribute Lecture topic tasks even if they are a manager
                 if "[Lecture Topic Task]" in issue["content"].get("title", ""):
                     devLectureTopicTasks[dev["login"]] += 1

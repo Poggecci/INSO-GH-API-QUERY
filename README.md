@@ -26,16 +26,44 @@ When using this repo through actions, the generated metrics will be placed in a 
 ##### Config File Setup
 
 1. On the main branch of your repository, create a file named `gh_metrics_config.json`.
-2. Populate the .json file with the following fields: (An example can be found in the `exampleActionsConfig.json` file in this repo)
+2. Populate the .json file with the following fields:
 
 - `projectName` : Name of the Github Project associated with your repository. **Must** also be the name of the team on Github (case-sensitive).
 - `managers` : a list of the GitHub logins (usernames) that belong to the managers (case-sensitive).
-- `milestoneName` : name of the current milestone (case-sensitive).
-- `projectedMilestoneGroupGrade` which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.). Defaults to `100.0`.
-- `milestoneStartDate` : start date of the current milestone in the format YYYY-MM-DD
-- `milestoneEndDate` : end date of the current milestone in the format YYYY-MM-DD
-- `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer by the end of the course. Reminder that there **no** required number of lecture topic tasks per developer per milestone. Only a quota that each developer must fill by the end of the course. Defaults to `0`.
+- `milestones` : a nested JSON object mapping each milestone's name to its details including:
+  - `startDate`: start date of the milestone in the format YYYY-MM-DD (not including this field will disable decay)
+  - `endDate`: end date of the milestone in the format YYYY-MM-DD (not including this field will disable decay)
+  - `projectedGroupGrade`: the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (defaults to `100.0`)
+- `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer by the end of the course. Reminder that there **is no** required number of lecture topic tasks per developer per milestone. Only a quota that each developer must fill by the end of the course. Defaults to `0`.
 - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
+
+**Example `gh_metrics_config.json` file:**
+
+```json
+{
+  "projectName": "College Toolbox",
+  "managers": ["Sbeve, Lieb"],
+  "milestones": {
+    "Milestone #1": {
+      "startDate": "2024-01-15",
+      "endDate": "2024-02-09",
+      "projectedGroupGrade": 100.0
+    },
+    "Milestone #2": {
+      "startDate": "2024-02-12",
+      "endDate": "2024-03-08",
+      "projectedGroupGrade": 100.0
+    },
+    "Milestone #3": {
+      "startDate": "2024-03-11",
+      "endDate": "2024-04-05",
+      "projectedGroupGrade": 100.0
+    }
+  },
+  "lectureTopicTaskQuota": 0,
+  "countOpenIssues": false
+}
+```
 
 3. If working locally, push the changes onto the remote such that they are visible on the main branch from the Github page for the repository
 
