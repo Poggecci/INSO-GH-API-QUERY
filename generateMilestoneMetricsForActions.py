@@ -1,30 +1,47 @@
-from datetime import datetime
+import datetime as dt
 import json
 import os
 import logging
 from generateTeamMetrics import getTeamMetricsForMilestone
 
 from getTeamMembers import get_team_members
-from utils.models import MilestoneData
+from utils.models import Developer, MilestoneData
 
 
 def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str):
     with open(md_file_path, mode="w") as md_file:
-        md_file.write("# Milestone Data\n\n")
+        for idx, sprint in enumerate(milestone_data.sprints):
+            md_file.write(
+                f"# Sprint #{idx+1} ({sprint.startDate.strftime('%d/%m/%Y')}-{(sprint.startDate+sprint.duration).strftime('%d/%m/%Y')})\n\n"
+            )
+            md_file.write(
+                "| Developer | Points Closed | Percent Contribution | Projected Grade |\n"
+            )
+            md_file.write(
+                "| --------- | ------------- | -------------------- | --------------- |\n"
+            )
+            for developer, metrics in sprint.devMetrics.items():
+                md_file.write(
+                    f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% |\n"
+                )
+            md_file.write(f"| Total | {sprint.totalPointsClosed} | /100% | /100% |\n")
+
+        md_file.write("\n")
+        md_file.write("# Overall Milestone Data\n\n")
         md_file.write(
             "| Developer | Points Closed | Percent Contribution | Projected Grade | Lecture Topic Tasks |\n"
         )
         md_file.write(
             "| --------- | ------------- | -------------------- | --------------- | ------------------- |\n"
         )
-        totalLectureTopicTasks = 0
-        for developer, metrics in milestone_data.devMetrics.items():
-            totalLectureTopicTasks += metrics.lectureTopicTasksClosed
-            md_file.write(
-                f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% | {metrics.lectureTopicTasksClosed} |\n"
-            )
+        for developer in milestone_data.developers:
+            metrics = milestone_data.getMetricsForDev(developer)
+            if metrics is not None:
+                md_file.write(
+                    f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% | {metrics.lectureTopicTasksClosed} |\n"
+                )
         md_file.write(
-            f"| Total | {milestone_data.totalPointsClosed} | /100% | /100% | {totalLectureTopicTasks} |\n"
+            f"| Total | {milestone_data.getTotalPointsClosed()} | /100% | /100% | {milestone_data.getTotalLectureTopicTasks()} |\n"
         )
         md_file.write("\n")
 
@@ -36,7 +53,7 @@ def write_log_data_to_md(log_file_path: str, md_file_path: str):
             md_file.write("| Message |\n")
             md_file.write("| ------- |\n")
             for log_message in log_file.readlines():
-                md_file.write("| "+log_message.strip('\n')+" |\n")
+                md_file.write("| " + log_message.strip("\n") + " |\n")
 
 
 if __name__ == "__main__":
@@ -50,7 +67,9 @@ if __name__ == "__main__":
     team = course_data["projectName"]
     organization = os.environ["ORGANIZATION"]
     milestones: dict = course_data["milestones"]
-    managers = course_data["managers"]
+    managers = [
+        Developer(githubUsername=manager) for manager in course_data["managers"]
+    ]
     print("Team: ", team)
     print("Managers: ", managers)
     print("Milestones: ", ", ".join(milestones.keys()))
@@ -63,32 +82,30 @@ if __name__ == "__main__":
         )
     for milestone, mData in milestones.items():
         logger = logging.getLogger(milestone)
-        logFileName = f'{milestone}-{team}-{organization}.log'
+        logFileName = f"{milestone}-{team}-{organization}.log"
         logFileHandler = logging.FileHandler(logFileName)
-        formatter = logging.Formatter('%(levelname)s: %(message)s')
+        formatter = logging.Formatter("%(levelname)s: %(message)s")
         logFileHandler.setFormatter(formatter)
         logger.addHandler(logFileHandler)
+        sprintDuration = dt.timedelta(days=14)
 
         try:
-            startDate = datetime.fromisoformat(
-                f"{mData.get('startDate')}T00:00:00.000Z"
-            )
-            endDate = datetime.fromisoformat(
-                f"{mData.get('endDate')}T23:59:59.000Z"
-            )
+            startDate = dt.date.fromisoformat(f"{mData.get('startDate')}")
+            endDate = dt.date.fromisoformat(f"{mData.get('endDate')}")
             useDecay = True
         except Exception as e:
             print(f"Error while parsing milestone dates: {e}")
             print(
                 "Warning: startDate and/or endDate couldn't be interpreted, proceeding without decay."
             )
-            logger.error(
-                f"Error while parsing milestone dates: {e}")
-            logger.warning(f"startDate and/or endDate for {milestone} couldn't be interpreted, proceeding without decay.")
-            startDate = datetime.now()
-            endDate = datetime.now()
+            logger.error(f"Error while parsing milestone dates: {e}")
+            logger.warning(
+                f"startDate and/or endDate for {milestone} couldn't be interpreted, proceeding without decay."
+            )
+            startDate = dt.date.today()
+            endDate = dt.date.today() + sprintDuration
             useDecay = False
-        team_metrics = MilestoneData()
+        team_metrics = MilestoneData(startDate=startDate, endDate=endDate)
         try:
             team_metrics = getTeamMetricsForMilestone(
                 org=organization,
@@ -99,6 +116,7 @@ if __name__ == "__main__":
                 managers=managers,
                 startDate=startDate,
                 endDate=endDate,
+                sprintDuration=dt.timedelta(days=14),
                 useDecay=useDecay,
                 shouldCountOpenIssues=course_data.get("countOpenIssues", False),
                 logger=logger,
@@ -110,4 +128,6 @@ if __name__ == "__main__":
         write_milestone_data_to_md(
             milestone_data=team_metrics, md_file_path=output_markdown_path
         )
-        write_log_data_to_md(log_file_path=logFileName, md_file_path=output_markdown_path)
+        write_log_data_to_md(
+            log_file_path=logFileName, md_file_path=output_markdown_path
+        )

@@ -1,8 +1,7 @@
-import json
 import logging
-from getTeamMembers import get_team_members
-from utils.models import DeveloperMetrics, MilestoneData
-from datetime import datetime
+from typing import Iterable
+from utils.models import Developer, DeveloperMetrics, MilestoneData, SprintData
+import datetime as dt
 from utils.queryRunner import run_graphql_query
 
 get_team_issues = """
@@ -35,6 +34,7 @@ query QueryProjectItemsForTeam(
                 }
                 createdAt
                 closed
+                closedAt
                 milestone {
                   title
                 }
@@ -100,7 +100,7 @@ query QueryProjectItemsForTeam(
 
 
 def decay(
-    milestoneStart: datetime, milestoneEnd: datetime, issueCreated: datetime
+    milestoneStart: dt.date, milestoneEnd: dt.date, issueCreated: dt.date
 ) -> float:
     duration = (milestoneEnd - milestoneStart).days
     if issueCreated > milestoneEnd:
@@ -116,36 +116,61 @@ def decay(
 
 
 # Expects each score to be [0,inf)
-def outliersRemovedAverage(scores: list) -> float:
+def outliersRemovedAverage(scores: Iterable) -> float:
     non_zero_lst = [x for x in scores if x > 0]
     smallest_non_zero = min(non_zero_lst, default=0)
-    largestVal = max(scores, default=0)
-    newLength = len(scores) - (largestVal != 0) - (smallest_non_zero != 0)
-    total = sum(scores) - largestVal - smallest_non_zero
+    largestVal = max(non_zero_lst, default=0)
+    newLength = len(non_zero_lst) - (largestVal != 0) - (smallest_non_zero != 0)
+    total = sum(non_zero_lst) - largestVal - smallest_non_zero
     return total / max(1, newLength)
+
+
+def createSprints(
+    startDate: dt.date, endDate: dt.date, duration: dt.timedelta
+) -> list[SprintData]:
+    sprints = []
+    currentDate = startDate
+    while currentDate < endDate:
+        if currentDate + duration > endDate:
+            sprints.append(
+                SprintData(startDate=currentDate, duration=endDate - currentDate)
+            )
+        else:
+            sprints.append(SprintData(startDate=currentDate, duration=duration))
+        currentDate += duration
+    return sprints
+
+
+def findSprintIndex(sprints: list[SprintData], targetDate: dt.date) -> int:
+    for index, sprint in enumerate(sprints):
+        if sprint.startDate <= targetDate < (sprint.startDate + sprint.duration):
+            return index
+    return -1
 
 
 def getTeamMetricsForMilestone(
     org: str,
     team: str,
     milestone: str,
-    members: list[str],
-    managers: list[str],
-    startDate: datetime,
-    endDate: datetime,
+    members: list[Developer],
+    managers: list[Developer],
+    startDate: dt.date,
+    endDate: dt.date,
+    sprintDuration: dt.timedelta,
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
-    logger: logging.Logger = None,
+    logger: logging.Logger | None = None,
 ) -> MilestoneData:
     if logger is None:
         logger = logging.getLogger(__name__)
-    developers = [member for member in members if member not in managers]
-    devPointsClosed = {dev: 0.0 for dev in developers}
-    devLectureTopicTasks = {dev: 0 for dev in developers}
-    totalPointsClosed = 0.0
+    sprints = createSprints(
+        startDate=startDate, endDate=endDate, duration=sprintDuration
+    )
     params = {"owner": org, "team": team}
-    milestoneData = MilestoneData()
+    milestoneData = MilestoneData(startDate=startDate, endDate=endDate)
+    milestoneData.developers = {member for member in members if member not in managers}
+    milestoneData.sprints = sprints
     hasAnotherPage = True
     while hasAnotherPage:
         response = run_graphql_query(get_team_issues, params)
@@ -194,6 +219,7 @@ def getTeamMetricsForMilestone(
 
             elif not shouldCountOpenIssues:
                 continue
+
             if issue["difficulty"] is None or issue["urgency"] is None:
                 logger.warning(
                     f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
@@ -204,13 +230,20 @@ def getTeamMetricsForMilestone(
                     f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
-
             if issue["modifier"] is None or not issue["modifier"]:
                 issue["modifier"] = {"number": 0}
             workedOnlyByManager = True
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
             print(issue)
-            createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
+            createdAt = dt.datetime.fromisoformat(issue["content"]["createdAt"]).date()
+            closedAt = dt.datetime.fromisoformat(
+                issue["content"].get("closedAt", dt.datetime.now())
+            ).date()
+            sprintIndex = (
+                findSprintIndex(sprints, closedAt) if closedAt is not None else -1
+            )
+            sprint = sprints[sprintIndex]
+            assignee = issue["content"]["author"]["login"]
             issueScore = (
                 issue["difficulty"]["number"]
                 * issue["urgency"]["number"]
@@ -219,21 +252,21 @@ def getTeamMetricsForMilestone(
             )
             # attribute documentation bonus is a manager has reacted with 🎉
             documentationBonus = issueScore * 0.1
+            issueAuthor = Developer(githubUsername=issue["content"]["author"]["login"])
             if any(
                 map(
                     (lambda reaction: (reaction["user"]["login"] in managers)),
                     issue["content"]["reactions"]["nodes"],
                 )
             ):
-                if issue["content"]["author"]["login"] not in managers:
-                    devPointsClosed[
-                        issue["content"]["author"]["login"]
-                    ] += documentationBonus
+                if issueAuthor not in managers:
+                    sprint.devMetrics[issueAuthor].pointsClosed += documentationBonus
                     logger.info(
                         f"Documentation Bonus given to [Issue #{issue['content'].get('number')}]({issue['content'].get('url')})"
                     )
             else:
                 for comment in issue["content"]["comments"]["nodes"]:
+                    commenter = comment["author"]["login"]
                     if (
                         any(
                             map(
@@ -245,105 +278,61 @@ def getTeamMetricsForMilestone(
                                 comment["reactions"]["nodes"],
                             )
                         )
-                        and issue["content"]["author"]["login"] not in managers
+                        and issueAuthor not in managers
                     ):
-                        devPointsClosed[
-                            comment["author"]["login"]
-                        ] += documentationBonus
+                        sprint.devMetrics[commenter].pointsClosed += documentationBonus
                         break  # only attribute the bonus once and to the earliest comment
 
             # attribute points to correct developer
-            for dev in issue["content"]["assignees"]["nodes"]:
-                if dev["login"] in managers:
+            for assignee in issue["content"]["assignees"]["nodes"]:
+                dev = Developer(githubUsername=assignee["login"])
+                if dev in managers:
                     logger.info(
-                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to manager {dev['login']}"
+                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to manager {assignee['login']}"
                     )
                     continue
-                if dev["login"] not in developers:
+                if dev not in milestoneData.developers:
                     logger.warning(
-                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to developer {dev['login']} not belonging to the team."
+                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to developer {assignee['login']} not belonging to the team."
                     )
                     continue
 
                 # attribute Lecture topic tasks even if they are a manager
                 if "[Lecture Topic Task]" in issue["content"].get("title", ""):
-                    devLectureTopicTasks[dev["login"]] += 1
-                if dev["login"] not in managers:
+                    sprint.devMetrics[dev].lectureTopicTasksClosed += 1
+                if dev not in managers:
                     workedOnlyByManager = False
-                if dev["login"] in managers:
+                if dev in managers:
                     continue  # don't count manager metrics
-                devPointsClosed[dev["login"]] += issueScore / numberAssignees
+                sprint.devMetrics[dev].pointsClosed += issueScore / numberAssignees
             if not workedOnlyByManager:
-                totalPointsClosed += issueScore
+                sprints[sprintIndex].totalPointsClosed += issueScore
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
             params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
-
-    untrimmedAverage = totalPointsClosed / max(1, len(devPointsClosed))
-    trimmedAverage = outliersRemovedAverage(devPointsClosed.values())
-    devBenchmark = max(
-        1, min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
-    )
-
-    milestoneData.totalPointsClosed = totalPointsClosed
-    for dev in developers:
-        contribution = devPointsClosed[dev] / max(totalPointsClosed, 1)
-        milestoneData.devMetrics[dev] = DeveloperMetrics(
-            pointsClosed=devPointsClosed[dev],
-            percentContribution=contribution * 100.0,
-            expectedGrade=min(
-                (devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0
-            ),
-            lectureTopicTasksClosed=devLectureTopicTasks[dev],
+    for sprint in sprints:
+        untrimmedAverage = sprint.totalPointsClosed / max(1, len(sprint.devMetrics))
+        trimmedAverage = outliersRemovedAverage(
+            map(lambda d: d.pointsClosed, sprint.devMetrics.values())
         )
-    return milestoneData
-
-
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) < 2:
-        exit(0)
-    _, course_config_file, *_ = sys.argv
-    with open(course_config_file) as course_config:
-        course_data = json.load(course_config)
-    organization = course_data["organization"]
-    teams_and_teamdata = course_data["teams"]
-    if (
-        course_data.get("milestoneStartsOn", None) is None
-        or not course_data["milestoneStartsOn"]
-        or course_data["milestoneStartsOn"] is None
-        or course_data.get("milestoneEndsOn", None) is None
-        or course_data["milestoneEndsOn"] is None
-        or not course_data["milestoneEndsOn"]
-    ):
-        startDate = datetime.now()
-        endDate = datetime.now()
-        useDecay = False
-    else:
-        startDate = datetime.fromisoformat(course_data["milestoneStartsOn"])
-        endDate = datetime.fromisoformat(course_data["milestoneEndsOn"])
-        useDecay = True
-
-    print("Organization: ", organization)
-
-    team_metrics = {}
-    for team, teamdata in teams_and_teamdata.items():
-        print("Team: ", team)
-        print("Managers: ", teamdata["managers"])
-        print("Milestone: ", teamdata["milestone"])
-        members = get_team_members(organization, team)
-        print(
-            getTeamMetricsForMilestone(
-                org=organization,
-                team=team,
-                milestone=teamdata["milestone"],
-                milestoneGrade=teamdata["milestoneGrade"],
-                members=members,
-                managers=teamdata["managers"],
-                startDate=startDate,
-                endDate=endDate,
-                useDecay=useDecay,
+        devBenchmark = max(
+            1, min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
+        )
+        for assignee in milestoneData.developers:
+            contribution = sprint.devMetrics[assignee].pointsClosed / max(
+                sprint.totalPointsClosed, 1
             )
-        )
+            sprint.devMetrics[assignee] = DeveloperMetrics(
+                pointsClosed=sprint.devMetrics[assignee].pointsClosed,
+                percentContribution=contribution * 100.0,
+                expectedGrade=min(
+                    (sprint.devMetrics[assignee].pointsClosed / devBenchmark)
+                    * milestoneGrade,
+                    100.0,
+                ),
+                lectureTopicTasksClosed=sprint.devMetrics[
+                    assignee
+                ].lectureTopicTasksClosed,
+            )
+    return milestoneData
