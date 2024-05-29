@@ -163,18 +163,16 @@ def getTeamMetricsForMilestone(
         issues = project["items"]["nodes"]
         for issue in issues:
             if issue["content"].get("milestone", None) is None:
-                issueNumber = issue['content'].get('number')
-                issueUrl = issue['content'].get('url')
+                issueNumber = issue["content"].get("number")
+                issueUrl = issue["content"].get("url")
                 if issueUrl:
                     logger.warning(
-                            f"[Issue #{issueNumber}]({issueUrl}) is not associated with a milestone."
-                        )
+                        f"[Issue #{issueNumber}]({issueUrl}) is not associated with a milestone."
+                    )
                 continue
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
-            if not shouldCountOpenIssues:
-                if not issue["content"].get("closed", False):
-                    continue
+            if issue["content"].get("closed", False):
                 closedByList = issue["content"]["timelineItems"][
                     "nodes"
                 ]  # should always have a length of 1 if the issue was closed
@@ -194,6 +192,8 @@ def getTeamMetricsForMilestone(
                     )
                     continue
 
+            elif not shouldCountOpenIssues:
+                continue
             if issue["difficulty"] is None or issue["urgency"] is None:
                 logger.warning(
                     f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
