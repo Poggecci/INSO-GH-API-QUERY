@@ -119,7 +119,7 @@ def decay(
 def outliersRemovedAverage(scores: Iterable) -> float:
     smallest_elem = min(scores, default=0)
     largestVal = max(scores, default=0)
-    newLength = len(scores) - (largestVal != 0) - (smallest_elem != 0)
+    newLength = len(list(scores)) - (largestVal != 0) - (smallest_elem != 0)
     total = sum(scores) - largestVal - smallest_elem
     return total / max(1, newLength)
 
@@ -135,7 +135,7 @@ def getTeamMetricsForMilestone(
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
-    logger: logging.Logger = None,
+    logger: logging.Logger | None = None,
 ) -> MilestoneData:
     if logger is None:
         logger = logging.getLogger(__name__)
