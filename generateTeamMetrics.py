@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Iterable
 from getTeamMembers import get_team_members
 from utils.models import DeveloperMetrics, MilestoneData
 from datetime import datetime
@@ -115,13 +116,11 @@ def decay(
     )
 
 
-# Expects each score to be [0,inf)
-def outliersRemovedAverage(scores: list) -> float:
-    non_zero_lst = [x for x in scores if x > 0]
-    smallest_non_zero = min(non_zero_lst, default=0)
+def outliersRemovedAverage(scores: Iterable) -> float:
+    smallest_elem = min(scores, default=0)
     largestVal = max(scores, default=0)
-    newLength = len(scores) - (largestVal != 0) - (smallest_non_zero != 0)
-    total = sum(scores) - largestVal - smallest_non_zero
+    newLength = len(scores) - (largestVal != 0) - (smallest_elem != 0)
+    total = sum(scores) - largestVal - smallest_elem
     return total / max(1, newLength)
 
 
