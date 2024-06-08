@@ -11,6 +11,7 @@ from utils.models import MilestoneData
 def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str):
     with open(md_file_path, mode="w") as md_file:
         md_file.write("# Milestone Data\n\n")
+        md_file.write(f"## Date Generated: {datetime.now().date}\n")
         md_file.write(
             "| Developer | Points Closed | Percent Contribution | Projected Grade | Lecture Topic Tasks |\n"
         )
