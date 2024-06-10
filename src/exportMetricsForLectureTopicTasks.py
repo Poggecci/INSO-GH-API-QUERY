@@ -1,9 +1,9 @@
 import csv
 import json
-from generateLectureTopicTaskMetrics import getLectureTopicTaskMetrics
-from getTeamMembers import get_team_members
+from src.generateLectureTopicTaskMetrics import getLectureTopicTaskMetrics
+from src.getTeamMembers import get_team_members
 
-from utils.models import LectureTopicTaskData
+from src.utils.models import LectureTopicTaskData
 
 
 def write_lecture_topic_task_data_to_csv(

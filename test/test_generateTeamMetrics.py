@@ -1,5 +1,5 @@
 import pytz
-from generateTeamMetrics import getTeamMetricsForMilestone
+from src.generateTeamMetrics import getTeamMetricsForMilestone
 import pytest
 from unittest.mock import patch
 from datetime import datetime
@@ -139,7 +139,7 @@ mock_gh_res_with_open_issue = {
 }
 
 
-@patch("generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.run_graphql_query")
 def test_issues_closed_by_non_managers_arent_counted(mock_run_graphql_query, logger):
     mock_run_graphql_query.return_value = mock_gh_res_with_issue_closed_by_dev
 
@@ -170,7 +170,7 @@ def test_issues_closed_by_non_managers_arent_counted(mock_run_graphql_query, log
     assert result.devMetrics["dev1"].pointsClosed == 0
 
 
-@patch("generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.run_graphql_query")
 def test_issues_not_belonging_to_milestone_arent_counted(
     mock_run_graphql_query, logger
 ):
@@ -203,7 +203,7 @@ def test_issues_not_belonging_to_milestone_arent_counted(
     assert result.devMetrics["dev1"].pointsClosed == 0
 
 
-@patch("generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.run_graphql_query")
 def test_open_issues_arent_counted_when_shouldCountOpenIssues_is_false(
     mock_run_graphql_query, logger
 ):
@@ -376,7 +376,7 @@ mock_gh_res_issue_with_multiple_devs = {
 }
 
 
-@patch("generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.run_graphql_query")
 def test_issues_only_worked_on_by_managers_arent_counted(
     mock_run_graphql_query, logger
 ):
@@ -409,7 +409,7 @@ def test_issues_only_worked_on_by_managers_arent_counted(
     assert "manager1" not in result.devMetrics
 
 
-@patch("generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.run_graphql_query")
 def test_issues_with_hooray_reaction_get_bonus(mock_run_graphql_query, logger):
     mock_run_graphql_query.return_value = mock_gh_res_issue_with_hooray
 
@@ -441,7 +441,7 @@ def test_issues_with_hooray_reaction_get_bonus(mock_run_graphql_query, logger):
     assert result.devMetrics["dev1"].pointsClosed == pytest.approx(expected_score)
 
 
-@patch("generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.run_graphql_query")
 def test_issues_with_multiple_developers_have_points_divided(
     mock_run_graphql_query, logger
 ):

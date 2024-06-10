@@ -1,6 +1,6 @@
-from utils.models import LectureTopicTaskData
+from src.utils.models import LectureTopicTaskData
 
-from utils.queryRunner import run_graphql_query
+from src.utils.queryRunner import run_graphql_query
 
 get_team_lecture_topic_tasks = """
 query QueryProjectItemsForTeam($owner: String!, $team: String!,

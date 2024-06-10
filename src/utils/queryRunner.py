@@ -1,5 +1,5 @@
 import requests
-from utils.constants import getToken
+from src.utils.constants import getToken
 
 
 def run_graphql_query(query, variables=None) -> dict:

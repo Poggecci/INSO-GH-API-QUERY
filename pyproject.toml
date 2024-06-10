@@ -1,13 +1,18 @@
 [tool.poetry]
 name = "insoghapiquery"
 version = "0.1.0"
-description = ""
+description = "Codebase used to calculate grades for UPRM students' Software Engineering projects"
 authors = ["Poggecci <alejandro.cruzado@upr.edu>"]
 readme = "README.md"
+license = "MIT"
+packages = [
+    { include = "src/**/*.py" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 requests = "^2.32.2"
+
 
 
 

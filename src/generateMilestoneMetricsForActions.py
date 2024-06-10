@@ -2,10 +2,10 @@ from datetime import datetime
 import json
 import os
 import logging
-from generateTeamMetrics import getTeamMetricsForMilestone
+from src.generateTeamMetrics import getTeamMetricsForMilestone
 
-from getTeamMembers import get_team_members
-from utils.models import MilestoneData
+from src.getTeamMembers import get_team_members
+from src.utils.models import MilestoneData
 
 
 def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str):

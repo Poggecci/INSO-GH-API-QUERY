@@ -1,10 +1,11 @@
 import json
 import logging
 from typing import Iterable
-from getTeamMembers import get_team_members
-from utils.models import DeveloperMetrics, MilestoneData
 from datetime import datetime
-from utils.queryRunner import run_graphql_query
+
+from src.getTeamMembers import get_team_members
+from src.utils.models import DeveloperMetrics, MilestoneData
+from src.utils.queryRunner import run_graphql_query
 
 get_team_issues = """
 query QueryProjectItemsForTeam(
