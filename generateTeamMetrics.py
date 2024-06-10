@@ -147,7 +147,7 @@ def getTeamMetricsForMilestone(
     milestoneData = MilestoneData()
     hasAnotherPage = True
     while hasAnotherPage:
-        response = run_graphql_query(get_team_issues, params)
+        response: dict = run_graphql_query(get_team_issues, params)
         projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:
@@ -231,6 +231,7 @@ def getTeamMetricsForMilestone(
                     logger.info(
                         f"Documentation Bonus given to [Issue #{issue['content'].get('number')}]({issue['content'].get('url')})"
                     )
+                    totalPointsClosed += documentationBonus
             else:
                 for comment in issue["content"]["comments"]["nodes"]:
                     if (
