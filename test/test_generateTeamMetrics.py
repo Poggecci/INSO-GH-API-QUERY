@@ -45,6 +45,8 @@ mock_gh_res_with_issue_closed_by_dev = {
                                                 }
                                             ]
                                         },
+                                        "reactions": {"nodes": []},
+                                        "comments": {"nodes": []},
                                     },
                                     "urgency": {"number": 3},
                                     "difficulty": {"number": 2},
@@ -87,6 +89,8 @@ mock_gh_res_v20_milestone = {
                                         "timelineItems": {
                                             "nodes": [{"actor": {"login": "manager1"}}]
                                         },
+                                        "reactions": {"nodes": []},
+                                        "comments": {"nodes": []},
                                     },
                                     "urgency": {"number": 3},
                                     "difficulty": {"number": 2},
@@ -124,6 +128,8 @@ mock_gh_res_with_open_issue = {
                                         "closed": False,  # Open issue
                                         "milestone": {"title": "v1.0"},
                                         "assignees": {"nodes": [{"login": "dev1"}]},
+                                        "reactions": {"nodes": []},
+                                        "comments": {"nodes": []},
                                     },
                                     "urgency": {"number": 3},
                                     "difficulty": {"number": 2},
@@ -204,7 +210,7 @@ def test_issues_not_belonging_to_milestone_arent_counted(
 
 
 @patch("src.generateTeamMetrics.run_graphql_query")
-def test_open_issues_arent_counted_when_shouldCountOpenIssues_is_false(
+def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
     mock_run_graphql_query, logger
 ):
     mock_run_graphql_query.return_value = mock_gh_res_with_open_issue
@@ -236,6 +242,25 @@ def test_open_issues_arent_counted_when_shouldCountOpenIssues_is_false(
 
     assert result.totalPointsClosed == 0
     assert result.devMetrics["dev1"].pointsClosed == 0
+
+    # ensure the issue is counted if we are counting open issues
+    shouldCountOpenIssues = True
+    resultCountingOpen = getTeamMetricsForMilestone(
+        org=org,
+        team=team,
+        milestone=milestone,
+        members=members,
+        managers=managers,
+        startDate=startDate,
+        endDate=endDate,
+        useDecay=useDecay,
+        milestoneGrade=milestoneGrade,
+        shouldCountOpenIssues=shouldCountOpenIssues,
+        logger=logger,
+    )
+
+    assert resultCountingOpen.totalPointsClosed != 0
+    assert resultCountingOpen.devMetrics["dev1"].pointsClosed != pytest.approx(0)
 
 
 mock_gh_res_issue_only_worked_by_manager = {
@@ -473,13 +498,9 @@ def test_issues_with_multiple_developers_have_points_divided(
     expected_score = 3 * 2 + 1  # Urgency * Difficulty + Modifier
     divided_score = expected_score / 2
 
-    assert result.totalPointsClosed == pytest.approx(expected_score, rel=1e-9)
-    assert result.devMetrics["dev1"].pointsClosed == pytest.approx(
-        divided_score, rel=1e-9
-    )
-    assert result.devMetrics["dev2"].pointsClosed == pytest.approx(
-        divided_score, rel=1e-9
-    )
+    assert result.totalPointsClosed == pytest.approx(expected_score)
+    assert result.devMetrics["dev1"].pointsClosed == pytest.approx(divided_score)
+    assert result.devMetrics["dev2"].pointsClosed == pytest.approx(divided_score)
 
 
 if __name__ == "__main__":
