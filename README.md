@@ -28,6 +28,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 1. On the main branch of your repository, create a file named `gh_metrics_config.json`.
 2. Populate the .json file with the following fields:
 
+- `version` : Version of the config used for the project. The latest version is `2.0`.
 - `projectName` : Name of the Github Project associated with your repository. **Must** also be the name of the team on Github (case-sensitive).
 - `managers` : a list of the GitHub logins (usernames) that belong to the managers (case-sensitive).
 - `milestones` : a nested JSON object mapping each milestone's name to its details including:
@@ -41,6 +42,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 
 ```json
 {
+  "version": "2.0",
   "projectName": "College Toolbox",
   "managers": ["Sbeve, Lieb"],
   "milestones": {
