@@ -121,7 +121,7 @@ def outliersRemovedAverage(scores: Iterable) -> float:
     smallest_elem = min(scores, default=0)
     largestVal = max(scores, default=0)
     newLength = len(list(scores)) - (largestVal != 0) - (smallest_elem != 0)
-    total = sum(scores) - largestVal - smallest_elem
+    total = sum(scores, start=0) - largestVal - smallest_elem
     return total / max(1, newLength)
 
 
