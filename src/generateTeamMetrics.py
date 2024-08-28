@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Iterable
 from datetime import datetime
-
+from src.utils.constants import pr_tz
 from src.getTeamMembers import get_team_members
 from src.utils.models import DeveloperMetrics, MilestoneData
 from src.utils.queryRunner import run_graphql_query
@@ -37,6 +37,7 @@ query QueryProjectItemsForTeam(
                 }
                 createdAt
                 closed
+                closedAt
                 milestone {
                   title
                 }
@@ -125,6 +126,43 @@ def outliersRemovedAverage(scores: Iterable) -> float:
     return total / max(1, newLength)
 
 
+def getCurrentSprintIndex(date: datetime, cutoffs: list[datetime]):
+    sprintIndex = 0
+    for cutoff in cutoffs:
+        if date > cutoff:
+            sprintIndex += 1
+    return sprintIndex
+
+
+def getFormattedSprintDateRange(
+    startDate: datetime, endDate: datetime, cutoffs: list[datetime], sprintIndex: int
+):
+    if len(cutoffs) == 0:
+        return f"{startDate.strftime('%Y/%m/%d')}-{endDate.strftime('%Y/%m/%d')}"
+    if sprintIndex >= len(cutoffs):
+        return f"{cutoffs[-1].strftime('%Y/%m/%d')}-{endDate.strftime('%Y/%m/%d')}"
+    if sprintIndex == 0:
+        return f"{startDate.strftime('%Y/%m/%d')}-{cutoffs[0].strftime('%Y/%m/%d')}"
+    return f"{cutoffs[sprintIndex-1].strftime('%Y/%m/%d')}-{cutoffs[sprintIndex].strftime('%Y/%m/%d')}"
+
+
+def generateSprintCutoffs(
+    startDate: datetime, endDate: datetime, sprints: int
+) -> list[datetime]:
+    if sprints <= 1:
+        return []
+
+    total_duration = endDate - startDate
+    cutoffs = []
+
+    for i in range(1, sprints):
+        fraction = i / sprints
+        cutoff_date = startDate + total_duration * fraction
+        cutoffs.append(cutoff_date)
+
+    return cutoffs
+
+
 def getTeamMetricsForMilestone(
     org: str,
     team: str,
@@ -133,6 +171,8 @@ def getTeamMetricsForMilestone(
     managers: list[str],
     startDate: datetime,
     endDate: datetime,
+    sprints: int,
+    minTasksPerSprint: int,
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
@@ -142,10 +182,12 @@ def getTeamMetricsForMilestone(
         logger = logging.getLogger(__name__)
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
+    devTasksCompleted = {dev: [0 for _ in range(sprints)] for dev in developers}
     devLectureTopicTasks = {dev: 0 for dev in developers}
     totalPointsClosed = 0.0
     params = {"owner": org, "team": team}
-    milestoneData = MilestoneData()
+    milestoneData = MilestoneData(sprints=sprints, startDate=startDate, endDate=endDate)
+    sprintCutoffs = generateSprintCutoffs(startDate, endDate, sprints)
     hasAnotherPage = True
     while hasAnotherPage:
         response: dict = run_graphql_query(get_team_issues, params)
@@ -265,7 +307,12 @@ def getTeamMetricsForMilestone(
                         f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to developer {dev['login']} not belonging to the team."
                     )
                     continue
-
+                # attribute task completion to appropriate sprint
+                taskCompletionDate = datetime.fromisoformat(
+                    issue["content"].get("closedAt", issue["content"]["createdAt"])
+                )
+                sprintIndex = getCurrentSprintIndex(taskCompletionDate, sprintCutoffs)
+                devTasksCompleted[dev["login"]][sprintIndex] += 1
                 # attribute Lecture topic tasks even if they are a manager
                 if "[Lecture Topic Task]" in issue["content"].get("title", ""):
                     devLectureTopicTasks[dev["login"]] += 1
@@ -274,6 +321,7 @@ def getTeamMetricsForMilestone(
                 if dev["login"] in managers:
                     continue  # don't count manager metrics
                 devPointsClosed[dev["login"]] += issueScore / numberAssignees
+
             if not workedOnlyByManager:
                 totalPointsClosed += issueScore
 
@@ -290,12 +338,30 @@ def getTeamMetricsForMilestone(
     milestoneData.totalPointsClosed = totalPointsClosed
     for dev in developers:
         contribution = devPointsClosed[dev] / max(totalPointsClosed, 1)
+        # check if the developer has completed the minimum tasks up until the current sprint
+        # If they haven't thats an automatic zero for that milestone
+        currentSprint = getCurrentSprintIndex(
+            pr_tz.localize(datetime.today()), sprintCutoffs
+        )
+        expectedGrade = min(
+            (devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0
+        )
+        for sprintIdx in range(currentSprint + 1):
+            if devTasksCompleted[dev][sprintIdx] < minTasksPerSprint:
+                sprintDateRange = getFormattedSprintDateRange(
+                    startDate=startDate,
+                    endDate=endDate,
+                    cutoffs=sprintCutoffs,
+                    sprintIndex=sprintIdx,
+                )
+                logger.warning(
+                    f"{dev} didn't complete the minimum {minTasksPerSprint} task(s) required for sprint {sprintDateRange}"
+                )
+                expectedGrade = 0.0
         milestoneData.devMetrics[dev] = DeveloperMetrics(
             pointsClosed=devPointsClosed[dev],
             percentContribution=contribution * 100.0,
-            expectedGrade=min(
-                (devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0
-            ),
+            expectedGrade=expectedGrade,
             lectureTopicTasksClosed=devLectureTopicTasks[dev],
         )
     return milestoneData
@@ -345,6 +411,8 @@ if __name__ == "__main__":
                 managers=teamdata["managers"],
                 startDate=startDate,
                 endDate=endDate,
+                sprints=course_data.get("sprints", 2),
+                minTasksPerSprint=course_data.get("minTasksPerSprint", 2),
                 useDecay=useDecay,
             )
         )

@@ -95,6 +95,8 @@ def generateMetricsFromV1Config(config: dict):
             startDate=startDate,
             endDate=endDate,
             useDecay=useDecay,
+            sprints=2,
+            minTasksPerSprint=1,
             shouldCountOpenIssues=config.get("countOpenIssues", False),
             logger=logger,
         )
@@ -161,6 +163,8 @@ def generateMetricsFromV2Config(config: dict):
                 startDate=startDate,
                 endDate=endDate,
                 useDecay=useDecay,
+                sprints=config.get("sprints", 2),
+                minTasksPerSprint=config.get("minTasksPerSprint", 1),
                 shouldCountOpenIssues=config.get("countOpenIssues", False),
                 logger=logger,
             )
@@ -184,9 +188,8 @@ if __name__ == "__main__":
     _, course_config_file, *_ = sys.argv
     with open(course_config_file) as course_config:
         course_data: dict = json.load(course_config)
-    version = course_data.get("version", "1.0")
-    match version:
-        case "1.0":
-            generateMetricsFromV1Config(config=course_data)
-        case "2.0":
-            generateMetricsFromV2Config(config=course_data)
+    version: str = course_data.get("version", "1.0")
+    if version.startswith("1."):
+        generateMetricsFromV1Config(config=course_data)
+    elif version.startswith("2."):
+        generateMetricsFromV2Config(config=course_data)

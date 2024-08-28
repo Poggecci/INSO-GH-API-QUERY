@@ -158,6 +158,8 @@ def test_issues_closed_by_non_managers_arent_counted(mock_run_graphql_query, log
     endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
     useDecay = True
     milestoneGrade = 90
+    sprints = 1
+    minTasksPerSprint = 1
 
     result = getTeamMetricsForMilestone(
         org=org,
@@ -168,6 +170,8 @@ def test_issues_closed_by_non_managers_arent_counted(mock_run_graphql_query, log
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         logger=logger,
     )
@@ -191,7 +195,8 @@ def test_issues_not_belonging_to_milestone_arent_counted(
     endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
     useDecay = True
     milestoneGrade = 90
-
+    sprints = 1
+    minTasksPerSprint = 1
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -201,6 +206,8 @@ def test_issues_not_belonging_to_milestone_arent_counted(
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         logger=logger,
     )
@@ -225,7 +232,8 @@ def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
     useDecay = True
     milestoneGrade = 90
     shouldCountOpenIssues = False
-
+    sprints = 1
+    minTasksPerSprint = 1
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -235,6 +243,8 @@ def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         shouldCountOpenIssues=shouldCountOpenIssues,
         logger=logger,
@@ -254,6 +264,8 @@ def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         shouldCountOpenIssues=shouldCountOpenIssues,
         logger=logger,
@@ -416,7 +428,8 @@ def test_issues_only_worked_on_by_managers_arent_counted(
     endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
     useDecay = True
     milestoneGrade = 90
-
+    sprints = 1
+    minTasksPerSprint = 1
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -426,6 +439,8 @@ def test_issues_only_worked_on_by_managers_arent_counted(
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         logger=logger,
     )
@@ -447,7 +462,8 @@ def test_issues_with_hooray_reaction_get_bonus(mock_run_graphql_query, logger):
     endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
     useDecay = True
     milestoneGrade = 90
-
+    sprints = 1
+    minTasksPerSprint = 1
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -457,6 +473,8 @@ def test_issues_with_hooray_reaction_get_bonus(mock_run_graphql_query, logger):
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         logger=logger,
     )
@@ -481,7 +499,8 @@ def test_issues_with_multiple_developers_have_points_divided(
     endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
     useDecay = True
     milestoneGrade = 90
-
+    sprints = 1
+    minTasksPerSprint = 1
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -491,6 +510,8 @@ def test_issues_with_multiple_developers_have_points_divided(
         startDate=startDate,
         endDate=endDate,
         useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         logger=logger,
     )

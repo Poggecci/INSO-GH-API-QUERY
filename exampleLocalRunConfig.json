@@ -3,9 +3,14 @@
   "teams": {
     "College Toolbox": {
       "managers": ["Ryan8702", "EdwinC1339"],
-      "milestone": "Milestone #3",
+      "milestone": "Milestone #1",
       "milestoneGrade": 100.0
     }
   },
-  "lectureTopicTaskQuota": 4
+  "milestoneStartsOn": "2023-08-14",
+  "milestoneEndsOn": "2023-09-16",
+  "lectureTopicTaskQuota": 4,
+  "sprints": 2,
+  "minTasksPerSprint": 1,
+  "countOpenIssues": false
 }
