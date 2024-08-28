@@ -28,6 +28,7 @@ if __name__ == "__main__":
     with open(course_config_file) as course_config:
         course_data = json.load(course_config)
     organization = course_data["organization"]
+    metricsDirectory = course_data["metricsDirectory"]
     teams_and_managers = course_data["teams"]
     lecture_topic_task_quota = course_data["lectureTopicTaskQuota"]
     print("Organization: ", course_data["organization"])
@@ -41,6 +42,6 @@ if __name__ == "__main__":
         )
         write_lecture_topic_task_data_to_csv(
             lecture_topic_task_metrics_by_team[team],
-            f"Lecture Topic Tasks-{team}-{organization}.csv",
+            f"{metricsDirectory}/Lecture Topic Tasks-{team}-{organization}.csv",
             lecture_topic_task_quota,
         )
