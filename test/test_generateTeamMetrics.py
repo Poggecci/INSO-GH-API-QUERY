@@ -524,5 +524,45 @@ def test_issues_with_multiple_developers_have_points_divided(
     assert result.devMetrics["dev2"].pointsClosed == pytest.approx(divided_score)
 
 
+@patch("src.generateTeamMetrics.run_graphql_query")
+def test_students_get_0_if_under_minimum_tasks_per_sprint(
+    mock_run_graphql_query, logger
+):
+    # Mocking the GraphQL query response
+    mock_run_graphql_query.return_value = mock_gh_res_issue_with_multiple_devs
+
+    org = "sample-org"
+    team = "sample-team"
+    milestone = "v1.0"
+    members = ["dev1", "dev2"]
+    managers = ["manager1"]
+    startDate = datetime(2023, 1, 1, tzinfo=pytz.UTC)
+    endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
+    useDecay = True
+    milestoneGrade = 90
+    sprints = 2
+    minTasksPerSprint = 2
+
+    # Mocked response will show both devs working on issues but neither has completed enough tasks in the sprint
+    result = getTeamMetricsForMilestone(
+        org=org,
+        team=team,
+        milestone=milestone,
+        members=members,
+        managers=managers,
+        startDate=startDate,
+        endDate=endDate,
+        useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
+        milestoneGrade=milestoneGrade,
+        logger=logger,
+    )
+
+    # Assert that both developers get 0 if they have not completed the minimum number of tasks per sprint
+    assert result.devMetrics["dev1"].expectedGrade == 0.0
+    assert result.devMetrics["dev2"].expectedGrade == 0.0
+
+
 if __name__ == "__main__":
     pytest.main()
