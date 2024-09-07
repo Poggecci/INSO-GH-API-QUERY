@@ -359,6 +359,7 @@ def getTeamMetricsForMilestone(
                 )
                 expectedGrade = 0.0
         milestoneData.devMetrics[dev] = DeveloperMetrics(
+            tasksBySprint=devTasksCompleted[dev],
             pointsClosed=devPointsClosed[dev],
             percentContribution=contribution * 100.0,
             expectedGrade=expectedGrade,
