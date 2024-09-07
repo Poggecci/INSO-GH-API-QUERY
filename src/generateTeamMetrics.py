@@ -2,10 +2,11 @@ import json
 import logging
 from typing import Iterable
 from datetime import datetime
+from typing import Optional
 
-from src.getTeamMembers import get_team_members
-from src.utils.models import DeveloperMetrics, MilestoneData
-from src.utils.queryRunner import run_graphql_query
+from getTeamMembers import get_team_members
+from utils.models import DeveloperMetrics, MilestoneData
+from utils.queryRunner import run_graphql_query
 
 get_team_issues = """
 query QueryProjectItemsForTeam(
@@ -136,7 +137,7 @@ def getTeamMetricsForMilestone(
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
-    logger: logging.Logger | None = None,
+    logger: Optional[logging.Logger] = None,
 ) -> MilestoneData:
     if logger is None:
         logger = logging.getLogger(__name__)

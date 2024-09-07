@@ -2,10 +2,10 @@ from datetime import datetime
 import json
 import os
 import logging
-from src.generateTeamMetrics import getTeamMetricsForMilestone
+from generateTeamMetrics import getTeamMetricsForMilestone
 
-from src.getTeamMembers import get_team_members
-from src.utils.models import MilestoneData
+from getTeamMembers import get_team_members
+from utils.models import MilestoneData
 
 
 def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str):
@@ -185,8 +185,10 @@ if __name__ == "__main__":
     with open(course_config_file) as course_config:
         course_data: dict = json.load(course_config)
     version = course_data.get("version", "1.0")
-    match version:
-        case "1.0":
-            generateMetricsFromV1Config(config=course_data)
-        case "2.0":
-            generateMetricsFromV2Config(config=course_data)
+    if version == "1.0":
+        generateMetricsFromV1Config(config=course_data)
+    elif version == "2.0":
+        generateMetricsFromV2Config(config=course_data)
+    else:
+        # Manejar versiones desconocidas, si es necesario
+        print(f"Versión desconocida: {version}")

@@ -1,10 +1,10 @@
 import csv
 import json
 from datetime import datetime
-from src.generateTeamMetrics import getTeamMetricsForMilestone
-from src.getTeamMembers import get_team_members
+from generateTeamMetrics import getTeamMetricsForMilestone
+from getTeamMembers import get_team_members
 
-from src.utils.models import MilestoneData
+from utils.models import MilestoneData
 
 
 def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: str):

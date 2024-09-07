@@ -1,4 +1,4 @@
-from src.utils.queryRunner import run_graphql_query
+from utils.queryRunner import run_graphql_query
 
 get_teams_query = """
 query QueryClassroomTeams($owner: String!) {

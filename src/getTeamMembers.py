@@ -1,4 +1,4 @@
-from src.utils.queryRunner import run_graphql_query
+from utils.queryRunner import run_graphql_query
 
 member_fetching_query = """
 query GetTeamMembers($owner: String!, $team: String!) {
