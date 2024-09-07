@@ -95,8 +95,8 @@ def generateMetricsFromV1Config(config: dict):
             startDate=startDate,
             endDate=endDate,
             useDecay=useDecay,
-            sprints=2,
-            minTasksPerSprint=1,
+            sprints=1,
+            minTasksPerSprint=0,
             shouldCountOpenIssues=config.get("countOpenIssues", False),
             logger=logger,
         )

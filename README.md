@@ -37,6 +37,8 @@ When using this repo through actions, the generated metrics will be placed in a 
   - `projectedGroupGrade`: the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (defaults to `100.0`)
 - `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer by the end of the course. Reminder that there **is no** required number of lecture topic tasks per developer per milestone. Only a quota that each developer must fill by the end of the course. Defaults to `0`.
 - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
+- `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
+- `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
 
 **Example `gh_metrics_config.json` file:**
 
@@ -63,7 +65,10 @@ When using this repo through actions, the generated metrics will be placed in a 
     }
   },
   "lectureTopicTaskQuota": 0,
-  "countOpenIssues": false
+  "countOpenIssues": false,
+  "sprints": 2,
+  "minTasksPerSprint": 1,
+  ""
 }
 ```
 
