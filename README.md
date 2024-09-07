@@ -1,10 +1,10 @@
 # Team Metrics Generator
 
-This script generates team metrics for a specified milestone in a GitHub organization. It collects data on points closed and percent contribution for each developer in the specified teams and outputs the results to CSV files. You can now also use Github Actions generate the metrics as a Markdown that is stored in a separate branch of your repository.
+This script generates team metrics for a specified milestone in a GitHub organization. It collects data on points closed and percent contribution for each developer in the specified teams and outputs the results to CSV files. You can now also use Github Actions generate the metrics as a Markdown that is stored in a separate branch of your repository. Checkout [this](https://github.com/Poggecci/INSO-GH-API-QUERY/blob/main/scoring.md) to learn more about how issues are counted.
 
 ## Usage
 
-### Github Actions
+### Github Actions (Recommended for students)
 
 When using this repo through actions, the generated metrics will be placed in a `metrics/` folder in your repository on the `inso-metrics` branch. If you have the repository permissions to let Actions create pull requests, the workflow will also create a pull request to merge the metrics onto the main branch.
 
