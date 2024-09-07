@@ -190,6 +190,17 @@ pluggy = ">=1.5,<2.0"
 dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytz"
+version = "2024.1"
+description = "World timezone definitions, modern and historical"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
+    {file = "pytz-2024.1.tar.gz", hash = "sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812"},
+]
+
+[[package]]
 name = "requests"
 version = "2.32.2"
 description = "Python HTTP for Humans."
@@ -230,4 +241,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "51e7dd9523d752cb06b072aa0052972dbccd60bd2ff687535eed3b5096fb2ac3"
+content-hash = "2ccf225c71d82a4c95f8a308b3e7e6f9e5f9d68eba012f3ecbf5c34261d79fa8"

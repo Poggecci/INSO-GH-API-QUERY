@@ -37,6 +37,8 @@ When using this repo through actions, the generated metrics will be placed in a 
   - `projectedGroupGrade`: the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (defaults to `100.0`)
 - `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer by the end of the course. Reminder that there **is no** required number of lecture topic tasks per developer per milestone. Only a quota that each developer must fill by the end of the course. Defaults to `0`.
 - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
+- `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
+- `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
 
 **Example `gh_metrics_config.json` file:**
 
@@ -44,7 +46,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 {
   "version": "2.0",
   "projectName": "College Toolbox",
-  "managers": ["Sbeve, Lieb"],
+  "managers": ["Poggecci"],
   "milestones": {
     "Milestone #1": {
       "startDate": "2024-01-15",
@@ -63,7 +65,10 @@ When using this repo through actions, the generated metrics will be placed in a 
     }
   },
   "lectureTopicTaskQuota": 0,
-  "countOpenIssues": false
+  "countOpenIssues": false,
+  "sprints": 2,
+  "minTasksPerSprint": 1,
+  ""
 }
 ```
 
@@ -84,17 +89,7 @@ You should now see a new Workflow on the **Actions** tab on Github. This will ru
 
 # **_End of Actions Setup_**
 
-</br>
-</br>
-</br>
-</br>
-</br>
-</br>
-</br>
-</br>
-</br>
-
-### Local Run Setup (TBU: Currently out of date. Use Actions setup instead.)
+### Local Run Setup
 
 When running locally, you can setup your config file to generate metrics for multiple teams, but remember that you will only be able to see the issues and thus metrics of teams you have permissions to view or are a part of.
 
@@ -116,21 +111,27 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
 ### Points Closed Team Metrics
 
 1. The course is described in a JSON file. The fields of the JSON file are
-   - `organization` this will be used as the name of the organization
-   - `milestoneStartsOn` the `datetime` at which the milestone starts
-   - `milestoneEndsOn` the `datetime` at which the milestone ends
+
+   - `organization` : this will be used as the name of the organization
+   - `milestoneStartsOn` : the `datetime` at which the milestone starts
+   - `milestoneEndsOn` : the `datetime` at which the milestone ends
      if either one of `milestoneStartsOn` or `milestoneEndsOn` is missing then there will
      not be any use of the decay function in the calculation of the score of issues
-   - `teams` this field is a list of key/value pairs. The key of each pair is the team
+   - `teams` : this field is a list of key/value pairs. The key of each pair is the team
      name. It _must_ also be the name of the project board owned by that team from which the
      closed issues, with their urgency and difficulty can be collected. The value of each
      pair is a JSON with the fields
-     - `managers` which contains a list of the GitHub logins that belong to the managers
+     - `managers` : which contains a list of the GitHub logins that belong to the managers
        of the team and therefore do not get any points for closing issues, even if they
        were assigned to them.
-     - `milestone` which must be the name of the milestone to use, so that different
+     - `milestone` : which must be the name of the milestone to use, so that different
        projects can use different milestone names
-     - `milestoneGrade` which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.).
+     - `milestoneGrade` : which specifies the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (what they promised vs delivered, etc.).
+   - `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer by the end of the course.
+   - `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
+   - `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
+   - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation (defaults to false if not specified)
+
 2. Run the script from the command line:
 
 ```bash
@@ -141,6 +142,27 @@ poetry run python exportMetricsForCourseMilestone.py <json_config_file_path>
 
 ```bash
 poetry run python exportMetricsForCourseMilestone.py exampleConfig.json
+```
+
+**Example `exampleConfig.json` file:**
+
+```json
+{
+  "organization": "uprm-inso4116-2023-2024-S1",
+  "teams": {
+    "College Toolbox": {
+      "managers": ["Ryan8702", "EdwinC1339"],
+      "milestone": "Milestone #1",
+      "milestoneGrade": 100.0
+    }
+  },
+  "milestoneStartsOn": "2023-08-14",
+  "milestoneEndsOn": "2023-09-16",
+  "lectureTopicTaskQuota": 4,
+  "sprints": 2,
+  "minTasksPerSprint": 1,
+  "countOpenIssues": false
+}
 ```
 
 The script will generate CSV files containing team metrics for each specified team. The CSV files will be named `<milestone>-<team>-<organization>.csv`.

@@ -1,6 +1,7 @@
 import csv
 import json
 from datetime import datetime
+from src.utils.constants import pr_tz
 from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.getTeamMembers import get_team_members
 
@@ -34,44 +35,54 @@ if __name__ == "__main__":
     # idk why this isn't working, so hardcode for now. Kinda had to anyway cuz managers are hard coded rn
     # teams = get_teams(org)
     with open(course_config_file) as course_config:
-        course_data = json.load(course_config)
-    organization = course_data["organization"]
-    teams_and_teamdata = course_data["teams"]
-    if (
-        course_data.get("milestoneStartsOn", None) is None
-        or not course_data["milestoneStartsOn"]
-        or course_data["milestoneStartsOn"] is None
-        or course_data.get("milestoneEndsOn", None) is None
-        or course_data["milestoneEndsOn"] is None
-        or not course_data["milestoneEndsOn"]
-    ):
-        startDate = datetime.now()
-        endDate = datetime.now()
-        useDecay = False
-    else:
-        startDate = datetime.fromisoformat(course_data["milestoneStartsOn"])
-        endDate = datetime.fromisoformat(course_data["milestoneEndsOn"])
-        useDecay = True
+        config_dict = json.load(course_config)
 
-    print("Organization: ", organization)
+    if config_dict.get("version", "1.0").startswith("1."):
+        organization = config_dict["organization"]
+        teams_and_teamdata = config_dict["teams"]
+        if (
+            config_dict.get("milestoneStartsOn", None) is None
+            or not config_dict["milestoneStartsOn"]
+            or config_dict["milestoneStartsOn"] is None
+            or config_dict.get("milestoneEndsOn", None) is None
+            or config_dict["milestoneEndsOn"] is None
+            or not config_dict["milestoneEndsOn"]
+        ):
+            startDate = datetime.now(tz=pr_tz)
+            endDate = datetime.now(tz=pr_tz)
+            useDecay = False
+        else:
+            startDate = pr_tz.localize(
+                datetime.fromisoformat(
+                    config_dict["milestoneStartsOn"],
+                )
+            )
+            endDate = pr_tz.localize(
+                datetime.fromisoformat(config_dict["milestoneEndsOn"])
+            )
+            useDecay = True
 
-    team_metrics = {}
-    for team, teamdata in teams_and_teamdata.items():
-        print("Team: ", team)
-        print("Managers: ", teamdata["managers"])
-        print("Milestone: ", teamdata["milestone"])
-        members = get_team_members(organization, team)
-        team_metrics[team] = getTeamMetricsForMilestone(
-            org=organization,
-            team=team,
-            milestone=teamdata["milestone"],
-            milestoneGrade=teamdata["milestoneGrade"],
-            members=members,
-            managers=teamdata["managers"],
-            startDate=startDate,
-            endDate=endDate,
-            useDecay=useDecay,
-        )
-        write_milestone_data_to_csv(
-            team_metrics[team], f"{teamdata['milestone']}-{team}-{organization}.csv"
-        )
+        print("Organization: ", organization)
+
+        team_metrics = {}
+        for team, teamdata in teams_and_teamdata.items():
+            print("Team: ", team)
+            print("Managers: ", teamdata["managers"])
+            print("Milestone: ", teamdata["milestone"])
+            members = get_team_members(organization, team)
+            team_metrics[team] = getTeamMetricsForMilestone(
+                org=organization,
+                team=team,
+                milestone=teamdata["milestone"],
+                milestoneGrade=teamdata["milestoneGrade"],
+                members=members,
+                managers=teamdata["managers"],
+                startDate=startDate,
+                endDate=endDate,
+                useDecay=useDecay,
+                sprints=config_dict.get("sprints", 2),
+                minTasksPerSprint=config_dict.get("minTasksPerSprint", 1),
+            )
+            write_milestone_data_to_csv(
+                team_metrics[team], f"{teamdata['milestone']}-{team}-{organization}.csv"
+            )
