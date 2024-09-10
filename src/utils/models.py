@@ -4,7 +4,7 @@ from datetime import datetime
 
 @dataclass
 class DeveloperMetrics:
-    tasksBySprint: list[int] = []
+    tasksBySprint: list[int] = field(default_factory=list)
     pointsClosed: float = 0
     percentContribution: float = 0  # pointsClosed / (totalPoints) * %100
     expectedGrade: float = 0  # floor((pointsClosed / trimmedMean) * %100 , %100)
