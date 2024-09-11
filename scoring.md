@@ -13,7 +13,7 @@ For an issue to be counted towards a student's grade, it must meet the following
 
 3. **Closed by Manager**: Only issues closed by **team managers** are accredited.
 
-4. **Field Population**: Both `urgency` and `difficulty` fields must be populated with numerical values.
+4. **Field Population**: Both `Urgency` and `Difficulty` fields must be populated with numerical values.
 
 5. **Assignment**: The issue must be assigned to at least one team member who is not a manager.
 
@@ -27,7 +27,7 @@ To achieve a good grade each milestone, students should:
 
 3. **No Empty Descriptions**: Issue descriptions should never be empty. Actually state what the problem you're trying to solve is, what is needed to solve it (requirements), and what the solution you're going for is.
 
-4. **Take on Varied Tasks**: Work on a mix of tasks with different difficulty and urgency levels.
+4. **Take on Varied Tasks**: Work on a mix of tasks with different Difficulty and Urgency levels.
 
 5. **Complete Lecture Topic Tasks**: These are tracked independently of milestones (they are counted at the end of the course). These are issues relating to topics present in the lectures and unique to the course (ie. a task relating to setting up Integration Testing while you're taking the INSO4117 course). You can mark a task as a Lecture Topic task by adding "`[Lecture Topic Task]`" to the issue title. Students are expected to complete at least **4** by the end of the course.
 

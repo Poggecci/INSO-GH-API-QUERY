@@ -7,6 +7,7 @@ from src.getTeamMembers import get_team_members
 from src.utils.models import DeveloperMetrics, MilestoneData
 from src.utils.queryRunner import run_graphql_query
 
+# Check out https://docs.github.com/en/graphql/guides/introduction-to-graphql#schema to understand this query better
 get_team_issues = """
 query QueryProjectItemsForTeam(
   $owner: String!
@@ -78,17 +79,17 @@ query QueryProjectItemsForTeam(
                 }
               }
             }
-            urgency: fieldValueByName(name: "Urgency") {
+            Urgency: fieldValueByName(name: "Urgency") {
               ... on ProjectV2ItemFieldNumberValue {
                 number
               }
             }
-            difficulty: fieldValueByName(name: "Difficulty") {
+            Difficulty: fieldValueByName(name: "Difficulty") {
               ... on ProjectV2ItemFieldNumberValue {
                 number
               }
             }
-            modifier: fieldValueByName(name: "Modifier") {
+            Modifier: fieldValueByName(name: "Modifier") {
               ... on ProjectV2ItemFieldNumberValue {
                 number
               }
@@ -236,28 +237,28 @@ def getTeamMetricsForMilestone(
 
             elif not shouldCountOpenIssues:
                 continue
-            if issue["difficulty"] is None or issue["urgency"] is None:
+            if issue["Difficulty"] is None or issue["Urgency"] is None:
                 logger.warning(
                     f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
-            if not issue["difficulty"] or not issue["urgency"]:
+            if not issue["Difficulty"] or not issue["Urgency"]:
                 logger.warning(
                     f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
                 )
                 continue
 
-            if issue["modifier"] is None or not issue["modifier"]:
-                issue["modifier"] = {"number": 0}
+            if issue["Modifier"] is None or not issue["Modifier"]:
+                issue["Modifier"] = {"number": 0}
             workedOnlyByManager = True
             numberAssignees = len(issue["content"]["assignees"]["nodes"])
             print(issue)
             createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
             issueScore = (
-                issue["difficulty"]["number"]
-                * issue["urgency"]["number"]
+                issue["Difficulty"]["number"]
+                * issue["Urgency"]["number"]
                 * (decay(startDate, endDate, createdAt) if useDecay else 1)
-                + issue["modifier"]["number"]
+                + issue["Modifier"]["number"]
             )
             # attribute documentation bonus is a manager has reacted with 🎉
             documentationBonus = issueScore * 0.1
