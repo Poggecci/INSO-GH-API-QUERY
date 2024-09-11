@@ -64,7 +64,7 @@ When using this repo through actions, the generated metrics will be placed in a 
       "projectedGroupGrade": 100.0
     }
   },
-  "lectureTopicTaskQuota": 0,
+  "lectureTopicTaskQuota": 4,
   "countOpenIssues": false,
   "sprints": 2,
   "minTasksPerSprint": 1,
@@ -89,7 +89,86 @@ You should now see a new Workflow on the **Actions** tab on Github. This will ru
 
 # **_End of Actions Setup_**
 
-### Local Run Setup
+### Local Run
+
+When using this repo through actions, the generated metrics will be placed in a `metrics/` folder in your repository on the `inso-metrics` branch. If you have the repository permissions to let Actions create pull requests, the workflow will also create a pull request to merge the metrics onto the main branch.
+
+#### Setup
+
+##### Environment Variables Setup
+
+1. Go to `https://github.com/settings/tokens` and generate a _Classic_ Personal Access Token (PAT).
+2. Name the token something meaningful like "INSO Metrics Generation Token"
+3. Ensure the token has the `read:org` and `read:project` permissions.
+4. Set your expiration to the final date you expect to require the metrics (or set no expiration, though this is not recommended).
+5. Copy the token somewhere private, we will be utilizing it promptly
+6. Create an environment variable ([Windows](https://www.computerhope.com/issues/ch000549.htm)/[Linux](https://stackoverflow.com/questions/45502996/how-to-set-environment-variable-in-linux-permanently)/[MacOS](https://phoenixnap.com/kb/set-environment-variable-mac)) with the name `GH_API_TOKEN` and put the PAT you generated as the value.
+7. Create an environment variable called `ORGANIZATION` with the value of the github organization of the course (ie. `uprm-inso4101-2024-2025-s1`)
+
+##### Python
+
+1. Install [Python](https://www.python.org/)
+2. Install [Poetry](https://python-poetry.org/docs/#installing-with-pipx)
+
+##### Config File Setup
+
+1. Clone this repository to your local device.
+2. Edit the `exampleActionsConfiguration.json` file with the following fields:
+
+- `version` : Version of the config used for the project. The latest version is `2.0`.
+- `projectName` : Name of the Github Project associated with your repository. **Must** also be the name of the team on Github (case-sensitive).
+- `managers` : a list of the GitHub logins (usernames) that belong to the managers (case-sensitive).
+- `milestones` : a nested JSON object mapping each milestone's name to its details including:
+  - `startDate`: start date of the milestone in the format YYYY-MM-DD (not including this field will disable decay)
+  - `endDate`: end date of the milestone in the format YYYY-MM-DD (not including this field will disable decay)
+  - `projectedGroupGrade`: the maximum grade achievable for this milestone, determined by the professor based on the team's overall performance (defaults to `100.0`)
+- `lectureTopicTaskQuota` : number of lecture topic tasks expected to be completed by each developer by the end of the course. Reminder that there **is no** required number of lecture topic tasks per developer per milestone. Only a quota that each developer must fill by the end of the course. Defaults to `0`.
+- `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
+- `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
+- `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
+
+**Example `exampleActionsConfiguration.json` file:**
+
+```json
+{
+  "version": "2.0",
+  "projectName": "College Toolbox",
+  "managers": ["Poggecci"],
+  "milestones": {
+    "Milestone #1": {
+      "startDate": "2024-01-15",
+      "endDate": "2024-02-09",
+      "projectedGroupGrade": 100.0
+    },
+    "Milestone #2": {
+      "startDate": "2024-02-12",
+      "endDate": "2024-03-08",
+      "projectedGroupGrade": 100.0
+    },
+    "Milestone #3": {
+      "startDate": "2024-03-11",
+      "endDate": "2024-04-05",
+      "projectedGroupGrade": 100.0
+    }
+  },
+  "lectureTopicTaskQuota": 4,
+  "countOpenIssues": false,
+  "sprints": 2,
+  "minTasksPerSprint": 1,
+  ""
+}
+```
+
+#### Generating Metrics
+
+1. Run `poetry install`
+2. Run `poetry run python src/generateMilestoneMetricsForActions.py exampleActionsConfiguration.json`
+
+You should now see metrics generated in the directory.
+
+# **_End of Local Run Setup_**
+
+### Setup for Professor (For students who want to run locally, see the Local Run Section)
 
 When running locally, you can setup your config file to generate metrics for multiple teams, but remember that you will only be able to see the issues and thus metrics of teams you have permissions to view or are a part of.
 
@@ -119,7 +198,7 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
      not be any use of the decay function in the calculation of the score of issues
    - `teams` : this field is a list of key/value pairs. The key of each pair is the team
      name. It _must_ also be the name of the project board owned by that team from which the
-     closed issues, with their urgency and difficulty can be collected. The value of each
+     closed issues, with their `Urgency` and `Difficulty` can be collected. The value of each
      pair is a JSON with the fields
      - `managers` : which contains a list of the GitHub logins that belong to the managers
        of the team and therefore do not get any points for closing issues, even if they
@@ -172,7 +251,7 @@ The script will generate CSV files containing team metrics for each specified te
 1. The course is described in a JSON file. The fields of the JSON file are
 
    - `organization` this will be used as the name of the organization
-   - `teams` this field is a list of key/value pairs. The key of each pair is the team name. It must also be the name of the project board owned by that team from which the closed issues, with their urgency and difficulty can be collected. The value of each pair is a JSON with the fields
+   - `teams` this field is a list of key/value pairs. The key of each pair is the team name. It must also be the name of the project board owned by that team from which the closed issues, with their `Urgency` and `Difficulty` can be collected. The value of each pair is a JSON with the fields
 
    - `managers` which contains a list of the GitHub logins that belong to the managers
      of the team and therefore do not get any points for closing issues, even if they

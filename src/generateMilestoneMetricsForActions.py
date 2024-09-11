@@ -11,7 +11,7 @@ from src.utils.models import MilestoneData
 def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str):
     with open(md_file_path, mode="w") as md_file:
         md_file.write("# Milestone Data\n\n")
-        md_file.write(f"## Date Generated: {datetime.now().date}\n")
+        md_file.write(f"## Date Generated: {datetime.now().date()}\n")
         md_file.write(
             "| Developer | Points Closed | Percent Contribution | Projected Grade | Lecture Topic Tasks |\n"
         )
@@ -52,7 +52,7 @@ def write_sprint_task_completion_to_md(
             current_indicator = "[current] " if is_current_sprint else ""
 
             md_file.write(
-                f" {current_indicator}S{sprint+1} ({sprint_start.strftime('%Y-%m-%d')}-{sprint_end.strftime('%Y-%m-%d')}) |"
+                f" {current_indicator}S{sprint+1} ({sprint_start.strftime('%Y/%m/%d')}-{sprint_end.strftime('%Y/%m/%d')}) |"
             )
         md_file.write("\n")
 
@@ -99,6 +99,9 @@ def generateMetricsFromV1Config(config: dict):
     formatter = logging.Formatter("%(levelname)s: %(message)s")
     logFileHandler.setFormatter(formatter)
     logger.addHandler(logFileHandler)
+    logger.warning(
+        'Using V1 Metrics is deprecated. New projects should use V2 metrics. Please update your config to have "version":"2.0".'
+    )
 
     try:
         startDate = datetime.fromisoformat(
