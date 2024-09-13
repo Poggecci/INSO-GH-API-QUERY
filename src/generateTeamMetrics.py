@@ -216,22 +216,11 @@ def getTeamMetricsForMilestone(
             if issue["content"]["milestone"]["title"] != milestone:
                 continue
             if issue["content"].get("closed", False):
-                closedByList = issue["content"]["timelineItems"][
-                    "nodes"
-                ]  # should always have a length of 1 if the issue was closed
-                closedBy = (
-                    closedByList[0]["actor"]["login"]
-                    if len(closedByList) == 1
-                    else None
-                )
-                if closedBy is None:
-                    logger.warning(
-                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) is marked as closed but doesn't have an user who closed it."
-                    )
-                    continue
+                closedByList = issue["content"]["timelineItems"]["nodes"]
+                closedBy = closedByList[-1]["actor"]["login"]
                 if closedBy not in managers:
                     logger.warning(
-                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) was closed by non-manager {closedBy}. Only issues closed by managers are accredited."
+                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) was closed by non-manager {closedBy}. Only issues closed by managers are accredited. Managers for this project are: {managers}"
                     )
                     continue
 
@@ -367,54 +356,3 @@ def getTeamMetricsForMilestone(
             lectureTopicTasksClosed=devLectureTopicTasks[dev],
         )
     return milestoneData
-
-
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) < 2:
-        exit(0)
-    _, course_config_file, *_ = sys.argv
-    with open(course_config_file) as course_config:
-        course_data = json.load(course_config)
-    organization = course_data["organization"]
-    teams_and_teamdata = course_data["teams"]
-    if (
-        course_data.get("milestoneStartsOn", None) is None
-        or not course_data["milestoneStartsOn"]
-        or course_data["milestoneStartsOn"] is None
-        or course_data.get("milestoneEndsOn", None) is None
-        or course_data["milestoneEndsOn"] is None
-        or not course_data["milestoneEndsOn"]
-    ):
-        startDate = datetime.now(tz=pr_tz)
-        endDate = datetime.now(tz=pr_tz)
-        useDecay = False
-    else:
-        startDate = datetime.fromisoformat(course_data["milestoneStartsOn"])
-        endDate = datetime.fromisoformat(course_data["milestoneEndsOn"])
-        useDecay = True
-
-    print("Organization: ", organization)
-
-    team_metrics = {}
-    for team, teamdata in teams_and_teamdata.items():
-        print("Team: ", team)
-        print("Managers: ", teamdata["managers"])
-        print("Milestone: ", teamdata["milestone"])
-        members = get_team_members(organization, team)
-        print(
-            getTeamMetricsForMilestone(
-                org=organization,
-                team=team,
-                milestone=teamdata["milestone"],
-                milestoneGrade=teamdata["milestoneGrade"],
-                members=members,
-                managers=teamdata["managers"],
-                startDate=startDate,
-                endDate=endDate,
-                sprints=course_data.get("sprints", 2),
-                minTasksPerSprint=course_data.get("minTasksPerSprint", 2),
-                useDecay=useDecay,
-            )
-        )
