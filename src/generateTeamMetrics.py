@@ -387,8 +387,8 @@ if __name__ == "__main__":
         or course_data["milestoneEndsOn"] is None
         or not course_data["milestoneEndsOn"]
     ):
-        startDate = datetime.now()
-        endDate = datetime.now()
+        startDate = datetime.now(tz=pr_tz)
+        endDate = datetime.now(tz=pr_tz)
         useDecay = False
     else:
         startDate = datetime.fromisoformat(course_data["milestoneStartsOn"])

@@ -120,8 +120,8 @@ def generateMetricsFromV1Config(config: dict):
         logger.warning(
             f"startDate and/or endDate for {milestone} couldn't be interpreted, proceeding without decay."
         )
-        startDate = datetime.now()
-        endDate = datetime.now()
+        startDate = datetime.now(tz=pr_tz)
+        endDate = datetime.now(tz=pr_tz)
         useDecay = False
     team_metrics = MilestoneData()
     try:
@@ -188,8 +188,8 @@ def generateMetricsFromV2Config(config: dict):
             logger.warning(
                 f"startDate and/or endDate for {milestone} couldn't be interpreted, proceeding without decay."
             )
-            startDate = datetime.now()
-            endDate = datetime.now()
+            startDate = datetime.now(tz=pr_tz)
+            endDate = datetime.now(tz=pr_tz)
             useDecay = False
         team_metrics = MilestoneData()
         try:
@@ -229,6 +229,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
+        print("Please pass in the path to your config (See README.md for how to do it)")
         exit(0)
     _, course_config_file, *_ = sys.argv
     with open(course_config_file) as course_config:

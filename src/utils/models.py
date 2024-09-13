@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from src.utils.constants import pr_tz
 
 
 @dataclass
@@ -15,8 +16,8 @@ class DeveloperMetrics:
 class MilestoneData:
     sprints: int = 2
     totalPointsClosed: float = 0
-    startDate: datetime = datetime.now()
-    endDate: datetime = datetime.now()
+    startDate: datetime = datetime.now(tz=pr_tz)
+    endDate: datetime = datetime.now(tz=pr_tz)
     devMetrics: dict[str, DeveloperMetrics] = field(default_factory=dict)
 
 
