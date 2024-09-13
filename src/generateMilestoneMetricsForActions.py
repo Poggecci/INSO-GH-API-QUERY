@@ -174,10 +174,12 @@ def generateMetricsFromV2Config(config: dict):
         logger.addHandler(logFileHandler)
 
         try:
-            startDate = datetime.fromisoformat(
-                f"{mData.get('startDate')}T00:00:00.000Z"
+            startDate = pr_tz.localize(
+                datetime.fromisoformat(f"{mData.get('startDate')}T00:00:00")
             )
-            endDate = datetime.fromisoformat(f"{mData.get('endDate')}T23:59:59.000Z")
+            endDate = pr_tz.localize(
+                datetime.fromisoformat(f"{mData.get('endDate')}T23:59:59")
+            )
             useDecay = True
         except Exception as e:
             print(f"Error while parsing milestone dates: {e}")

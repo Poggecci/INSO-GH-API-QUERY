@@ -113,7 +113,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 ##### Config File Setup
 
 1. Clone this repository to your local device.
-2. Edit the `exampleActionsConfiguration.json` file with the following fields:
+2. Edit the `exampleActionsConfig.json` file with the following fields:
 
 - `version` : Version of the config used for the project. The latest version is `2.0`.
 - `projectName` : Name of the Github Project associated with your repository. **Must** also be the name of the team on Github (case-sensitive).
@@ -127,7 +127,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 - `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
 - `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
 
-**Example `exampleActionsConfiguration.json` file:**
+**Example `exampleActionsConfig.json` file:**
 
 ```json
 {
@@ -162,7 +162,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 #### Generating Metrics
 
 1. Run `poetry install`
-2. Run `poetry run python src/generateMilestoneMetricsForActions.py exampleActionsConfiguration.json`
+2. Run `poetry run python src/generateMilestoneMetricsForActions.py exampleActionsConfig.json`
 
 You should now see metrics generated in the directory.
 
