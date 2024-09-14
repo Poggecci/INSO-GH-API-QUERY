@@ -21,7 +21,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 7. Go to the **Settings** page.
 8. On the sidebar, press the _Secrets and variables_ dropdown, and select **Actions**.
 9. Press the **New Repository Secret** button.
-10. Create a secret with the name `GH_API_TOKEN` and put the PAT you generated as the value.
+10. Create a secret with the name `GITHUB_API_TOKEN` and put the PAT you generated as the value.
 
 ##### Config File Setup
 
@@ -102,7 +102,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 3. Ensure the token has the `read:org` and `read:project` permissions.
 4. Set your expiration to the final date you expect to require the metrics (or set no expiration, though this is not recommended).
 5. Copy the token somewhere private, we will be utilizing it promptly
-6. Create an environment variable ([Windows](https://www.computerhope.com/issues/ch000549.htm)/[Linux](https://stackoverflow.com/questions/45502996/how-to-set-environment-variable-in-linux-permanently)/[MacOS](https://phoenixnap.com/kb/set-environment-variable-mac)) with the name `GH_API_TOKEN` and put the PAT you generated as the value.
+6. Create an environment variable ([Windows](https://www.computerhope.com/issues/ch000549.htm)/[Linux](https://stackoverflow.com/questions/45502996/how-to-set-environment-variable-in-linux-permanently)/[MacOS](https://phoenixnap.com/kb/set-environment-variable-mac)) with the name `GITHUB_API_TOKEN` and put the PAT you generated as the value.
 7. Create an environment variable called `ORGANIZATION` with the value of the github organization of the course (ie. `uprm-inso4101-2024-2025-s1`)
 
 ##### Python
