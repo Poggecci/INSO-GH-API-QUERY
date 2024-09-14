@@ -298,9 +298,10 @@ def getTeamMetricsForMilestone(
                     )
                     continue
                 # attribute task completion to appropriate sprint
-                taskCompletionDate = datetime.fromisoformat(
-                    issue["content"].get("closedAt", issue["content"]["createdAt"])
-                )
+                closedAt = None
+                if issue["content"]["closedAt"] is not None:
+                    closedAt = datetime.fromisoformat(issue["content"]["closedAt"])
+                taskCompletionDate = closedAt if closedAt is not None else createdAt
                 sprintIndex = getCurrentSprintIndex(taskCompletionDate, sprintCutoffs)
                 devTasksCompleted[dev["login"]][sprintIndex] += 1
                 # attribute Lecture topic tasks even if they are a manager
