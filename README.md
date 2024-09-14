@@ -21,7 +21,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 7. Go to the **Settings** page.
 8. On the sidebar, press the _Secrets and variables_ dropdown, and select **Actions**.
 9. Press the **New Repository Secret** button.
-10. Create a secret with the name `GITHUB_API_TOKEN` and put the PAT you generated as the value.
+10. Create a secret with the name `GH_API_TOKEN` and put the PAT you generated as the value.
 
 ##### Config File Setup
 
