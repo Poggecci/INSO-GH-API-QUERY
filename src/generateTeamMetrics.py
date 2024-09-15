@@ -205,6 +205,8 @@ def getTeamMetricsForMilestone(
         # Extract data
         issues = project["items"]["nodes"]
         for issue in issues:
+            if issue["content"] is None:
+                continue
             if issue["content"].get("milestone", None) is None:
                 issueNumber = issue["content"].get("number")
                 issueUrl = issue["content"].get("url")
