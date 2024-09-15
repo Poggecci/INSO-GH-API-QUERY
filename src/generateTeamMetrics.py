@@ -204,10 +204,12 @@ def getTeamMetricsForMilestone(
                 logger.exception(
                     f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
                 )
+                continue
             except ValueError as e:
                 logger.exception(
                     f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
                 )
+                continue
 
             if not should_count_issue(
                 issue=issue,
