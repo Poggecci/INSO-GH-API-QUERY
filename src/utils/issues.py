@@ -25,11 +25,11 @@ def parse_issue(*, issue_dict: dict) -> Issue:
                created/closed times, assignees, reactions, comments, urgency, difficulty, and modifier values.
 
     Raises:
-        ParsingError: If the structure of the issue_dict does not match the expected format, either due to missing fields
+        ParsingError: If the issue 'content' field is missing or is empty due to permission errors or possibly API changes.
+        Key Error: If the structure of the issue_dict does not match the expected format, either due to missing fields
                       or permission errors. Specific errors include:
-                      - Missing or incorrect 'content' field.
-                      - KeyError for required fields such as 'url', 'number', 'title', 'createdAt', etc.
-                      - ValueError if date formatting for 'createdAt' or 'closedAt' fails.
+                      - Missing Required fields such as 'url', 'number', 'title', 'createdAt', etc.
+        ValueError: if date formatting for 'createdAt' or 'closedAt' fails.
     """
     # Note that project scoped fields are not tied to the issue content!
     urgency: float | None = None
@@ -117,6 +117,32 @@ def should_count_issue(
     managers: list[str],
     shouldCountOpenIssues: bool,
 ) -> bool:
+    """
+    Determines whether an issue should be counted for scoring based on various criteria.
+
+    This function checks if an issue meets the following conditions:
+    1. The issue is associated with a milestone.
+    2. The issue's milestone matches the current milestone.
+    3. If the issue is closed, it was closed by a manager.
+    4. If the issue is open, open issues are allowed to be counted.
+    5. The issue has both Urgency and Difficulty fields populated.
+
+    Args:
+        issue (Issue): The issue to be evaluated.
+        logger (logging.Logger): Logger object for recording warnings.
+        currentMilestone (str): The milestone currently being processed.
+        managers (list[str]): List of manager usernames.
+        shouldCountOpenIssues (bool): Flag indicating whether open issues should be counted.
+
+    Returns:
+        bool: True if the issue should be counted, False otherwise.
+
+    Side effects:
+        Logs warnings for issues that:
+        - Are not associated with a milestone.
+        - Were closed by a non-manager.
+        - Do not have Urgency and/or Difficulty fields populated.
+    """
     if issue.milestone is None:
         logger.warning(
             f"[Issue #{issue.number}]({issue.url}) is not associated with a milestone."
@@ -169,6 +195,39 @@ def calculate_issue_scores(
     useDecay: bool,
     logger: logging.Logger,
 ) -> IssueMetrics:
+    """
+    Calculates scores and bonuses for an issue based on various factors and team member roles.
+
+    This function computes the base score for an issue and distributes it among assigned developers.
+    It also calculates bonus points for documentation contributions.
+
+    Args:
+        issue (Issue): The issue to be scored.
+        managers (list[str]): List of manager usernames.
+        developers (list[str]): List of developer usernames.
+        startDate (datetime): The start date of the relevant period (e.g., milestone start).
+        endDate (datetime): The end date of the relevant period (e.g., milestone end).
+        useDecay (bool): Flag to determine if decay factor should be applied to the score.
+        logger (logging.Logger): Logger object for recording information and warnings.
+
+    Returns:
+        IssueMetrics: An object containing two defaultdict(float) attributes:
+                      - pointsByDeveloper: Base scores attributed to each developer.
+                      - bonusesByDeveloper: Bonus scores attributed to each developer.
+
+    Behavior:
+        1. Calculates base issue score using difficulty, urgency, and optional decay factor.
+        2. Applies modifier to the base score if present.
+        3. Attributes documentation bonus (10% of issue score) to the issue author if a manager reacted with 🎉.
+        4. Attributes additional documentation bonus for helpful comments if a manager reacted with 🎉.
+        5. Distributes the base issue score equally among assigned developers.
+        6. Logs warnings for assignments to users not in the developers or managers lists.
+
+    Note:
+        - The function assumes that issue.difficulty and issue.urgency are not None.
+        - Bonuses are only attributed once per issue and once for comments.
+        - Scores are only attributed to users in the developers list.
+    """
 
     assert issue.difficulty is not None and issue.urgency is not None
     modifier = issue.modifier if issue.modifier is not None else 0.0
@@ -205,8 +264,8 @@ def calculate_issue_scores(
             )
             break  # only attribute the bonus once and to the earliest comment
 
-    # attribute points only to developers
-    assignedDevelopers = len(set(issue.assignees) - set(managers))
+    # attribute points only to developers in the team
+    assignedDevelopers = len((set(issue.assignees) - set(managers)) & (set(developers)))
     distributedScore = (
         issueScore / assignedDevelopers if assignedDevelopers > 0 else issueScore
     )
