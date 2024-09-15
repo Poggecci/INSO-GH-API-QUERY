@@ -3,8 +3,12 @@ import logging
 from typing import Iterable
 from datetime import datetime
 from src.utils.constants import pr_tz
-from src.getTeamMembers import get_team_members
-from src.utils.models import DeveloperMetrics, MilestoneData
+from src.utils.issues import (
+    calculate_issue_scores,
+    parse_issue,
+    should_count_issue,
+)
+from src.utils.models import DeveloperMetrics, MilestoneData, ParsingError
 from src.utils.queryRunner import run_graphql_query
 
 # Check out https://docs.github.com/en/graphql/guides/introduction-to-graphql#schema to understand this query better
@@ -103,22 +107,6 @@ query QueryProjectItemsForTeam(
 """
 
 
-def decay(
-    milestoneStart: datetime, milestoneEnd: datetime, issueCreated: datetime
-) -> float:
-    duration = (milestoneEnd - milestoneStart).days
-    if issueCreated > milestoneEnd:
-        issueCreated = milestoneEnd
-    issueLateness = max(0, (issueCreated - milestoneStart).days)
-    decayBase = 1 + 1 / duration
-    difference = pow(decayBase, 3 * duration) - pow(decayBase, 0)
-    finalDecrease = 0.7
-    translate = 1 + finalDecrease / difference
-    return max(
-        0, translate - finalDecrease * pow(decayBase, 3 * issueLateness) / difference
-    )
-
-
 def outliersRemovedAverage(scores: Iterable) -> float:
     smallest_elem = min(scores, default=0)
     largestVal = max(scores, default=0)
@@ -148,7 +136,7 @@ def getFormattedSprintDateRange(
 
 
 def generateSprintCutoffs(
-    startDate: datetime, endDate: datetime, sprints: int
+    *, startDate: datetime, endDate: datetime, sprints: int
 ) -> list[datetime]:
     if sprints <= 1:
         return []
@@ -188,7 +176,9 @@ def getTeamMetricsForMilestone(
     totalPointsClosed = 0.0
     params = {"owner": org, "team": team}
     milestoneData = MilestoneData(sprints=sprints, startDate=startDate, endDate=endDate)
-    sprintCutoffs = generateSprintCutoffs(startDate, endDate, sprints)
+    sprintCutoffs = generateSprintCutoffs(
+        startDate=startDate, endDate=endDate, sprints=sprints
+    )
     hasAnotherPage = True
     while hasAnotherPage:
         response: dict = run_graphql_query(get_team_issues, params)
@@ -204,119 +194,60 @@ def getTeamMetricsForMilestone(
             )
         # Extract data
         issues = project["items"]["nodes"]
-        for issue in issues:
-            if issue["content"] is None:
+        for issue_dict in issues:
+            try:
+                issue = parse_issue(issue_dict=issue_dict)
+            except ParsingError:
+                # don't log since the root cause can be hard to identify without manual review
                 continue
-            if issue["content"].get("milestone", None) is None:
-                issueNumber = issue["content"].get("number")
-                issueUrl = issue["content"].get("url")
-                if issueUrl:
-                    logger.warning(
-                        f"[Issue #{issueNumber}]({issueUrl}) is not associated with a milestone."
-                    )
-                continue
-            if issue["content"]["milestone"]["title"] != milestone:
-                continue
-            if issue["content"].get("closed", False):
-                closedByList = issue["content"]["timelineItems"]["nodes"]
-                closedBy = closedByList[-1]["actor"]["login"]
-                if closedBy not in managers:
-                    logger.warning(
-                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) was closed by non-manager {closedBy}. Only issues closed by managers are accredited. Managers for this project are: {managers}"
-                    )
-                    continue
+            except KeyError as e:
+                logger.exception(
+                    f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
+                )
+            except ValueError as e:
+                logger.exception(
+                    f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
+                )
 
-            elif not shouldCountOpenIssues:
-                continue
-            if issue["Difficulty"] is None or issue["Urgency"] is None:
-                logger.warning(
-                    f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
-                )
-                continue
-            if not issue["Difficulty"] or not issue["Urgency"]:
-                logger.warning(
-                    f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) does not have the Urgency and/or Difficulty fields populated"
-                )
-                continue
-
-            if issue["Modifier"] is None or not issue["Modifier"]:
-                issue["Modifier"] = {"number": 0}
-            workedOnlyByManager = True
-            numberAssignees = len(issue["content"]["assignees"]["nodes"])
-            print(issue)
-            createdAt = datetime.fromisoformat(issue["content"]["createdAt"])
-            issueScore = (
-                issue["Difficulty"]["number"]
-                * issue["Urgency"]["number"]
-                * (decay(startDate, endDate, createdAt) if useDecay else 1)
-                + issue["Modifier"]["number"]
-            )
-            # attribute documentation bonus is a manager has reacted with 🎉
-            documentationBonus = issueScore * 0.1
-            if any(
-                map(
-                    (lambda reaction: (reaction["user"]["login"] in managers)),
-                    issue["content"]["reactions"]["nodes"],
-                )
+            if not should_count_issue(
+                issue=issue,
+                logger=logger,
+                currentMilestone=milestone,
+                managers=managers,
+                shouldCountOpenIssues=shouldCountOpenIssues,
             ):
-                if issue["content"]["author"]["login"] not in managers:
-                    devPointsClosed[
-                        issue["content"]["author"]["login"]
-                    ] += documentationBonus
-                    logger.info(
-                        f"Documentation Bonus given to [Issue #{issue['content'].get('number')}]({issue['content'].get('url')})"
-                    )
-                    totalPointsClosed += documentationBonus
-            else:
-                for comment in issue["content"]["comments"]["nodes"]:
-                    if (
-                        any(
-                            map(
-                                (
-                                    lambda reaction: (
-                                        reaction["user"]["login"] in managers
-                                    )
-                                ),
-                                comment["reactions"]["nodes"],
-                            )
-                        )
-                        and issue["content"]["author"]["login"] not in managers
-                    ):
-                        devPointsClosed[
-                            comment["author"]["login"]
-                        ] += documentationBonus
-                        break  # only attribute the bonus once and to the earliest comment
+                continue
 
-            # attribute points to correct developer
-            for dev in issue["content"]["assignees"]["nodes"]:
-                if dev["login"] in managers:
-                    logger.info(
-                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to manager {dev['login']}"
-                    )
-                    continue
-                if dev["login"] not in developers:
-                    logger.warning(
-                        f"[Issue #{issue['content'].get('number')}]({issue['content'].get('url')}) assigned to developer {dev['login']} not belonging to the team."
-                    )
-                    continue
+            print(f"Successfully validated Issue #{issue.number}")
+            issueMetrics = calculate_issue_scores(
+                issue=issue,
+                managers=managers,
+                developers=developers,
+                startDate=startDate,
+                endDate=endDate,
+                useDecay=useDecay,
+                logger=logger,
+            )
+            # attribute base issue points to developer alongside giving them credit for the completed task
+            for dev, score in issueMetrics.pointsByDeveloper.items():
+                devPointsClosed[dev] += score
                 # attribute task completion to appropriate sprint
-                closedAt = None
-                if issue["content"]["closedAt"] is not None:
-                    closedAt = datetime.fromisoformat(issue["content"]["closedAt"])
-                taskCompletionDate = closedAt if closedAt is not None else createdAt
+                taskCompletionDate = (
+                    issue.closedAt if issue.closedAt is not None else issue.createdAt
+                )
                 sprintIndex = getCurrentSprintIndex(taskCompletionDate, sprintCutoffs)
-                devTasksCompleted[dev["login"]][sprintIndex] += 1
-                # attribute Lecture topic tasks even if they are a manager
-                if "[Lecture Topic Task]" in issue["content"].get("title", ""):
-                    devLectureTopicTasks[dev["login"]] += 1
-                if dev["login"] not in managers:
-                    workedOnlyByManager = False
-                if dev["login"] in managers:
-                    continue  # don't count manager metrics
-                devPointsClosed[dev["login"]] += issueScore / numberAssignees
+                devTasksCompleted[dev][sprintIndex] += 1
+                # update total points closed metric
+                totalPointsClosed += score
 
-            if not workedOnlyByManager:
-                totalPointsClosed += issueScore
+                # attribute Lecture topic tasks if applicable
+                if issue.isLectureTopicTask:
+                    devLectureTopicTasks[dev] += 1
+
+            # attribute bonuses for developers
+            for dev, bonus in issueMetrics.bonusesByDeveloper.items():
+                devPointsClosed[dev] += bonus
+                # Note that bonus do not increase the total points closed such as to not "raise the bar"
 
         hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
