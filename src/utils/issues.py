@@ -53,7 +53,7 @@ def parse_issue(*, issue_dict: dict) -> Issue:
     url: str = content["url"]
     number = content["number"]
     title: str = content["title"]
-    author: str = content["author"]
+    author: str = content["author"]["login"]
     createdAt = datetime.fromisoformat(content["createdAt"])
     closed = content["closed"]
     assignees = [
