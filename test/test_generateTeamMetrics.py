@@ -34,6 +34,7 @@ mock_gh_res_with_issue_closed_by_dev = {
                                         "author": {"login": "dev1"},
                                         "createdAt": "2023-01-01T00:00:00Z",
                                         "closed": True,
+                                        "closedAt": "2023-01-01T00:00:00Z",
                                         "milestone": {"title": "v1.0"},
                                         "assignees": {"nodes": [{"login": "dev1"}]},
                                         "timelineItems": {
@@ -82,6 +83,7 @@ mock_gh_res_v20_milestone = {
                                         "author": {"login": "dev1"},
                                         "createdAt": "2023-01-01T00:00:00Z",
                                         "closed": True,
+                                        "closedAt": "2023-01-01T00:00:00Z",
                                         "milestone": {
                                             "title": "v2.0"
                                         },  # Different milestone
@@ -126,10 +128,12 @@ mock_gh_res_with_open_issue = {
                                         "author": {"login": "dev1"},
                                         "createdAt": "2023-01-01T00:00:00Z",
                                         "closed": False,  # Open issue
+                                        "closedAt": None,
                                         "milestone": {"title": "v1.0"},
                                         "assignees": {"nodes": [{"login": "dev1"}]},
                                         "reactions": {"nodes": []},
                                         "comments": {"nodes": []},
+                                        "timelineItems": {"nodes": []},
                                     },
                                     "Urgency": {"number": 3},
                                     "Difficulty": {"number": 2},
@@ -159,7 +163,7 @@ def test_issues_closed_by_non_managers_arent_counted(mock_run_graphql_query, log
     useDecay = True
     milestoneGrade = 90
     sprints = 1
-    minTasksPerSprint = 1
+    minTasksPerSprint = 0
 
     result = getTeamMetricsForMilestone(
         org=org,
@@ -196,7 +200,7 @@ def test_issues_not_belonging_to_milestone_arent_counted(
     useDecay = True
     milestoneGrade = 90
     sprints = 1
-    minTasksPerSprint = 1
+    minTasksPerSprint = 0
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -233,7 +237,7 @@ def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
     milestoneGrade = 90
     shouldCountOpenIssues = False
     sprints = 1
-    minTasksPerSprint = 1
+    minTasksPerSprint = 0
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -296,6 +300,7 @@ mock_gh_res_issue_only_worked_by_manager = {
                                         "author": {"login": "manager1"},
                                         "createdAt": "2023-01-01T00:00:00Z",
                                         "closed": True,
+                                        "closedAt": "2023-01-01T00:00:00Z",
                                         "milestone": {"title": "v1.0"},
                                         "assignees": {"nodes": [{"login": "manager1"}]},
                                         "reactions": {"nodes": []},
@@ -338,6 +343,7 @@ mock_gh_res_issue_with_hooray = {
                                         "author": {"login": "dev1"},
                                         "createdAt": "2023-01-01T00:00:00Z",
                                         "closed": True,
+                                        "closedAt": "2023-01-01T00:00:00Z",
                                         "milestone": {"title": "v1.0"},
                                         "assignees": {"nodes": [{"login": "dev1"}]},
                                         "reactions": {
@@ -386,6 +392,7 @@ mock_gh_res_issue_with_multiple_devs = {
                                         "author": {"login": "dev1"},
                                         "createdAt": "2023-01-01T00:00:00Z",
                                         "closed": True,
+                                        "closedAt": "2023-01-01T00:00:00Z",
                                         "milestone": {"title": "v1.0"},
                                         "assignees": {
                                             "nodes": [
@@ -429,7 +436,7 @@ def test_issues_only_worked_on_by_managers_arent_counted(
     useDecay = True
     milestoneGrade = 90
     sprints = 1
-    minTasksPerSprint = 1
+    minTasksPerSprint = 0
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -461,9 +468,9 @@ def test_issues_with_hooray_reaction_get_bonus(mock_run_graphql_query, logger):
     startDate = datetime(2023, 1, 1, tzinfo=pytz.UTC)
     endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
     useDecay = True
-    milestoneGrade = 90
+    milestoneGrade = 100
     sprints = 1
-    minTasksPerSprint = 1
+    minTasksPerSprint = 0
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,
@@ -480,7 +487,9 @@ def test_issues_with_hooray_reaction_get_bonus(mock_run_graphql_query, logger):
     )
 
     expected_score = (3 * 2 + 1) * 1.1  # Urgency * Difficulty + Modifier * 110%
-    assert result.totalPointsClosed == pytest.approx(expected_score)
+    assert result.totalPointsClosed == pytest.approx(
+        expected_score / 1.1
+    )  # make sure the total points exclude bonuses
     assert result.devMetrics["dev1"].pointsClosed == pytest.approx(expected_score)
 
 
@@ -500,7 +509,7 @@ def test_issues_with_multiple_developers_have_points_divided(
     useDecay = True
     milestoneGrade = 90
     sprints = 1
-    minTasksPerSprint = 1
+    minTasksPerSprint = 0
     result = getTeamMetricsForMilestone(
         org=org,
         team=team,

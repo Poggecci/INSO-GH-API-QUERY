@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import StrEnum
 from src.utils.constants import pr_tz
 
 
@@ -25,3 +26,52 @@ class MilestoneData:
 class LectureTopicTaskData:
     totalLectureTopicTasks: int = 0
     lectureTopicTasksByDeveloper: dict[str, int] = field(default_factory=dict)
+
+
+class ReactionKind(StrEnum):
+    HOORAY = "HOORAY"
+
+
+@dataclass(kw_only=True)
+class Reaction:
+    user_login: str
+    kind: ReactionKind
+
+
+@dataclass(kw_only=True)
+class Comment:
+    author_login: str
+    reactions: list[Reaction] = field(default_factory=list)
+
+
+@dataclass(kw_only=True)
+class Issue:
+    url: str
+    number: int
+    title: str
+    author: str
+    createdAt: datetime
+    closedAt: datetime | None
+    closed: bool
+    closedBy: str | None
+    milestone: str | None
+    assignees: list[str] = field(default_factory=list)
+    reactions: list[Reaction] = field(default_factory=list)
+    comments: list[Comment] = field(default_factory=list)
+    urgency: float | None
+    difficulty: float | None
+    modifier: float | None
+    isLectureTopicTask: bool
+
+
+@dataclass(kw_only=True)
+class IssueMetrics:
+    pointsByDeveloper: dict[str, float]
+    bonusesByDeveloper: dict[str, float]
+
+
+class ParsingError(Exception):
+    """Custom exception for parsing errors."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
