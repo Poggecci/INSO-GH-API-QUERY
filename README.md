@@ -14,7 +14,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 
 1. Go to `https://github.com/settings/tokens` and generate a _Classic_ Personal Access Token (PAT).
 2. Name the token something meaningful like "INSO Metrics Generation Token"
-3. Ensure the token has the `read:org` and `read:project` permissions.
+3. Ensure the token has the `read:org` and `read:project` permissions. Ensure that your repository is **Public**. Private repositories will require more permissions for the PAT.
 4. Set your expiration to the final date you expect to require the metrics (or set no expiration, though this is not recommended).
 5. Copy the token somewhere private, we will be utilizing it promptly
 6. Navigate to the repository you would like to generate metrics for
@@ -99,7 +99,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 
 1. Go to `https://github.com/settings/tokens` and generate a _Classic_ Personal Access Token (PAT).
 2. Name the token something meaningful like "INSO Metrics Generation Token"
-3. Ensure the token has the `read:org` and `read:project` permissions.
+3. Ensure the token has the `read:org` and `read:project` permissions. Ensure that your repository is **Public**. Private repositories will require more permissions for the PAT.
 4. Set your expiration to the final date you expect to require the metrics (or set no expiration, though this is not recommended).
 5. Copy the token somewhere private, we will be utilizing it promptly
 6. Create an environment variable ([Windows](https://www.computerhope.com/issues/ch000549.htm)/[Linux](https://stackoverflow.com/questions/45502996/how-to-set-environment-variable-in-linux-permanently)/[MacOS](https://phoenixnap.com/kb/set-environment-variable-mac)) with the name `GITHUB_API_TOKEN` and put the PAT you generated as the value.
@@ -179,7 +179,7 @@ poetry install
 ```
 
 2. You must create a GitHub classic personal access token with the permissions `read:org`
-   and `read:project`.
+   and `read:project`. Ensure that your repository is **Public**. Private repositories will require more permissions for the PAT.
 3. Assign your Github classic PAT to the environment variable `GITHUB_API_TOKEN`. This
    allows you to keep the token in an encrypted file. For example,
 
