@@ -192,6 +192,7 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
 1. The course is described in a JSON file. The fields of the JSON file are
 
    - `organization` : this will be used as the name of the organization
+   - `metricsDirectory` : The folder where the metrics will be stored relative to where the script was called. Will create the folder if it doesn't exist.
    - `milestoneStartsOn` : the `datetime` at which the milestone starts
    - `milestoneEndsOn` : the `datetime` at which the milestone ends
      if either one of `milestoneStartsOn` or `milestoneEndsOn` is missing then there will
@@ -228,6 +229,7 @@ poetry run python exportMetricsForCourseMilestone.py exampleConfig.json
 ```json
 {
   "organization": "uprm-inso4116-2023-2024-S1",
+  "metricsDirectory": ".",
   "teams": {
     "College Toolbox": {
       "managers": ["Ryan8702", "EdwinC1339"],
@@ -251,6 +253,7 @@ The script will generate CSV files containing team metrics for each specified te
 1. The course is described in a JSON file. The fields of the JSON file are
 
    - `organization` this will be used as the name of the organization
+   - `metricsDirectory` : The folder where the metrics will be stored relative to where the script was called. Will create the folder if it doesn't exist.
    - `teams` this field is a list of key/value pairs. The key of each pair is the team name. It must also be the name of the project board owned by that team from which the closed issues, with their `Urgency` and `Difficulty` can be collected. The value of each pair is a JSON with the fields
 
    - `managers` which contains a list of the GitHub logins that belong to the managers

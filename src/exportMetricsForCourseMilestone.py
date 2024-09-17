@@ -28,6 +28,7 @@ def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: st
 
 if __name__ == "__main__":
     import sys
+    import os
 
     if len(sys.argv) < 2:
         exit(0)
@@ -39,6 +40,7 @@ if __name__ == "__main__":
 
     if config_dict.get("version", "1.0").startswith("1."):
         organization = config_dict["organization"]
+        metricsDirectory = config_dict["metricsDirectory"]
         teams_and_teamdata = config_dict["teams"]
         if (
             config_dict.get("milestoneStartsOn", None) is None
@@ -83,6 +85,8 @@ if __name__ == "__main__":
                 sprints=config_dict.get("sprints", 2),
                 minTasksPerSprint=config_dict.get("minTasksPerSprint", 1),
             )
+            os.makedirs(metricsDirectory, exist_ok=True)
             write_milestone_data_to_csv(
-                team_metrics[team], f"{teamdata['milestone']}-{team}-{organization}.csv"
+                team_metrics[team],
+                f"{metricsDirectory}/{teamdata['milestone']}-{team}-{organization}.csv",
             )

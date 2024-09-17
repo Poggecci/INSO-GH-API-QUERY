@@ -19,6 +19,7 @@ def write_lecture_topic_task_data_to_csv(
 
 if __name__ == "__main__":
     import sys
+    import os
 
     if len(sys.argv) < 2:
         exit(0)
@@ -40,6 +41,7 @@ if __name__ == "__main__":
         lecture_topic_task_metrics_by_team[team] = getLectureTopicTaskMetrics(
             org=organization, team=team, members=members
         )
+        os.makedirs(metricsDirectory, exist_ok=True)
         write_lecture_topic_task_data_to_csv(
             lecture_topic_task_metrics_by_team[team],
             f"{metricsDirectory}/Lecture Topic Tasks-{team}-{organization}.csv",
