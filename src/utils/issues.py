@@ -242,7 +242,12 @@ def calculate_issue_scores(
     # attribute documentation bonus to author when a manager has reacted to the issue description with 🎉
     documentationBonus = issueScore * 0.1
     for reaction in issue.reactions:
-        if reaction.kind == ReactionKind.HOORAY and reaction.user_login in managers:
+        if (
+            reaction.kind == ReactionKind.HOORAY
+            and reaction.user_login in managers
+            and issue.author
+            not in managers  # Ensure the author isn't a manager as they shouldn't be receiving poitns
+        ):
             logger.info(
                 f"Documentation Bonus given to {issue.author} in [Issue #{issue.number}]({issue.url})"
             )
