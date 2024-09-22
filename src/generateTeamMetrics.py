@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 import json
 import logging
 from typing import Iterable
@@ -152,6 +153,27 @@ def generateSprintCutoffs(
     return cutoffs
 
 
+def isses_from_gh_api(*, org: str, team: str) -> Iterator[dict]:
+    params = {"owner": org, "team": team}
+    hasAnotherPage = True
+    while hasAnotherPage:
+        response: dict = run_graphql_query(get_team_issues, params)
+        projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
+        project = next(filter(lambda x: x["title"] == team, projects), None)
+        if not project:
+            raise Exception(
+                "Project not found in org. Likely means the project board"
+                " doesn't share the same name as the team."
+            )
+
+        issues = project["items"]["nodes"]
+        yield from issues
+
+        hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
+        if hasAnotherPage:
+            params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
+
+
 def getTeamMetricsForMilestone(
     org: str,
     team: str,
@@ -174,86 +196,66 @@ def getTeamMetricsForMilestone(
     devTasksCompleted = {dev: [0 for _ in range(sprints)] for dev in developers}
     devLectureTopicTasks = {dev: 0 for dev in developers}
     totalPointsClosed = 0.0
-    params = {"owner": org, "team": team}
     milestoneData = MilestoneData(sprints=sprints, startDate=startDate, endDate=endDate)
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
-    hasAnotherPage = True
-    while hasAnotherPage:
-        response: dict = run_graphql_query(get_team_issues, params)
-        projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
-        project = next(filter(lambda x: x["title"] == team, projects), None)
-        if not project:
-            logger.critical(
-                "Project not found in org. Likely means the project board doesn't share the same name as the team."
+    for issue_dict in isses_from_gh_api(org=org, team=team):
+        try:
+            issue = parse_issue(issue_dict=issue_dict)
+        except ParsingError:
+            # don't log since the root cause can be hard to identify without manual review
+            continue
+        except KeyError as e:
+            logger.exception(
+                f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
             )
-            raise Exception(
-                "Project not found in org. Likely means the project board"
-                " doesn't share the same name as the team."
+            continue
+        except ValueError as e:
+            logger.exception(
+                f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
             )
-        # Extract data
-        issues = project["items"]["nodes"]
-        for issue_dict in issues:
-            try:
-                issue = parse_issue(issue_dict=issue_dict)
-            except ParsingError:
-                # don't log since the root cause can be hard to identify without manual review
-                continue
-            except KeyError as e:
-                logger.exception(
-                    f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
-                )
-                continue
-            except ValueError as e:
-                logger.exception(
-                    f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
-                )
-                continue
+            continue
 
-            if not should_count_issue(
-                issue=issue,
-                logger=logger,
-                currentMilestone=milestone,
-                managers=managers,
-                shouldCountOpenIssues=shouldCountOpenIssues,
-            ):
-                continue
+        if not should_count_issue(
+            issue=issue,
+            logger=logger,
+            currentMilestone=milestone,
+            managers=managers,
+            shouldCountOpenIssues=shouldCountOpenIssues,
+        ):
+            continue
 
-            print(f"Successfully validated Issue #{issue.number}")
-            issueMetrics = calculate_issue_scores(
-                issue=issue,
-                managers=managers,
-                developers=developers,
-                startDate=startDate,
-                endDate=endDate,
-                useDecay=useDecay,
-                logger=logger,
+        print(f"Successfully validated Issue #{issue.number}")
+        issueMetrics = calculate_issue_scores(
+            issue=issue,
+            managers=managers,
+            developers=developers,
+            startDate=startDate,
+            endDate=endDate,
+            useDecay=useDecay,
+            logger=logger,
+        )
+        # attribute base issue points to developer alongside giving them credit for the completed task
+        for dev, score in issueMetrics.pointsByDeveloper.items():
+            devPointsClosed[dev] += score
+            # attribute task completion to appropriate sprint
+            taskCompletionDate = (
+                issue.closedAt if issue.closedAt is not None else issue.createdAt
             )
-            # attribute base issue points to developer alongside giving them credit for the completed task
-            for dev, score in issueMetrics.pointsByDeveloper.items():
-                devPointsClosed[dev] += score
-                # attribute task completion to appropriate sprint
-                taskCompletionDate = (
-                    issue.closedAt if issue.closedAt is not None else issue.createdAt
-                )
-                sprintIndex = getCurrentSprintIndex(taskCompletionDate, sprintCutoffs)
-                devTasksCompleted[dev][sprintIndex] += 1
-                # update total points closed metric
-                totalPointsClosed += score
+            sprintIndex = getCurrentSprintIndex(taskCompletionDate, sprintCutoffs)
+            devTasksCompleted[dev][sprintIndex] += 1
+            # update total points closed metric
+            totalPointsClosed += score
 
-                # attribute Lecture topic tasks if applicable
-                if issue.isLectureTopicTask:
-                    devLectureTopicTasks[dev] += 1
+            # attribute Lecture topic tasks if applicable
+            if issue.isLectureTopicTask:
+                devLectureTopicTasks[dev] += 1
 
-            # attribute bonuses for developers
-            for dev, bonus in issueMetrics.bonusesByDeveloper.items():
-                devPointsClosed[dev] += bonus
-                # Note that bonus do not increase the total points closed such as to not "raise the bar"
-
-        hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
-        if hasAnotherPage:
-            params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
+        # attribute bonuses for developers
+        for dev, bonus in issueMetrics.bonusesByDeveloper.items():
+            devPointsClosed[dev] += bonus
+            # Note that bonus do not increase the total points closed such as to not "raise the bar"
 
     untrimmedAverage = totalPointsClosed / max(1, len(devPointsClosed))
     trimmedAverage = outliersRemovedAverage(devPointsClosed.values())
