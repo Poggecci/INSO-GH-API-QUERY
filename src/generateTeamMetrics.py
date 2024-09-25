@@ -191,6 +191,7 @@ def getTeamMetricsForMilestone(
 ) -> MilestoneData:
     if logger is None:
         logger = logging.getLogger(__name__)
+    print(members)
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
     devTasksCompleted = {dev: [0 for _ in range(sprints)] for dev in developers}
