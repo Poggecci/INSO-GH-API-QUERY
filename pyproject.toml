@@ -12,13 +12,22 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 requests = "^2.32.2"
+types-requests = "^2.32"
 pytz = "^2024.1"
-
+types-pytz = "^2024.2"
 
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
+debugpy = "^1.8.5"
+mypy = "^1.11.2"
+
+[tool.pylsp-mypy]
+enabled = true
+live_mode = true
+strict = true
+exclude = ["tests/*"]
 
 [build-system]
 requires = ["poetry-core"]
