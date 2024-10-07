@@ -46,8 +46,8 @@ class Comment:
 
 @dataclass(kw_only=True)
 class Issue:
-    url: str
-    number: int
+    url: str | None
+    number: int | None
     title: str
     author: str
     createdAt: datetime

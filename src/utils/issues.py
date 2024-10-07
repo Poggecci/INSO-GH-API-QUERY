@@ -50,8 +50,9 @@ def parse_issue(*, issue_dict: dict) -> Issue:
             "Missing, empty, or incorrectly typed 'content' field in issue data. This has many causes: the issue gathered was a draft, the PAT lacks permissions, the API changed, etc."
         )
     # Extract the fields declared non-nullable by the GH API
-    url: str = content["url"]
-    number = content["number"]
+    url: str | None = content.get("url", None)
+    number: int | None = content.get("number", None)
+    # Except the two above which for some reason can sometimes be unpopulated
     title: str = content["title"]
     author: str = content["author"]["login"]
     createdAt = datetime.fromisoformat(content["createdAt"])
