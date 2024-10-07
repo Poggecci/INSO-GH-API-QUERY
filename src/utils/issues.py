@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 import logging
 from src.utils.models import (
-    Comment,
+    IssueComment,
     IssueMetrics,
     ParsingError,
     Reaction,
@@ -66,7 +66,7 @@ def parseIssue(*, issue_dict: dict) -> Issue:
         for reaction in content["reactions"]["nodes"]
     ]
     comments = [
-        Comment(
+        IssueComment(
             author_login=comment["author"]["login"],
             reactions=[
                 Reaction(user_login=r["user"]["login"], kind=ReactionKind.HOORAY)
