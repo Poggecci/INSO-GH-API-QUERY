@@ -19,87 +19,87 @@ query QueryProjectItemsForTeam(
   $projectNumber: Int!
   $nextPage: String
 ) {
-  organization(login: $owner) {
-    projectV2(number: $projectNumber
-    ) {
-			title
-			items(first: 100, after: $nextPage) {
-				pageInfo {
-					endCursor
-					hasNextPage
-				}
-				nodes {
-					content {
-						... on Issue {
-              url
-              number
-							title
-							author {
-								login
-							}
-							createdAt
-							closedAt
-							closed
-							milestone {
-								title
-							}
-							assignees(first: 20) {
-								nodes {
-									login
-								}
-							}
-							reactions(first: 10, content: HOORAY) {
-								nodes {
-									user {
-										login
-									}
-								}
-							}
-							comments(first: 30) {
-								nodes {
-									author {
-										login
-									}
-									reactions(first: 10, content: HOORAY) {
-										nodes {
-											user {
-												login
-											}
-										}
-									}
-								}
-							}
-              timelineItems(last: 1, itemTypes : [CLOSED_EVENT]){
-                    nodes {
-                        ... on ClosedEvent {
-                                actor {
-                                    login
+    organization(login: $owner) {
+        projectV2(number: $projectNumber
+        ) {
+            title
+            items(first: 100, after: $nextPage) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+                nodes {
+                    content {
+                    ... on Issue {
+                        url
+                        number
+                        title
+                        author {
+                        login
+                        }
+                        createdAt
+                        closedAt
+                        closed
+                        milestone {
+                        title
+                        }
+                        assignees(first: 20) {
+                        nodes {
+                            login
+                        }
+                        }
+                        reactions(first: 10, content: HOORAY) {
+                        nodes {
+                            user {
+                            login
+                            }
+                        }
+                        }
+                        comments(first: 30) {
+                        nodes {
+                            author {
+                            login
+                            }
+                            reactions(first: 10, content: HOORAY) {
+                            nodes {
+                                user {
+                                login
                                 }
+                            }
+                            }
+                        }
+                        }
+                        timelineItems(last: 1, itemTypes : [CLOSED_EVENT]){
+                            nodes {
+                                ... on ClosedEvent {
+                                        actor {
+                                            login
+                                        }
+                                }
+                            }
+                        }
+                        }
+                    }
+
+                    Urgency: fieldValueByName(name: "Urgency") {
+                        ... on ProjectV2ItemFieldNumberValue {
+                            number
+                        }
+                    }
+                    Difficulty: fieldValueByName(name: "Difficulty") {
+                        ... on ProjectV2ItemFieldNumberValue {
+                            number
+                        }
+                    }
+                    Modifier: fieldValueByName(name: "Modifier") {
+                        ... on ProjectV2ItemFieldNumberValue {
+                            number
                         }
                     }
                 }
-              }
-						}
-					}
-					Urgency: fieldValueByName(name: "Urgency") {
-						... on ProjectV2ItemFieldNumberValue {
-							number
-						}
-					}
-					Difficulty: fieldValueByName(name: "Difficulty") {
-						... on ProjectV2ItemFieldNumberValue {
-							number
-						}
-					}
-					Modifier: fieldValueByName(name: "Modifier") {
-						... on ProjectV2ItemFieldNumberValue {
-							number
-						}
-					}
-				}
-			}
-		}
-	}
+            }
+        }
+    }
 }
 """
 
