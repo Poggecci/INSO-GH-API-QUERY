@@ -23,7 +23,7 @@ query QueryProjectItemsForTeam(
     projectV2(number: $projectNumber
     ) {
 			title
-			items(first: 10, after: $nextPage) {
+			items(first: 100, after: $nextPage) {
 				pageInfo {
 					endCursor
 					hasNextPage
@@ -31,6 +31,8 @@ query QueryProjectItemsForTeam(
 				nodes {
 					content {
 						... on Issue {
+              url
+              number
 							title
 							author {
 								login
