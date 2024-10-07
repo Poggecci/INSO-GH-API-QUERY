@@ -69,6 +69,16 @@ query QueryProjectItemsForTeam(
 									}
 								}
 							}
+              timelineItems(last: 1, itemTypes : [CLOSED_EVENT]){
+                    nodes {
+                        ... on ClosedEvent {
+                                actor {
+                                    login
+                                }
+                        }
+                    }
+                }
+              }
 						}
 					}
 					Urgency: fieldValueByName(name: "Urgency") {
