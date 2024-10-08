@@ -26,7 +26,7 @@ def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: st
             )
 
 
-def maybeLocalizeDateTime(aDateTime: datetime) -> datetime:
+def ensureDatetimeLocalized(aDateTime: datetime) -> datetime:
     if (aDateTime.tzinfo is None
         or aDateTime.tzinfo.utcoffset(aDateTime) is None):
         return pr_tz.localize(aDateTime)
@@ -62,12 +62,12 @@ if __name__ == "__main__":
             endDate = datetime.now(tz=pr_tz)
             useDecay = False
         else:
-            startDate = maybeLocalizeDateTime(
+            startDate = ensureDatetimeLocalized(
                 datetime.fromisoformat(
                     config_dict["milestoneStartsOn"],
                 )
             )
-            endDate = maybeLocalizeDateTime(
+            endDate = ensureDatetimeLocalized(
                 datetime.fromisoformat(config_dict["milestoneEndsOn"])
             )
             useDecay = True
