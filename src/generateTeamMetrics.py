@@ -1,8 +1,8 @@
 from collections.abc import Iterator
-import json
 import logging
 from typing import Iterable
 from datetime import datetime
+from src.getProject import get_project_number
 from src.utils.constants import pr_tz
 from src.utils.issues import (
     calculate_issue_scores,
@@ -16,94 +16,90 @@ from src.utils.queryRunner import run_graphql_query
 get_team_issues = """
 query QueryProjectItemsForTeam(
   $owner: String!
-  $team: String!
+  $projectNumber: Int!
   $nextPage: String
 ) {
-  organization(login: $owner) {
-    projectsV2(
-      query: $team
-      first: 1
-      orderBy: { field: TITLE, direction: ASC }
-    ) {
-      nodes {
-        title
-        items(first: 100, after: $nextPage) {
-          pageInfo {
-            endCursor
-            hasNextPage
-          }
-          nodes {
-            content {
-              ... on Issue {
-                url
-                number
-                title
-                author {
-                    login
+    organization(login: $owner) {
+        projectV2(number: $projectNumber
+        ) {
+            title
+            items(first: 100, after: $nextPage) {
+                pageInfo {
+                    endCursor
+                    hasNextPage
                 }
-                createdAt
-                closed
-                closedAt
-                milestone {
-                  title
-                }
-                assignees(first: 20) {
-                  nodes {
-                    login
-                  }
-                }
-                reactions(first: 10, content: HOORAY) {
-                  nodes {
-                    user {
-                      login
-                    }
-                  }
-                }
-                comments(first: 30) {
-                  nodes {
-                    author {
-                      login
-                    }
-                    reactions(first: 10, content: HOORAY) {
-                      nodes {
-                        user {
-                          login
+                nodes {
+                    content {
+                    ... on Issue {
+                        url
+                        number
+                        title
+                        author {
+                        login
                         }
-                      }
-                    }
-                  }
-                }
-                timelineItems(last: 1, itemTypes : [CLOSED_EVENT]){
-                    nodes {
-                        ... on ClosedEvent {
-                                actor {
-                                    login
+                        createdAt
+                        closedAt
+                        closed
+                        milestone {
+                        title
+                        }
+                        assignees(first: 20) {
+                        nodes {
+                            login
+                        }
+                        }
+                        reactions(first: 10, content: HOORAY) {
+                        nodes {
+                            user {
+                            login
+                            }
+                        }
+                        }
+                        comments(first: 30) {
+                        nodes {
+                            author {
+                            login
+                            }
+                            reactions(first: 10, content: HOORAY) {
+                            nodes {
+                                user {
+                                login
                                 }
+                            }
+                            }
+                        }
+                        }
+                        timelineItems(last: 1, itemTypes : [CLOSED_EVENT]){
+                            nodes {
+                                ... on ClosedEvent {
+                                        actor {
+                                            login
+                                        }
+                                }
+                            }
+                        }
+                        }
+                    }
+
+                    Urgency: fieldValueByName(name: "Urgency") {
+                        ... on ProjectV2ItemFieldNumberValue {
+                            number
+                        }
+                    }
+                    Difficulty: fieldValueByName(name: "Difficulty") {
+                        ... on ProjectV2ItemFieldNumberValue {
+                            number
+                        }
+                    }
+                    Modifier: fieldValueByName(name: "Modifier") {
+                        ... on ProjectV2ItemFieldNumberValue {
+                            number
                         }
                     }
                 }
-              }
             }
-            Urgency: fieldValueByName(name: "Urgency") {
-              ... on ProjectV2ItemFieldNumberValue {
-                number
-              }
-            }
-            Difficulty: fieldValueByName(name: "Difficulty") {
-              ... on ProjectV2ItemFieldNumberValue {
-                number
-              }
-            }
-            Modifier: fieldValueByName(name: "Modifier") {
-              ... on ProjectV2ItemFieldNumberValue {
-                number
-              }
-            }
-          }
         }
-      }
     }
-  }
 }
 """
 
@@ -154,18 +150,14 @@ def generateSprintCutoffs(
 
 
 def isses_from_gh_api(*, org: str, team: str) -> Iterator[dict]:
-    params = {"owner": org, "team": team}
+
+    project_number = get_project_number(organization=org, project_name=team)
+
+    params = {"owner": org, "team": team, "projectNumber": project_number}
     hasAnotherPage = True
     while hasAnotherPage:
         response: dict = run_graphql_query(get_team_issues, params)
-        projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
-        project = next(filter(lambda x: x["title"] == team, projects), None)
-        if not project:
-            raise Exception(
-                "Project not found in org. Likely means the project board"
-                " doesn't share the same name as the team."
-            )
-
+        project: dict = response["data"]["organization"]["projectV2"]
         issues = project["items"]["nodes"]
         yield from issues
 
