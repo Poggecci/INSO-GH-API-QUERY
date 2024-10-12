@@ -19,7 +19,7 @@ query GetTeamMembers($owner: String!, $team: String!) {
 
 def getTeamMembers(organization, team) -> list[str]:
     params = {"owner": organization, "team": team}
-    response = runGraphqlQuery(member_fetching_query, params)
+    response = runGraphqlQuery(query=member_fetching_query, variables=params)
     teams = response["data"]["organization"]["teams"]["nodes"]
     if len(teams) < 1:
         return []

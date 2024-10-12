@@ -1,6 +1,5 @@
-from collections.abc import Iterator
+from collections.abc import Iterator, ValuesView
 import logging
-from typing import Iterable
 from datetime import datetime
 from src.getProject import getProjectNumber
 from src.utils.constants import pr_tz
@@ -104,7 +103,7 @@ query QueryProjectItemsForTeam(
 """
 
 
-def outliersRemovedAverage(scores: Iterable) -> float:
+def outliersRemovedAverage(scores: ValuesView[float], /) -> float:
     smallest_elem = min(scores, default=0)
     largestVal = max(scores, default=0)
     newLength = len(list(scores)) - (largestVal != 0) - (smallest_elem != 0)
@@ -112,7 +111,7 @@ def outliersRemovedAverage(scores: Iterable) -> float:
     return total / max(1, newLength)
 
 
-def getCurrentSprintIndex(date: datetime, cutoffs: list[datetime]):
+def getCurrentSprintIndex(*, date: datetime, cutoffs: list[datetime]):
     sprintIndex = 0
     for cutoff in cutoffs:
         if date > cutoff:
@@ -121,7 +120,7 @@ def getCurrentSprintIndex(date: datetime, cutoffs: list[datetime]):
 
 
 def getFormattedSprintDateRange(
-    startDate: datetime, endDate: datetime, cutoffs: list[datetime], sprintIndex: int
+    *, startDate: datetime, endDate: datetime, cutoffs: list[datetime], sprintIndex: int
 ):
     if len(cutoffs) == 0:
         return f"{startDate.strftime('%Y/%m/%d')}-{endDate.strftime('%Y/%m/%d')}"
@@ -156,7 +155,7 @@ def fetchIssuesFromGithub(*, org: str, team: str) -> Iterator[dict]:
     params = {"owner": org, "team": team, "projectNumber": project_number}
     hasAnotherPage = True
     while hasAnotherPage:
-        response: dict = runGraphqlQuery(get_team_issues, params)
+        response: dict = runGraphqlQuery(query=get_team_issues, variables=params)
         project: dict = response["data"]["organization"]["projectV2"]
         issues = project["items"]["nodes"]
         yield from issues
@@ -167,6 +166,7 @@ def fetchIssuesFromGithub(*, org: str, team: str) -> Iterator[dict]:
 
 
 def getTeamMetricsForMilestone(
+    *,
     org: str,
     team: str,
     milestone: str,
@@ -236,7 +236,9 @@ def getTeamMetricsForMilestone(
             taskCompletionDate = (
                 issue.closedAt if issue.closedAt is not None else issue.createdAt
             )
-            sprintIndex = getCurrentSprintIndex(taskCompletionDate, sprintCutoffs)
+            sprintIndex = getCurrentSprintIndex(
+                date=taskCompletionDate, cutoffs=sprintCutoffs
+            )
             devTasksCompleted[dev][sprintIndex] += 1
             # update total points closed metric
             totalPointsClosed += score
@@ -262,7 +264,7 @@ def getTeamMetricsForMilestone(
         # check if the developer has completed the minimum tasks up until the current sprint
         # If they haven't thats an automatic zero for that milestone
         currentSprint = getCurrentSprintIndex(
-            pr_tz.localize(datetime.today()), sprintCutoffs
+            date=pr_tz.localize(datetime.today()), cutoffs=sprintCutoffs
         )
         expectedGrade = min(
             (devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0
