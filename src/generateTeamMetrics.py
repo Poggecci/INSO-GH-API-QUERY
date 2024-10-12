@@ -4,6 +4,7 @@ from datetime import datetime
 from src.getProject import getProjectNumber
 from src.utils.constants import pr_tz
 from src.utils.issues import (
+    applyIssuePreProcessingHooks,
     calculateIssueScores,
     parseIssue,
     shouldCountIssue,
@@ -179,8 +180,11 @@ def getTeamMetricsForMilestone(
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
+    issuePreProcessingHooks: list[str] | None = None,
     logger: logging.Logger | None = None,
 ) -> MilestoneData:
+    if issuePreProcessingHooks is None:
+        issuePreProcessingHooks = []
     if logger is None:
         logger = logging.getLogger(__name__)
     print(members)
@@ -209,6 +213,15 @@ def getTeamMetricsForMilestone(
                 f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
             )
             continue
+
+        # Apply any overrides prior to counting or discarding the issue
+        issue = applyIssuePreProcessingHooks(
+            hooks=issuePreProcessingHooks,
+            issue=issue,
+            milestone=milestone,
+            startDate=startDate,
+            endDate=endDate,
+        )
 
         if not shouldCountIssue(
             issue=issue,

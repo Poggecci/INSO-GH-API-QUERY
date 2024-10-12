@@ -1,26 +1,27 @@
 {
-    "organization": "uprm-inso4116-2024-2025-s1",
-    "milestoneStartsOn": "2024-08-30T08:00:00",
-    "milestoneEndsOn": "2024-09-20T23:59:59",
-    "metricsDirectory": "./GitHub/",
-    "teams": {
-        "SafeRUM": {
-            "managers": [
-                {
-                    "name": "YanehRuiz",
-                    "gradeFromProfessor": 91.0
-                },
-                {
-                    "name": "evnd04",
-                    "gradeFromProfessor": 92.0
-                }
-            ],
-            "milestone": "Milestone #1",
-            "milestoneGrade": 90.0
+  "organization": "uprm-inso4116-2024-2025-s1",
+  "milestoneStartsOn": "2024-08-30T08:00:00",
+  "milestoneEndsOn": "2024-09-20T23:59:59",
+  "metricsDirectory": "./GitHub/",
+  "teams": {
+    "SafeRUM": {
+      "managers": [
+        {
+          "name": "YanehRuiz",
+          "gradeFromProfessor": 91.0
+        },
+        {
+          "name": "evnd04",
+          "gradeFromProfessor": 92.0
         }
-    },
-    "lectureTopicTaskQuota": 0,
-    "countOpenIssues": false,
-    "sprints": 1,
-    "minTasksPerSprint": 1
-  }
+      ],
+      "issuePreProcessingHooks": [],
+      "milestone": "Milestone #1",
+      "milestoneGrade": 90.0
+    }
+  },
+  "lectureTopicTaskQuota": 0,
+  "countOpenIssues": false,
+  "sprints": 1,
+  "minTasksPerSprint": 1
+}
