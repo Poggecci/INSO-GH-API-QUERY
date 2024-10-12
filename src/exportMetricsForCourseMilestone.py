@@ -8,7 +8,7 @@ from src.getTeamMembers import getTeamMembers
 from src.utils.models import MilestoneData
 
 
-def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: str):
+def writeMilestoneToCsv(milestone_data: MilestoneData, csv_file_path: str):
     with open(csv_file_path, mode="w", newline="") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(
@@ -93,7 +93,7 @@ if __name__ == "__main__":
                 minTasksPerSprint=config_dict.get("minTasksPerSprint", 1),
             )
             os.makedirs(metricsDirectory, exist_ok=True)
-            write_milestone_data_to_csv(
+            writeMilestoneToCsv(
                 team_metrics[team],
                 f"{metricsDirectory}/{teamdata['milestone']}-{team}-{organization}.csv",
             )

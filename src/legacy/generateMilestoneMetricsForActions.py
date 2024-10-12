@@ -4,8 +4,8 @@ from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.getTeamMembers import getTeamMembers
 from src.utils.constants import pr_tz
 from src.io.markdown import (
-    write_log_data_to_md,
-    write_milestone_data_to_md,
+    writeLogsToMarkdown,
+    writeMilestoneToMarkdown,
 )
 from src.utils.models import MilestoneData
 
@@ -77,7 +77,7 @@ def generateMetricsFromV1Config(config: dict):
         logger.critical(e)
     strippedMilestoneName = milestone.replace(" ", "")
     output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
-    write_milestone_data_to_md(
+    writeMilestoneToMarkdown(
         milestone_data=team_metrics, md_file_path=output_markdown_path
     )
-    write_log_data_to_md(log_file_path=logFileName, md_file_path=output_markdown_path)
+    writeLogsToMarkdown(log_file_path=logFileName, md_file_path=output_markdown_path)

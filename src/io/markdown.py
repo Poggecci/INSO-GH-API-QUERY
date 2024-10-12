@@ -3,7 +3,7 @@ from src.utils.models import MilestoneData
 from src.utils.constants import pr_tz
 
 
-def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str):
+def writeMilestoneToMarkdown(milestone_data: MilestoneData, md_file_path: str):
     with open(md_file_path, mode="w") as md_file:
         md_file.write("# Milestone Data\n\n")
         md_file.write(f"## Date Generated: {datetime.now().date()}\n")
@@ -25,7 +25,7 @@ def write_milestone_data_to_md(milestone_data: MilestoneData, md_file_path: str)
         md_file.write("\n")
 
 
-def write_sprint_task_completion_to_md(
+def writeSprintTaskCompletionToMarkdown(
     milestone_data: MilestoneData, md_file_path: str, minTasksPerSprint: int
 ):
     current_date = datetime.now(tz=pr_tz)
@@ -62,7 +62,7 @@ def write_sprint_task_completion_to_md(
             md_file.write("\n")
 
 
-def write_log_data_to_md(log_file_path: str, md_file_path: str):
+def writeLogsToMarkdown(log_file_path: str, md_file_path: str):
     with open(log_file_path, mode="r") as log_file:
         with open(md_file_path, mode="a") as md_file:
             md_file.write("# Metrics Generation Logs\n\n")
