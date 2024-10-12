@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from unittest.mock import MagicMock
 from src.utils.constants import pr_tz
-from src.utils.issues import calculate_issue_scores, decay, should_count_issue
+from src.utils.issues import calculateIssueScores, decay, shouldCountIssue
 from src.utils.models import Issue, IssueMetrics, Reaction, ReactionKind, Comment
 
 
@@ -45,7 +45,7 @@ def create_issue():
 def test_should_count_issue_valid(create_issue, mock_logger):
     issue = create_issue(milestone="Milestone #1", closed=True, closedBy="manager1")
     assert (
-        should_count_issue(
+        shouldCountIssue(
             issue=issue,
             logger=mock_logger,
             currentMilestone="Milestone #1",
@@ -59,7 +59,7 @@ def test_should_count_issue_valid(create_issue, mock_logger):
 def test_should_count_issue_no_milestone(create_issue, mock_logger):
     issue = create_issue(milestone=None)
     assert (
-        should_count_issue(
+        shouldCountIssue(
             issue=issue,
             logger=mock_logger,
             currentMilestone="Milestone #1",
@@ -74,7 +74,7 @@ def test_should_count_issue_no_milestone(create_issue, mock_logger):
 def test_should_count_issue_wrong_milestone(create_issue, mock_logger):
     issue = create_issue(milestone="Milestone #2")
     assert (
-        should_count_issue(
+        shouldCountIssue(
             issue=issue,
             logger=mock_logger,
             currentMilestone="Milestone #1",
@@ -88,7 +88,7 @@ def test_should_count_issue_wrong_milestone(create_issue, mock_logger):
 def test_should_count_issue_closed_by_non_manager(create_issue, mock_logger):
     issue = create_issue(closed=True, closedBy="user1")
     assert (
-        should_count_issue(
+        shouldCountIssue(
             issue=issue,
             logger=mock_logger,
             currentMilestone="Milestone #1",
@@ -103,7 +103,7 @@ def test_should_count_issue_closed_by_non_manager(create_issue, mock_logger):
 def test_should_count_issue_open_not_allowed(create_issue, mock_logger):
     issue = create_issue(closed=False)
     assert (
-        should_count_issue(
+        shouldCountIssue(
             issue=issue,
             logger=mock_logger,
             currentMilestone="Milestone #1",
@@ -118,7 +118,7 @@ def test_should_count_issue_missing_fields(create_issue, mock_logger):
     noUrgencyIssue = create_issue(urgency=None)
 
     assert (
-        should_count_issue(
+        shouldCountIssue(
             issue=noUrgencyIssue,
             logger=mock_logger,
             currentMilestone="Milestone #1",
@@ -133,7 +133,7 @@ def test_should_count_issue_missing_fields(create_issue, mock_logger):
     noDifficultyIssue = create_issue(difficulty=None)
 
     assert (
-        should_count_issue(
+        shouldCountIssue(
             issue=noDifficultyIssue,
             logger=mock_logger,
             currentMilestone="Milestone #1",
@@ -180,7 +180,7 @@ def test_calculate_issue_scores_basic(create_issue, mock_logger):
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(difficulty=2.0, urgency=3.0, assignees=["dev1", "dev2"])
 
-    result = calculate_issue_scores(
+    result = calculateIssueScores(
         issue=issue,
         managers=["manager1"],
         developers=["dev1", "dev2"],
@@ -203,7 +203,7 @@ def test_calculate_issue_scores_with_decay(create_issue, mock_logger):
         difficulty=2.0, urgency=3.0, assignees=["dev1"], createdAt=middleDate
     )
 
-    result = calculate_issue_scores(
+    result = calculateIssueScores(
         issue=issue,
         managers=["manager1"],
         developers=["dev1"],
@@ -223,7 +223,7 @@ def test_calculate_issue_scores_with_modifier(create_issue, mock_logger):
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(difficulty=2.0, urgency=3.0, modifier=1.0, assignees=["dev1"])
 
-    result = calculate_issue_scores(
+    result = calculateIssueScores(
         issue=issue,
         managers=["manager1"],
         developers=["dev1"],
@@ -246,7 +246,7 @@ def test_calculate_issue_scores_documentation_bonus(create_issue, mock_logger):
         reactions=[Reaction(user_login="manager1", kind=ReactionKind.HOORAY)],
     )
 
-    result = calculate_issue_scores(
+    result = calculateIssueScores(
         issue=issue,
         managers=["manager1"],
         developers=["dev1"],
@@ -275,7 +275,7 @@ def test_calculate_issue_scores_comment_bonus(create_issue, mock_logger):
         ],
     )
 
-    result = calculate_issue_scores(
+    result = calculateIssueScores(
         issue=issue,
         managers=["manager1"],
         developers=["dev1"],
@@ -294,7 +294,7 @@ def test_calculate_issue_scores_non_team_member(create_issue, mock_logger):
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(difficulty=2.0, urgency=3.0, assignees=["dev1", "external"])
 
-    result = calculate_issue_scores(
+    result = calculateIssueScores(
         issue=issue,
         managers=["manager1"],
         developers=["dev1"],

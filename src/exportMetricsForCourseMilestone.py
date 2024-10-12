@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from src.utils.constants import pr_tz
 from src.generateTeamMetrics import getTeamMetricsForMilestone
-from src.getTeamMembers import get_team_members
+from src.getTeamMembers import getTeamMembers
 
 from src.utils.models import MilestoneData
 
@@ -27,8 +27,7 @@ def write_milestone_data_to_csv(milestone_data: MilestoneData, csv_file_path: st
 
 
 def ensureDatetimeLocalized(aDateTime: datetime) -> datetime:
-    if (aDateTime.tzinfo is None
-        or aDateTime.tzinfo.utcoffset(aDateTime) is None):
+    if aDateTime.tzinfo is None or aDateTime.tzinfo.utcoffset(aDateTime) is None:
         return pr_tz.localize(aDateTime)
     else:
         return aDateTime
@@ -79,7 +78,7 @@ if __name__ == "__main__":
             print("Team: ", team)
             print("Managers: ", teamdata["managers"])
             print("Milestone: ", teamdata["milestone"])
-            members = get_team_members(organization, team)
+            members = getTeamMembers(organization, team)
             team_metrics[team] = getTeamMetricsForMilestone(
                 org=organization,
                 team=team,

@@ -1,4 +1,4 @@
-from src.utils.queryRunner import run_graphql_query
+from src.utils.queryRunner import runGraphqlQuery
 
 member_fetching_query = """
 query GetTeamMembers($owner: String!, $team: String!) {
@@ -17,9 +17,9 @@ query GetTeamMembers($owner: String!, $team: String!) {
 """
 
 
-def get_team_members(organization, team) -> list[str]:
+def getTeamMembers(organization, team) -> list[str]:
     params = {"owner": organization, "team": team}
-    response = run_graphql_query(member_fetching_query, params)
+    response = runGraphqlQuery(member_fetching_query, params)
     teams = response["data"]["organization"]["teams"]["nodes"]
     if len(teams) < 1:
         return []
@@ -32,4 +32,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         exit(0)
     _, org, team, *_ = sys.argv
-    print(get_team_members(org, team))
+    print(getTeamMembers(org, team))

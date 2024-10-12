@@ -1,4 +1,4 @@
-from src.utils.queryRunner import run_graphql_query
+from src.utils.queryRunner import runGraphqlQuery
 
 get_projects_query = """
 query QueryProjects($owner: String!, $project_name: String!,  $nextPage: String) {
@@ -18,11 +18,11 @@ query QueryProjects($owner: String!, $project_name: String!,  $nextPage: String)
 """
 
 
-def get_project_number(*, organization: str, project_name: str) -> int:
+def getProjectNumber(*, organization: str, project_name: str) -> int:
     params = {"owner": organization, "project_name": project_name}
     hasAnotherPage = True
     while hasAnotherPage:
-        response: dict = run_graphql_query(get_projects_query, params)
+        response: dict = runGraphqlQuery(get_projects_query, params)
         projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
         for project in projects:
             if project["title"] == project_name:

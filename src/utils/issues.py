@@ -11,7 +11,7 @@ from src.utils.models import (
 )
 
 
-def parse_issue(*, issue_dict: dict) -> Issue:
+def parseIssue(*, issue_dict: dict) -> Issue:
     """
     Parses a dictionary representing a GitHub Issue fetched through the GraphQL API and returns an Issue object.
 
@@ -110,7 +110,7 @@ def parse_issue(*, issue_dict: dict) -> Issue:
     )
 
 
-def should_count_issue(
+def shouldCountIssue(
     *,
     issue: Issue,
     logger: logging.Logger,
@@ -186,7 +186,7 @@ def decay(
     )
 
 
-def calculate_issue_scores(
+def calculateIssueScores(
     *,
     issue: Issue,
     managers: list[str],

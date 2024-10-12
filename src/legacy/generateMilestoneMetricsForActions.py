@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 from src.generateTeamMetrics import getTeamMetricsForMilestone
-from src.getTeamMembers import get_team_members
+from src.getTeamMembers import getTeamMembers
 from src.utils.constants import pr_tz
 from src.io.markdown import (
     write_log_data_to_md,
@@ -18,7 +18,7 @@ def generateMetricsFromV1Config(config: dict):
     print("Team: ", team)
     print("Managers: ", managers)
     print("Milestone: ", milestone)
-    members = get_team_members(organization, team)
+    members = getTeamMembers(organization, team)
     if len(members) == 0:
         print(
             "Warning: No team members found. This likely means your projectName isn't "

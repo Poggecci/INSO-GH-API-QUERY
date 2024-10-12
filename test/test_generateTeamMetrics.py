@@ -137,13 +137,13 @@ mock_gh_res_with_open_issue = {
 }
 
 
-@patch("src.generateTeamMetrics.get_project_number")
-@patch("src.generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.getProjectNumber")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_closed_by_non_managers_arent_counted(
-    mock_run_graphql_query, mock_get_project_number, logger
+    mock_runGraphqlQuery, mock_getProjectNumber, logger
 ):
-    mock_get_project_number.return_value = mock_project_number
-    mock_run_graphql_query.return_value = mock_gh_res_with_issue_closed_by_dev
+    mock_getProjectNumber.return_value = mock_project_number
+    mock_runGraphqlQuery.return_value = mock_gh_res_with_issue_closed_by_dev
 
     org = "sample-org"
     team = "sample-team"
@@ -176,13 +176,13 @@ def test_issues_closed_by_non_managers_arent_counted(
     assert result.devMetrics["dev1"].pointsClosed == 0
 
 
-@patch("src.generateTeamMetrics.get_project_number")
-@patch("src.generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.getProjectNumber")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_not_belonging_to_milestone_arent_counted(
-    mock_run_graphql_query, mock_get_project_number, logger
+    mock_runGraphqlQuery, mock_getProjectNumber, logger
 ):
-    mock_get_project_number.return_value = mock_project_number
-    mock_run_graphql_query.return_value = mock_gh_res_v20_milestone
+    mock_getProjectNumber.return_value = mock_project_number
+    mock_runGraphqlQuery.return_value = mock_gh_res_v20_milestone
 
     org = "sample-org"
     team = "sample-team"
@@ -214,13 +214,13 @@ def test_issues_not_belonging_to_milestone_arent_counted(
     assert result.devMetrics["dev1"].pointsClosed == 0
 
 
-@patch("src.generateTeamMetrics.get_project_number")
-@patch("src.generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.getProjectNumber")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
-    mock_run_graphql_query, mock_get_project_number, logger
+    mock_runGraphqlQuery, mock_getProjectNumber, logger
 ):
-    mock_get_project_number.return_value = mock_get_project_number
-    mock_run_graphql_query.return_value = mock_gh_res_with_open_issue
+    mock_getProjectNumber.return_value = mock_getProjectNumber
+    mock_runGraphqlQuery.return_value = mock_gh_res_with_open_issue
 
     org = "sample-org"
     team = "sample-team"
@@ -404,13 +404,13 @@ mock_gh_res_issue_with_multiple_devs = {
 }
 
 
-@patch("src.generateTeamMetrics.get_project_number")
-@patch("src.generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.getProjectNumber")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_only_worked_on_by_managers_arent_counted(
-    mock_run_graphql_query, mock_get_project_number, logger
+    mock_runGraphqlQuery, mock_getProjectNumber, logger
 ):
-    mock_get_project_number.return_value = mock_get_project_number
-    mock_run_graphql_query.return_value = mock_gh_res_issue_only_worked_by_manager
+    mock_getProjectNumber.return_value = mock_getProjectNumber
+    mock_runGraphqlQuery.return_value = mock_gh_res_issue_only_worked_by_manager
 
     org = "sample-org"
     team = "sample-team"
@@ -442,13 +442,13 @@ def test_issues_only_worked_on_by_managers_arent_counted(
     assert "manager1" not in result.devMetrics
 
 
-@patch("src.generateTeamMetrics.get_project_number")
-@patch("src.generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.getProjectNumber")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_with_hooray_reaction_get_bonus(
-    mock_run_graphql_query, mock_get_project_number, logger
+    mock_runGraphqlQuery, mock_getProjectNumber, logger
 ):
-    mock_get_project_number.return_value = mock_project_number
-    mock_run_graphql_query.return_value = mock_gh_res_issue_with_hooray
+    mock_getProjectNumber.return_value = mock_project_number
+    mock_runGraphqlQuery.return_value = mock_gh_res_issue_with_hooray
 
     org = "sample-org"
     team = "sample-team"
@@ -483,13 +483,13 @@ def test_issues_with_hooray_reaction_get_bonus(
     assert result.devMetrics["dev1"].pointsClosed == pytest.approx(expected_score)
 
 
-@patch("src.generateTeamMetrics.get_project_number")
-@patch("src.generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.getProjectNumber")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_with_multiple_developers_have_points_divided(
-    mock_run_graphql_query, mock_get_project_number, logger
+    mock_runGraphqlQuery, mock_getProjectNumber, logger
 ):
-    mock_get_project_number.return_value = mock_get_project_number
-    mock_run_graphql_query.return_value = mock_gh_res_issue_with_multiple_devs
+    mock_getProjectNumber.return_value = mock_getProjectNumber
+    mock_runGraphqlQuery.return_value = mock_gh_res_issue_with_multiple_devs
 
     org = "sample-org"
     team = "sample-team"
@@ -525,13 +525,13 @@ def test_issues_with_multiple_developers_have_points_divided(
     assert result.devMetrics["dev2"].pointsClosed == pytest.approx(divided_score)
 
 
-@patch("src.generateTeamMetrics.get_project_number")
-@patch("src.generateTeamMetrics.run_graphql_query")
+@patch("src.generateTeamMetrics.getProjectNumber")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_students_get_0_if_under_minimum_tasks_per_sprint(
-    mock_run_graphql_query, mock_get_project_number, logger
+    mock_runGraphqlQuery, mock_getProjectNumber, logger
 ):
-    mock_get_project_number.return_value = mock_get_project_number
-    mock_run_graphql_query.return_value = mock_gh_res_issue_with_multiple_devs
+    mock_getProjectNumber.return_value = mock_getProjectNumber
+    mock_runGraphqlQuery.return_value = mock_gh_res_issue_with_multiple_devs
 
     org = "sample-org"
     team = "sample-team"

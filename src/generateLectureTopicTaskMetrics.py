@@ -1,6 +1,6 @@
 from src.utils.models import LectureTopicTaskData
 
-from src.utils.queryRunner import run_graphql_query
+from src.utils.queryRunner import runGraphqlQuery
 
 get_team_lecture_topic_tasks = """
 query QueryProjectItemsForTeam($owner: String!, $team: String!,
@@ -49,7 +49,7 @@ def getLectureTopicTaskMetrics(
     params = {"owner": org, "team": team}
     hasAnotherPage = True
     while hasAnotherPage:
-        response = run_graphql_query(get_team_lecture_topic_tasks, params)
+        response = runGraphqlQuery(get_team_lecture_topic_tasks, params)
         projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:

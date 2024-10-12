@@ -2,7 +2,7 @@ import requests
 from src.utils.constants import getToken
 
 
-def run_graphql_query(query, variables=None) -> dict:
+def runGraphqlQuery(query, variables=None) -> dict:
     # GitHub GraphQL API endpoint
     url = "https://api.github.com/graphql"
     token = getToken()

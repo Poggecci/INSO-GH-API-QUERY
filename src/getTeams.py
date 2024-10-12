@@ -1,4 +1,4 @@
-from src.utils.queryRunner import run_graphql_query
+from src.utils.queryRunner import runGraphqlQuery
 
 get_teams_query = """
 query QueryClassroomTeams($owner: String!) {
@@ -14,9 +14,9 @@ query QueryClassroomTeams($owner: String!) {
 """
 
 
-def get_teams(organization: str) -> list[str]:
+def getTeams(organization: str) -> list[str]:
     params = {"owner": organization}
-    response = run_graphql_query(get_teams_query, params)
+    response = runGraphqlQuery(get_teams_query, params)
     teams = response["data"]["organization"]["teams"]["nodes"]
     print([team["name"] for team in teams])
     return [team["name"] for team in teams]

@@ -1,7 +1,7 @@
 import csv
 import json
 from src.generateLectureTopicTaskMetrics import getLectureTopicTaskMetrics
-from src.getTeamMembers import get_team_members
+from src.getTeamMembers import getTeamMembers
 
 from src.utils.models import LectureTopicTaskData
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     for team, managers in teams_and_managers.items():
         print("Team: ", team)
         print("Managers: ", managers)
-        members = get_team_members(organization, team)
+        members = getTeamMembers(organization, team)
         lecture_topic_task_metrics_by_team[team] = getLectureTopicTaskMetrics(
             org=organization, team=team, members=members
         )

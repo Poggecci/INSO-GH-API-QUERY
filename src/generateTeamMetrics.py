@@ -2,15 +2,15 @@ from collections.abc import Iterator
 import logging
 from typing import Iterable
 from datetime import datetime
-from src.getProject import get_project_number
+from src.getProject import getProjectNumber
 from src.utils.constants import pr_tz
 from src.utils.issues import (
-    calculate_issue_scores,
-    parse_issue,
-    should_count_issue,
+    calculateIssueScores,
+    parseIssue,
+    shouldCountIssue,
 )
 from src.utils.models import DeveloperMetrics, MilestoneData, ParsingError
-from src.utils.queryRunner import run_graphql_query
+from src.utils.queryRunner import runGraphqlQuery
 
 # Check out https://docs.github.com/en/graphql/guides/introduction-to-graphql#schema to understand this query better
 get_team_issues = """
@@ -149,14 +149,14 @@ def generateSprintCutoffs(
     return cutoffs
 
 
-def isses_from_gh_api(*, org: str, team: str) -> Iterator[dict]:
+def fetchIssuesFromGithub(*, org: str, team: str) -> Iterator[dict]:
 
-    project_number = get_project_number(organization=org, project_name=team)
+    project_number = getProjectNumber(organization=org, project_name=team)
 
     params = {"owner": org, "team": team, "projectNumber": project_number}
     hasAnotherPage = True
     while hasAnotherPage:
-        response: dict = run_graphql_query(get_team_issues, params)
+        response: dict = runGraphqlQuery(get_team_issues, params)
         project: dict = response["data"]["organization"]["projectV2"]
         issues = project["items"]["nodes"]
         yield from issues
@@ -193,9 +193,9 @@ def getTeamMetricsForMilestone(
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
-    for issue_dict in isses_from_gh_api(org=org, team=team):
+    for issue_dict in fetchIssuesFromGithub(org=org, team=team):
         try:
-            issue = parse_issue(issue_dict=issue_dict)
+            issue = parseIssue(issue_dict=issue_dict)
         except ParsingError:
             # don't log since the root cause can be hard to identify without manual review
             continue
@@ -210,7 +210,7 @@ def getTeamMetricsForMilestone(
             )
             continue
 
-        if not should_count_issue(
+        if not shouldCountIssue(
             issue=issue,
             logger=logger,
             currentMilestone=milestone,
@@ -220,7 +220,7 @@ def getTeamMetricsForMilestone(
             continue
 
         print(f"Successfully validated Issue #{issue.number}")
-        issueMetrics = calculate_issue_scores(
+        issueMetrics = calculateIssueScores(
             issue=issue,
             managers=managers,
             developers=developers,
