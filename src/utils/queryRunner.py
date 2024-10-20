@@ -1,8 +1,9 @@
+from typing import Any
 import requests
 from src.utils.constants import getToken
 
 
-def runGraphqlQuery(*, query: str, variables: dict | None = None) -> dict:
+def runGraphqlQuery(*, query: str, variables: dict[str, Any] | None = None) -> dict:
     # GitHub GraphQL API endpoint
     url = "https://api.github.com/graphql"
     token = getToken()
