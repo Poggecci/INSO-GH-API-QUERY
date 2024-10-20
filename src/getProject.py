@@ -1,3 +1,4 @@
+import logging
 from src.utils.queryRunner import runGraphqlQuery
 
 get_projects_query = """
@@ -18,7 +19,11 @@ query QueryProjects($owner: String!, $project_name: String!,  $nextPage: String)
 """
 
 
-def getProjectNumber(*, organization: str, project_name: str) -> int:
+def getProjectNumber(
+    *, organization: str, project_name: str, logger: logging.Logger | None = None
+) -> int:
+    if not logger:
+        logger = logging.getLogger()
     params = {"owner": organization, "project_name": project_name}
     hasAnotherPage = True
     while hasAnotherPage:
@@ -26,6 +31,7 @@ def getProjectNumber(*, organization: str, project_name: str) -> int:
         projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
         for project in projects:
             if project["title"] == project_name:
+                logger.info(f"Found project: {project}")
                 return project["number"]
         hasAnotherPage = response["data"]["organization"]["projectsV2"]["pageInfo"][
             "hasNextPage"
@@ -35,6 +41,6 @@ def getProjectNumber(*, organization: str, project_name: str) -> int:
                 "pageInfo"
             ]["endCursor"]
     raise ValueError(
-        "Project not found in org. Likely means the project board"
-        " doesn't share the same name as the team."
+        f"Project Board with name {project_name} not found in organization. Ensure that all"
+        " the team's issues are listed in a board with this *exact* name."
     )

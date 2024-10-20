@@ -148,9 +148,15 @@ def generateSprintCutoffs(
     return cutoffs
 
 
-def fetchIssuesFromGithub(*, org: str, team: str) -> Iterator[dict]:
+def fetchIssuesFromGithub(
+    *, org: str, team: str, logger: logging.Logger | None = None
+) -> Iterator[dict]:
+    if not logger:
+        logger = logging.getLogger()
 
-    project_number = getProjectNumber(organization=org, project_name=team)
+    project_number = getProjectNumber(
+        organization=org, project_name=team, logger=logger
+    )
 
     params = {"owner": org, "team": team, "projectNumber": project_number}
     hasAnotherPage = True
@@ -193,7 +199,7 @@ def getTeamMetricsForMilestone(
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
-    for issue_dict in fetchIssuesFromGithub(org=org, team=team):
+    for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger):
         try:
             issue = parseIssue(issue_dict=issue_dict)
         except ParsingError:
