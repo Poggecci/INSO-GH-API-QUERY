@@ -31,6 +31,7 @@ def generateMetricsFromV2Config(config: dict):
         )
     for milestone, mData in milestones.items():
         logger = logging.getLogger(milestone)
+        logger.setLevel(logging.INFO)
         logFileName = f"{milestone}-{team}-{organization}.log"
         logFileHandler = logging.FileHandler(logFileName)
         formatter = logging.Formatter("%(levelname)s: %(message)s")
