@@ -24,9 +24,10 @@ def runGraphqlQuery(*, query: str, variables: dict | None = None) -> dict:
 
     # Check for errors
     if response.status_code != 200:
-        raise Exception(
+        raise ConnectionError(
             f"Query failed to run, status code {response.status_code}\n{response.text}"
         )
-
-    # Return the JSON response
-    return response.json()
+    response_dict = response.json()
+    if "errors" in response_dict:
+        raise ConnectionError(f"Error executing query: {response_dict['errors']}")
+    return response_dict["data"]

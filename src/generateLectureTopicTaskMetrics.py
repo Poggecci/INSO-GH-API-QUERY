@@ -50,7 +50,7 @@ def getLectureTopicTaskMetrics(
     hasAnotherPage = True
     while hasAnotherPage:
         response = runGraphqlQuery(query=get_team_lecture_topic_tasks, variables=params)
-        projects: list[dict] = response["data"]["organization"]["projectsV2"]["nodes"]
+        projects: list[dict] = response["organization"]["projectsV2"]["nodes"]
         project = next(filter(lambda x: x["title"] == team, projects), None)
         if not project:
             raise Exception(
