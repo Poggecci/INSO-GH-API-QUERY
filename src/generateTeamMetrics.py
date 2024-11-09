@@ -1,7 +1,7 @@
 from collections.abc import Iterator, ValuesView
 import logging
 from datetime import datetime
-from src.getProject import getProjectNumber
+from src.getProject import getProject
 from src.utils.constants import pr_tz
 from src.utils.issues import (
     calculateIssueScores,
@@ -154,21 +154,28 @@ def fetchIssuesFromGithub(
     if not logger:
         logger = logging.getLogger()
 
-    project_number = getProjectNumber(
-        organization=org, project_name=team, logger=logger
-    )
+    project = getProject(organization=org, project_name=team)
+    logger.info(f"Found {project}")
+    if not project.public:
+        logger.warning(
+            "Project visibility is set to private. This can lead to"
+            " issues not being found if the Personal Access Token doesn't"
+            " have permissions for viewing private projects."
+        )
 
-    params = {"owner": org, "team": team, "projectNumber": project_number}
+    params = {"owner": org, "team": team, "projectNumber": project.number}
     hasAnotherPage = True
     while hasAnotherPage:
         response: dict = runGraphqlQuery(query=get_team_issues, variables=params)
-        project: dict = response["data"]["organization"]["projectV2"]
-        issues = project["items"]["nodes"]
+        project_dict_with_issues: dict = response["organization"]["projectV2"]
+        issues = project_dict_with_issues["items"]["nodes"]
         yield from issues
 
-        hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
+        hasAnotherPage = project_dict_with_issues["items"]["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
-            params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
+            params["nextPage"] = project_dict_with_issues["items"]["pageInfo"][
+                "endCursor"
+            ]
 
 
 def getTeamMetricsForMilestone(
