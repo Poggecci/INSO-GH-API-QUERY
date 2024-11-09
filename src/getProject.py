@@ -4,20 +4,20 @@ from src.utils.queryRunner import runGraphqlQuery
 
 get_projects_query = """
 query QueryProjects($owner: String!, $project_name: String!,  $nextPage: String) {
-  organization(login: $owner) {
-		projectsV2(query: $project_name, first: 100, after: $nextPage ) {
-			nodes {
-				title
-				number
+    organization(login: $owner) {
+        projectsV2(query: $project_name, first: 100, after: $nextPage ) {
+            nodes {
+                title
+                number
                 public
                 url
-			}
-			pageInfo {
+            }
+            pageInfo {
                 endCursor
                 hasNextPage
-			}
-		}
-  }
+            }
+        }
+    }
 }
 """
 
