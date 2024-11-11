@@ -2,6 +2,8 @@ from datetime import datetime
 import json
 import os
 import logging
+import sys
+from dotenv import load_dotenv
 from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.io.markdown import (
     writeLogsToMarkdown,
@@ -93,12 +95,11 @@ def generateMetricsFromV2Config(config: dict):
 
 
 if __name__ == "__main__":
-    import sys
-
     if len(sys.argv) < 2:
         print("Please pass in the path to your config (See README.md for how to do it)")
         exit(0)
     _, course_config_file, *_ = sys.argv
+    load_dotenv()
     with open(course_config_file) as course_config:
         course_data: dict = json.load(course_config)
     version: str = course_data.get("version", "1.0")
