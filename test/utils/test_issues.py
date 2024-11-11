@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from src.utils.constants import pr_tz
 from src.utils.issues import calculateIssueScores, decay, shouldCountIssue
 from src.utils.models import Issue, Reaction, ReactionKind, Comment
-from unittest.mock import patch
 
 
 # Fixture for creating Issue objects
