@@ -30,14 +30,12 @@ def generateMetricsFromV2Config(config: dict):
             "The Github Team need to have the same name (this is whitespace and case sensitive!)."
         )
     for milestone, mData in milestones.items():
-        logger = logging.getLogger(milestone)
-        logger.setLevel(logging.INFO)
+
         logFileName = f"{milestone}-{team}-{organization}.log"
         logFileHandler = logging.FileHandler(logFileName)
         formatter = logging.Formatter("%(levelname)s: %(message)s")
         logFileHandler.setFormatter(formatter)
-        logger.addHandler(logFileHandler)
-
+        logging.basicConfig(handlers=[logFileHandler], level=logging.INFO)
         try:
             startDate = pr_tz.localize(
                 datetime.fromisoformat(f"{mData.get('startDate')}T00:00:00")
@@ -51,8 +49,8 @@ def generateMetricsFromV2Config(config: dict):
             print(
                 "Warning: startDate and/or endDate couldn't be interpreted, proceeding without decay."
             )
-            logger.exception(f"Error while parsing milestone dates: {e}")
-            logger.warning(
+            logging.exception(f"Error while parsing milestone dates: {e}")
+            logging.warning(
                 f"startDate and/or endDate for {milestone} couldn't be interpreted, proceeding without decay."
             )
             startDate = datetime.now(tz=pr_tz)
@@ -73,10 +71,9 @@ def generateMetricsFromV2Config(config: dict):
                 sprints=config.get("sprints", 2),
                 minTasksPerSprint=config.get("minTasksPerSprint", 1),
                 shouldCountOpenIssues=config.get("countOpenIssues", False),
-                logger=logger,
             )
         except Exception as e:
-            logger.exception(e)
+            logging.exception(e)
         strippedMilestoneName = milestone.replace(" ", "")
         output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
         writeMilestoneToMarkdown(

@@ -26,13 +26,12 @@ def generateMetricsFromV1Config(config: dict):
             "The Github Team need to have the same name (this is whitespace and case sensitive!)."
         )
 
-    logger = logging.getLogger(milestone)
     logFileName = f"{milestone}-{team}-{organization}.log"
     logFileHandler = logging.FileHandler(logFileName)
     formatter = logging.Formatter("%(levelname)s: %(message)s")
     logFileHandler.setFormatter(formatter)
-    logger.addHandler(logFileHandler)
-    logger.warning(
+    logging.basicConfig(handlers=[logFileHandler], level=logging.INFO)
+    logging.warning(
         'Using V1 Metrics is deprecated. New projects should use V2 metrics. Please update your config to have "version":"2.0".'
     )
 
@@ -49,8 +48,8 @@ def generateMetricsFromV1Config(config: dict):
         print(
             "Warning: startDate and/or endDate couldn't be interpreted, proceeding without decay."
         )
-        logger.error(f"Error while parsing milestone dates: {e}")
-        logger.warning(
+        logging.error(f"Error while parsing milestone dates: {e}")
+        logging.warning(
             f"startDate and/or endDate for {milestone} couldn't be interpreted, proceeding without decay."
         )
         startDate = datetime.now(tz=pr_tz)
@@ -71,10 +70,9 @@ def generateMetricsFromV1Config(config: dict):
             sprints=1,
             minTasksPerSprint=0,
             shouldCountOpenIssues=config.get("countOpenIssues", False),
-            logger=logger,
         )
     except Exception as e:
-        logger.critical(e)
+        logging.critical(e)
     strippedMilestoneName = milestone.replace(" ", "")
     output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
     writeMilestoneToMarkdown(

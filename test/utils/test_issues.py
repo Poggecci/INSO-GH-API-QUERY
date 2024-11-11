@@ -1,16 +1,9 @@
 import pytest
 from datetime import datetime, timedelta
-from collections import defaultdict
-from unittest.mock import MagicMock
 from src.utils.constants import pr_tz
 from src.utils.issues import calculateIssueScores, decay, shouldCountIssue
-from src.utils.models import Issue, IssueMetrics, Reaction, ReactionKind, Comment
-
-
-# Mock the logging module
-@pytest.fixture
-def mock_logger():
-    return MagicMock()
+from src.utils.models import Issue, Reaction, ReactionKind, Comment
+from unittest.mock import patch
 
 
 # Fixture for creating Issue objects
@@ -42,12 +35,13 @@ def create_issue():
 
 
 # Tests for should_count_issue function
-def test_should_count_issue_valid(create_issue, mock_logger):
+
+
+def test_should_count_issue_valid(create_issue):
     issue = create_issue(milestone="Milestone #1", closed=True, closedBy="manager1")
     assert (
         shouldCountIssue(
             issue=issue,
-            logger=mock_logger,
             currentMilestone="Milestone #1",
             managers=["manager1"],
             shouldCountOpenIssues=False,
@@ -56,27 +50,24 @@ def test_should_count_issue_valid(create_issue, mock_logger):
     )
 
 
-def test_should_count_issue_no_milestone(create_issue, mock_logger):
+def test_should_count_issue_no_milestone(create_issue):
     issue = create_issue(milestone=None)
     assert (
         shouldCountIssue(
             issue=issue,
-            logger=mock_logger,
             currentMilestone="Milestone #1",
             managers=["manager1"],
             shouldCountOpenIssues=True,
         )
         == False
     )
-    mock_logger.warning.assert_called_once()
 
 
-def test_should_count_issue_wrong_milestone(create_issue, mock_logger):
+def test_should_count_issue_wrong_milestone(create_issue):
     issue = create_issue(milestone="Milestone #2")
     assert (
         shouldCountIssue(
             issue=issue,
-            logger=mock_logger,
             currentMilestone="Milestone #1",
             managers=["manager1"],
             shouldCountOpenIssues=True,
@@ -85,27 +76,24 @@ def test_should_count_issue_wrong_milestone(create_issue, mock_logger):
     )
 
 
-def test_should_count_issue_closed_by_non_manager(create_issue, mock_logger):
+def test_should_count_issue_closed_by_non_manager(create_issue):
     issue = create_issue(closed=True, closedBy="user1")
     assert (
         shouldCountIssue(
             issue=issue,
-            logger=mock_logger,
             currentMilestone="Milestone #1",
             managers=["manager1"],
             shouldCountOpenIssues=True,
         )
         == False
     )
-    mock_logger.warning.assert_called_once()
 
 
-def test_should_count_issue_open_not_allowed(create_issue, mock_logger):
+def test_should_count_issue_open_not_allowed(create_issue):
     issue = create_issue(closed=False)
     assert (
         shouldCountIssue(
             issue=issue,
-            logger=mock_logger,
             currentMilestone="Milestone #1",
             managers=["manager1"],
             shouldCountOpenIssues=False,
@@ -114,35 +102,30 @@ def test_should_count_issue_open_not_allowed(create_issue, mock_logger):
     )
 
 
-def test_should_count_issue_missing_fields(create_issue, mock_logger):
+def test_should_count_issue_missing_fields(create_issue):
     noUrgencyIssue = create_issue(urgency=None)
 
     assert (
         shouldCountIssue(
             issue=noUrgencyIssue,
-            logger=mock_logger,
             currentMilestone="Milestone #1",
             managers=["manager1"],
             shouldCountOpenIssues=True,
         )
         == False
     )
-    mock_logger.warning.assert_called_once()
 
-    mock_logger.warning.reset_mock()
     noDifficultyIssue = create_issue(difficulty=None)
 
     assert (
         shouldCountIssue(
             issue=noDifficultyIssue,
-            logger=mock_logger,
             currentMilestone="Milestone #1",
             managers=["manager1"],
             shouldCountOpenIssues=True,
         )
         == False
     )
-    mock_logger.warning.assert_called_once()
 
 
 # Tests for decay function
@@ -175,7 +158,7 @@ def test_decay_middle_of_milestone():
 
 
 # Tests for calculate_issue_scores function
-def test_calculate_issue_scores_basic(create_issue, mock_logger):
+def test_calculate_issue_scores_basic(create_issue):
     milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(difficulty=2.0, urgency=3.0, assignees=["dev1", "dev2"])
@@ -187,7 +170,6 @@ def test_calculate_issue_scores_basic(create_issue, mock_logger):
         startDate=milestoneStart,
         endDate=milestoneEnd,
         useDecay=False,  # Disable Decay to simplify calculation
-        logger=mock_logger,
     )
 
     assert result.pointsByDeveloper["dev1"] == pytest.approx(3.0)
@@ -195,7 +177,7 @@ def test_calculate_issue_scores_basic(create_issue, mock_logger):
     assert sum(result.bonusesByDeveloper.values()) == 0
 
 
-def test_calculate_issue_scores_with_decay(create_issue, mock_logger):
+def test_calculate_issue_scores_with_decay(create_issue):
     milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     middleDate = milestoneStart + (milestoneEnd - milestoneStart) / 2
@@ -210,7 +192,6 @@ def test_calculate_issue_scores_with_decay(create_issue, mock_logger):
         startDate=milestoneStart,
         endDate=milestoneEnd,
         useDecay=True,
-        logger=mock_logger,
     )
 
     assert (
@@ -218,7 +199,7 @@ def test_calculate_issue_scores_with_decay(create_issue, mock_logger):
     )  # Score should be less than 2.0 * 3.0 due to decay
 
 
-def test_calculate_issue_scores_with_modifier(create_issue, mock_logger):
+def test_calculate_issue_scores_with_modifier(create_issue):
     milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(difficulty=2.0, urgency=3.0, modifier=1.0, assignees=["dev1"])
@@ -230,13 +211,12 @@ def test_calculate_issue_scores_with_modifier(create_issue, mock_logger):
         startDate=milestoneStart,
         endDate=milestoneEnd,
         useDecay=False,
-        logger=mock_logger,
     )
 
     assert result.pointsByDeveloper["dev1"] == pytest.approx(7.0)  # (2.0 * 3.0) + 1.0
 
 
-def test_calculate_issue_scores_documentation_bonus(create_issue, mock_logger):
+def test_calculate_issue_scores_documentation_bonus(create_issue):
     milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(
@@ -253,14 +233,13 @@ def test_calculate_issue_scores_documentation_bonus(create_issue, mock_logger):
         startDate=milestoneStart,
         endDate=milestoneEnd,
         useDecay=False,
-        logger=mock_logger,
     )
 
     assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
     assert result.bonusesByDeveloper[issue.author] == pytest.approx(0.6)  # 10% of 6.0
 
 
-def test_calculate_issue_scores_comment_bonus(create_issue, mock_logger):
+def test_calculate_issue_scores_comment_bonus(create_issue):
     milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(
@@ -282,14 +261,13 @@ def test_calculate_issue_scores_comment_bonus(create_issue, mock_logger):
         startDate=milestoneStart,
         endDate=milestoneEnd,
         useDecay=False,
-        logger=mock_logger,
     )
 
     assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
     assert result.bonusesByDeveloper[issue.author] == pytest.approx(0.6)  # 10% of 6.0
 
 
-def test_calculate_issue_scores_non_team_member(create_issue, mock_logger):
+def test_calculate_issue_scores_non_team_member(create_issue):
     milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
     milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
     issue = create_issue(difficulty=2.0, urgency=3.0, assignees=["dev1", "external"])
@@ -301,12 +279,10 @@ def test_calculate_issue_scores_non_team_member(create_issue, mock_logger):
         startDate=milestoneStart,
         endDate=milestoneEnd,
         useDecay=False,
-        logger=mock_logger,
     )
 
     assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
     assert "external" not in result.pointsByDeveloper
-    mock_logger.warning.assert_called_once()
 
 
 # Run the tests

@@ -148,16 +148,11 @@ def generateSprintCutoffs(
     return cutoffs
 
 
-def fetchIssuesFromGithub(
-    *, org: str, team: str, logger: logging.Logger | None = None
-) -> Iterator[dict]:
-    if not logger:
-        logger = logging.getLogger()
-
+def fetchIssuesFromGithub(*, org: str, team: str) -> Iterator[dict]:
     project = getProject(organization=org, project_name=team)
-    logger.info(f"Found {project}")
+    logging.info(f"Found {project}")
     if not project.public:
-        logger.warning(
+        logging.warning(
             "Project visibility is set to private. This can lead to"
             " issues not being found if the Personal Access Token doesn't"
             " have permissions for viewing private projects."
@@ -192,10 +187,7 @@ def getTeamMetricsForMilestone(
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
-    logger: logging.Logger | None = None,
 ) -> MilestoneData:
-    if logger is None:
-        logger = logging.getLogger(__name__)
     print(members)
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
@@ -206,26 +198,25 @@ def getTeamMetricsForMilestone(
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
-    for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger):
+    for issue_dict in fetchIssuesFromGithub(org=org, team=team):
         try:
             issue = parseIssue(issue_dict=issue_dict)
         except ParsingError:
             # don't log since the root cause can be hard to identify without manual review
             continue
         except KeyError as e:
-            logger.exception(
+            logging.exception(
                 f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
             )
             continue
         except ValueError as e:
-            logger.exception(
+            logging.exception(
                 f"{e}. GH GraphQL API Issue type may have changed. This requires updating the code. Please contact the maintainers."
             )
             continue
 
         if not shouldCountIssue(
             issue=issue,
-            logger=logger,
             currentMilestone=milestone,
             managers=managers,
             shouldCountOpenIssues=shouldCountOpenIssues,
@@ -240,7 +231,6 @@ def getTeamMetricsForMilestone(
             startDate=startDate,
             endDate=endDate,
             useDecay=useDecay,
-            logger=logger,
         )
         # attribute base issue points to developer alongside giving them credit for the completed task
         for dev, score in issueMetrics.pointsByDeveloper.items():
@@ -290,7 +280,7 @@ def getTeamMetricsForMilestone(
                     cutoffs=sprintCutoffs,
                     sprintIndex=sprintIdx,
                 )
-                logger.warning(
+                logging.warning(
                     f"{dev} hasn't completed the minimum {minTasksPerSprint} task(s) required for sprint {sprintDateRange}"
                 )
                 if not shouldCountOpenIssues:

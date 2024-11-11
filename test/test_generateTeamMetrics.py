@@ -3,16 +3,7 @@ from src.generateTeamMetrics import getTeamMetricsForMilestone
 import pytest
 from unittest.mock import patch
 from datetime import datetime
-import logging
-
 from src.utils.models import Project
-
-
-@pytest.fixture
-def logger():
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    return logger
 
 
 mock_project = Project(number=1, name="test", url="", public=True)
@@ -136,7 +127,7 @@ mock_gh_res_with_open_issue = {
 @patch("src.generateTeamMetrics.getProject")
 @patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_closed_by_non_managers_arent_counted(
-    mock_runGraphqlQuery, mock_getProject, logger
+    mock_runGraphqlQuery, mock_getProject
 ):
     mock_getProject.return_value = mock_project
     mock_runGraphqlQuery.return_value = mock_gh_res_with_issue_closed_by_dev
@@ -165,7 +156,6 @@ def test_issues_closed_by_non_managers_arent_counted(
         sprints=sprints,
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
-        logger=logger,
     )
 
     assert result.totalPointsClosed == 0
@@ -175,7 +165,7 @@ def test_issues_closed_by_non_managers_arent_counted(
 @patch("src.generateTeamMetrics.getProject")
 @patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_not_belonging_to_milestone_arent_counted(
-    mock_runGraphqlQuery, mock_getProject, logger
+    mock_runGraphqlQuery, mock_getProject
 ):
     mock_getProject.return_value = mock_project
     mock_runGraphqlQuery.return_value = mock_gh_res_v20_milestone
@@ -203,7 +193,6 @@ def test_issues_not_belonging_to_milestone_arent_counted(
         sprints=sprints,
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
-        logger=logger,
     )
 
     assert result.totalPointsClosed == 0
@@ -213,7 +202,7 @@ def test_issues_not_belonging_to_milestone_arent_counted(
 @patch("src.generateTeamMetrics.getProject")
 @patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
-    mock_runGraphqlQuery, mock_getProject, logger
+    mock_runGraphqlQuery, mock_getProject
 ):
     mock_getProject.return_value = mock_getProject
     mock_runGraphqlQuery.return_value = mock_gh_res_with_open_issue
@@ -243,7 +232,6 @@ def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         shouldCountOpenIssues=shouldCountOpenIssues,
-        logger=logger,
     )
 
     assert result.totalPointsClosed == 0
@@ -264,7 +252,6 @@ def test_open_issues_arent_counted_iff_shouldCountOpenIssues_is_false(
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
         shouldCountOpenIssues=shouldCountOpenIssues,
-        logger=logger,
     )
 
     assert resultCountingOpen.totalPointsClosed != 0
@@ -397,7 +384,7 @@ mock_gh_res_issue_with_multiple_devs = {
 @patch("src.generateTeamMetrics.getProject")
 @patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_only_worked_on_by_managers_arent_counted(
-    mock_runGraphqlQuery, mock_getProject, logger
+    mock_runGraphqlQuery, mock_getProject
 ):
     mock_getProject.return_value = mock_getProject
     mock_runGraphqlQuery.return_value = mock_gh_res_issue_only_worked_by_manager
@@ -425,7 +412,6 @@ def test_issues_only_worked_on_by_managers_arent_counted(
         sprints=sprints,
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
-        logger=logger,
     )
 
     assert result.totalPointsClosed == 0
@@ -434,9 +420,7 @@ def test_issues_only_worked_on_by_managers_arent_counted(
 
 @patch("src.generateTeamMetrics.getProject")
 @patch("src.generateTeamMetrics.runGraphqlQuery")
-def test_issues_with_hooray_reaction_get_bonus(
-    mock_runGraphqlQuery, mock_getProject, logger
-):
+def test_issues_with_hooray_reaction_get_bonus(mock_runGraphqlQuery, mock_getProject):
     mock_getProject.return_value = mock_project
     mock_runGraphqlQuery.return_value = mock_gh_res_issue_with_hooray
 
@@ -463,7 +447,6 @@ def test_issues_with_hooray_reaction_get_bonus(
         sprints=sprints,
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
-        logger=logger,
     )
 
     expected_score = (3 * 2 + 1) * 1.1  # Urgency * Difficulty + Modifier * 110%
@@ -476,7 +459,7 @@ def test_issues_with_hooray_reaction_get_bonus(
 @patch("src.generateTeamMetrics.getProject")
 @patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_issues_with_multiple_developers_have_points_divided(
-    mock_runGraphqlQuery, mock_getProject, logger
+    mock_runGraphqlQuery, mock_getProject
 ):
     mock_getProject.return_value = mock_getProject
     mock_runGraphqlQuery.return_value = mock_gh_res_issue_with_multiple_devs
@@ -504,7 +487,6 @@ def test_issues_with_multiple_developers_have_points_divided(
         sprints=sprints,
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
-        logger=logger,
     )
 
     expected_score = 3 * 2 + 1  # Urgency * Difficulty + Modifier
@@ -518,7 +500,7 @@ def test_issues_with_multiple_developers_have_points_divided(
 @patch("src.generateTeamMetrics.getProject")
 @patch("src.generateTeamMetrics.runGraphqlQuery")
 def test_students_get_0_if_under_minimum_tasks_per_sprint(
-    mock_runGraphqlQuery, mock_getProject, logger
+    mock_runGraphqlQuery, mock_getProject
 ):
     mock_getProject.return_value = mock_getProject
     mock_runGraphqlQuery.return_value = mock_gh_res_issue_with_multiple_devs
@@ -548,7 +530,6 @@ def test_students_get_0_if_under_minimum_tasks_per_sprint(
         sprints=sprints,
         minTasksPerSprint=minTasksPerSprint,
         milestoneGrade=milestoneGrade,
-        logger=logger,
     )
 
     # Assert that both developers get 0 if they have not completed the minimum number of tasks per sprint

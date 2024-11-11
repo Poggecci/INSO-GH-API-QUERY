@@ -113,7 +113,6 @@ def parseIssue(*, issue_dict: dict) -> Issue:
 def shouldCountIssue(
     *,
     issue: Issue,
-    logger: logging.Logger,
     currentMilestone: str,
     managers: list[str],
     shouldCountOpenIssues: bool,
@@ -130,7 +129,6 @@ def shouldCountIssue(
 
     Args:
         issue (Issue): The issue to be evaluated.
-        logger (logging.Logger): Logger object for recording warnings.
         currentMilestone (str): The milestone currently being processed.
         managers (list[str]): List of manager usernames.
         shouldCountOpenIssues (bool): Flag indicating whether open issues should be counted.
@@ -145,7 +143,7 @@ def shouldCountIssue(
         - Do not have Urgency and/or Difficulty fields populated.
     """
     if issue.milestone is None:
-        logger.warning(
+        logging.warning(
             f"[Issue #{issue.number}]({issue.url}) is not associated with a milestone."
         )
         return False
@@ -154,7 +152,7 @@ def shouldCountIssue(
     if issue.closed:
         assert issue.closedBy is not None
         if issue.closedBy not in managers:
-            logger.warning(
+            logging.warning(
                 f"[Issue #{issue.number}]({issue.url}) was closed by non-manager {issue.closedBy}. Only issues closed by managers are accredited. Managers for this project are: {managers}"
             )
             return False
@@ -163,7 +161,7 @@ def shouldCountIssue(
         return False
 
     if issue.difficulty is None or issue.urgency is None:
-        logger.warning(
+        logging.warning(
             f"[Issue #{issue.number}]({issue.url}) does not have the Urgency and/or Difficulty fields populated"
         )
         return False
@@ -194,7 +192,6 @@ def calculateIssueScores(
     startDate: datetime,
     endDate: datetime,
     useDecay: bool,
-    logger: logging.Logger,
 ) -> IssueMetrics:
     """
     Calculates scores and bonuses for an issue based on various factors and team member roles.
@@ -209,7 +206,6 @@ def calculateIssueScores(
         startDate (datetime): The start date of the relevant period (e.g., milestone start).
         endDate (datetime): The end date of the relevant period (e.g., milestone end).
         useDecay (bool): Flag to determine if decay factor should be applied to the score.
-        logger (logging.Logger): Logger object for recording information and warnings.
 
     Returns:
         IssueMetrics: An object containing two defaultdict(float) attributes:
@@ -249,7 +245,7 @@ def calculateIssueScores(
             and issue.author
             not in managers  # Ensure the author isn't a manager as they shouldn't be receiving poitns
         ):
-            logger.info(
+            logging.info(
                 f"Documentation Bonus given to {issue.author} in [Issue #{issue.number}]({issue.url})"
             )
             bonusesByDeveloper[issue.author] += documentationBonus
@@ -265,7 +261,7 @@ def calculateIssueScores(
                 break
         if shouldGetBonus:
             bonusesByDeveloper[issue.author] += documentationBonus
-            logger.info(
+            logging.info(
                 f"Documentation Bonus given to {issue.author} in [Issue #{issue.number}]({issue.url})"
             )
             break  # only attribute the bonus once and to the earliest comment
@@ -277,7 +273,7 @@ def calculateIssueScores(
     )
     for user in issue.assignees:
         if user not in developers and user not in managers:
-            logger.warning(
+            logging.warning(
                 f"[Issue #{issue.number}]({issue.url}) assigned to user {user} not belonging to the team."
             )
             continue
