@@ -1,4 +1,5 @@
 from src.utils.models import Milestone, ParsingError
+from datetime import datetime
 
 
 def parseMilestone(milestone_dict: dict, /) -> Milestone:
@@ -26,11 +27,11 @@ def parseMilestone(milestone_dict: dict, /) -> Milestone:
             "Missing, empty, or incorrectly typed milestone data. This could be due to permission issues or API changes."
         )
 
-    # Extract the fields from the milestone dictionary
-    url: str | None = milestone_dict.get("url")
-    title: str = milestone_dict[
-        "title"
-    ]  # This is required, so we let it raise KeyError if missing
+    url: str = milestone_dict["url"]
+    title: str = milestone_dict["title"]
+    if "dueOn" in milestone_dict:
+        dueOn = datetime.fromisoformat(milestone_dict["dueOn"])
+    else:
+        dueOn = None
 
-    # Return the populated Milestone dataclass
-    return Milestone(url=url, title=title)
+    return Milestone(url=url, title=title, dueOn=dueOn)

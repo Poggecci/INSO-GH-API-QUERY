@@ -5,40 +5,48 @@ from src.utils.queryRunner import runGraphqlQuery
 
 
 get_milestones_query = """
-query GetRepositoryMilestones($org: String!, $repo: String!, $nextPage: String) {
-    organization(login: $org) {
-        repository(name: $repo) {
-            milestones(first: 100, after: $nextPage) {
-                pageInfo {
-                    hasNextPage
-                    endCursor
-                }
-                nodes {
-                    title
-                    url
-                }
+query GetRepositoryMilestones($org: String!, $team: String!) {
+  organization(login: $org) {
+    team(slug: $team) {
+      repositories(first: 100) {
+        nodes {
+          milestones(first: 100) {
+            nodes {
+              url
+              title
+              dueOn
             }
+          }
         }
+      }
     }
+  }
 }
 """
 
 
-def getMilestones(*, organization: str, repository: str) -> list[Milestone]:
-    params = {"org": organization, "repo": repository}
-    hasAnotherPage = True
+def getMilestones(*, organization: str, team: str) -> list[Milestone]:
+    """
+    Retrieve all milestones from repositories belonging to a team in an organization.
+
+    Args:
+        organization (str): The GitHub organization name. Keyword-only argument.
+        team (str): The team slug within the organization. Keyword-only argument.
+
+    Returns:
+        list[Milestone]: List of Milestone objects containing milestone information.
+
+    Raises:
+        KeyError: If the response doesn't contain the expected data structure.
+        ParsingError: If the milestone objects in the API response have an unknown structure.
+    """
+    params = {"org": organization, "team": team}
     milestones = []
-    while hasAnotherPage:
-        response: dict = runGraphqlQuery(query=get_milestones_query, variables=params)
-        milestone_dicts: list[dict] = response["data"]["organization"]["repository"][
-            "milestones"
-        ]["nodes"]
-        milestones.extend(map(parseMilestone, milestone_dicts))
-        hasAnotherPage = response["data"]["organization"]["repository"]["milestones"][
-            "pageInfo"
-        ]["hasNextPage"]
-        if hasAnotherPage:
-            params["nextPage"] = response["data"]["organization"]["repository"][
-                "milestones"
-            ]["pageInfo"]["endCursor"]
+    response: dict = runGraphqlQuery(query=get_milestones_query, variables=params)
+    repositories = response["organization"]["team"]["repositories"]["nodes"]
+    for repo in repositories:
+        # Get milestones for current repository
+        repo_milestones = repo["milestones"]["nodes"]
+        for milestone_data in repo_milestones:
+            milestones.append(parseMilestone(milestone_data))
     return milestones

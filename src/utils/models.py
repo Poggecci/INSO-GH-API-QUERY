@@ -87,5 +87,6 @@ class ParsingError(Exception):
 
 @dataclass(kw_only=True)
 class Milestone:
-    url: str | None
+    url: str
     title: str
+    dueOn: datetime | None
