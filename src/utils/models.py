@@ -83,3 +83,10 @@ class ParsingError(Exception):
 
     def __init__(self, message: str):
         super().__init__(message)
+
+
+@dataclass(kw_only=True)
+class Milestone:
+    url: str
+    title: str
+    dueOn: datetime | None
