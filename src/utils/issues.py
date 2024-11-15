@@ -152,8 +152,7 @@ def shouldCountIssue(
     if issue.milestone != currentMilestone:
         return False
     if issue.closed:
-        assert issue.closedBy is not None
-        if issue.closedBy not in managers:
+        if issue.closedBy is not None and issue.closedBy not in managers:
             logger.warning(
                 f"[Issue #{issue.number}]({issue.url}) was closed by non-manager {issue.closedBy}. Only issues closed by managers are accredited. Managers for this project are: {managers}"
             )
