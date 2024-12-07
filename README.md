@@ -68,7 +68,6 @@ When using this repo through actions, the generated metrics will be placed in a 
   "countOpenIssues": false,
   "sprints": 2,
   "minTasksPerSprint": 1,
-  ""
 }
 ```
 
