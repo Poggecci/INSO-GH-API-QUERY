@@ -15,6 +15,7 @@ requests = "^2.32.2"
 types-requests = "^2.32"
 pytz = "^2024.1"
 types-pytz = "^2024.2"
+python-dotenv = "^1.0.1"
 
 
 

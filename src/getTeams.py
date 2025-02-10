@@ -17,6 +17,6 @@ query QueryClassroomTeams($owner: String!) {
 def getTeams(organization: str) -> list[str]:
     params = {"owner": organization}
     response = runGraphqlQuery(query=get_teams_query, variables=params)
-    teams = response["data"]["organization"]["teams"]["nodes"]
+    teams = response["organization"]["teams"]["nodes"]
     print([team["name"] for team in teams])
     return [team["name"] for team in teams]

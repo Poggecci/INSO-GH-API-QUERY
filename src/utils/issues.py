@@ -26,7 +26,7 @@ def parseIssue(*, issue_dict: dict) -> Issue:
 
     Raises:
         ParsingError: If the issue 'content' field is missing or is empty due to permission errors or possibly API changes.
-        Key Error: If the structure of the issue_dict does not match the expected format, either due to missing fields
+        KeyError: If the structure of the issue_dict does not match the expected format, either due to missing fields
                       or permission errors. Specific errors include:
                       - Missing Required fields such as 'url', 'number', 'title', 'createdAt', etc.
         ValueError: if date formatting for 'createdAt' or 'closedAt' fails.
@@ -152,8 +152,7 @@ def shouldCountIssue(
     if issue.milestone != currentMilestone:
         return False
     if issue.closed:
-        assert issue.closedBy is not None
-        if issue.closedBy not in managers:
+        if issue.closedBy is not None and issue.closedBy not in managers:
             logger.warning(
                 f"[Issue #{issue.number}]({issue.url}) was closed by non-manager {issue.closedBy}. Only issues closed by managers are accredited. Managers for this project are: {managers}"
             )

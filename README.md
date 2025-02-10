@@ -68,7 +68,6 @@ When using this repo through actions, the generated metrics will be placed in a 
   "countOpenIssues": false,
   "sprints": 2,
   "minTasksPerSprint": 1,
-  ""
 }
 ```
 
@@ -102,8 +101,14 @@ When using this repo through actions, the generated metrics will be placed in a 
 3. Ensure the token has the `read:org` and `read:project` permissions. Ensure that your repository is **Public**. Private repositories will require more permissions for the PAT.
 4. Set your expiration to the final date you expect to require the metrics (or set no expiration, though this is not recommended).
 5. Copy the token somewhere private, we will be utilizing it promptly
-6. Create an environment variable ([Windows](https://www.computerhope.com/issues/ch000549.htm)/[Linux](https://stackoverflow.com/questions/45502996/how-to-set-environment-variable-in-linux-permanently)/[MacOS](https://phoenixnap.com/kb/set-environment-variable-mac)) with the name `GITHUB_API_TOKEN` and put the PAT you generated as the value.
-7. Create an environment variable called `ORGANIZATION` with the value of the github organization of the course (ie. `uprm-inso4101-2024-2025-s1`)
+6. Create a file called `.env` in the root directory of the project with the following contents:
+
+```bash
+GITHUB_API_TOKEN=your_personal_access_token_here
+ORGANIZATION="uprm-inso4101-YYYY-YYYY-s#"
+```
+
+Replace `your_personal_access_token_here` with the PAT you generated, and replace the organization name with the one where your project is hosted.
 
 ##### Python
 
@@ -166,7 +171,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 
 You should now see metrics generated in the directory.
 
-# **_End of Local Run Setup_**
+**_End of Local Run Setup_**
 
 ### Setup for Professor (For students who want to run locally, see the Local Run Section)
 

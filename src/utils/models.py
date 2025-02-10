@@ -70,11 +70,26 @@ class IssueMetrics:
     bonusesByDeveloper: dict[str, float]
 
 
+@dataclass(kw_only=True, frozen=True)
+class Project:
+    name: str
+    number: int
+    url: str
+    public: bool
+
+
 class ParsingError(Exception):
     """Custom exception for parsing errors."""
 
     def __init__(self, message: str):
         super().__init__(message)
+
+
+@dataclass(kw_only=True)
+class Milestone:
+    url: str
+    title: str
+    dueOn: datetime | None
 
 
 @dataclass(kw_only=True)

@@ -1,7 +1,8 @@
 from collections.abc import Iterator, ValuesView
 import logging
 from datetime import datetime
-from src.getProject import getProjectNumber
+from src.getMilestones import getMilestones
+from src.getProject import getProject
 from src.utils.constants import pr_tz
 from src.utils.issues import (
     calculateIssueScores,
@@ -148,21 +149,34 @@ def generateSprintCutoffs(
     return cutoffs
 
 
-def fetchIssuesFromGithub(*, org: str, team: str) -> Iterator[dict]:
+def fetchIssuesFromGithub(
+    *, org: str, team: str, logger: logging.Logger | None = None
+) -> Iterator[dict]:
+    if not logger:
+        logger = logging.getLogger()
 
-    project_number = getProjectNumber(organization=org, project_name=team)
+    project = getProject(organization=org, project_name=team)
+    logger.info(f"Found {project}")
+    if not project.public:
+        logger.warning(
+            "Project visibility is set to private. This can lead to"
+            " issues not being found if the Personal Access Token doesn't"
+            " have permissions for viewing private projects."
+        )
 
-    params = {"owner": org, "team": team, "projectNumber": project_number}
+    params = {"owner": org, "team": team, "projectNumber": project.number}
     hasAnotherPage = True
     while hasAnotherPage:
         response: dict = runGraphqlQuery(query=get_team_issues, variables=params)
-        project: dict = response["data"]["organization"]["projectV2"]
-        issues = project["items"]["nodes"]
+        project_dict_with_issues: dict = response["organization"]["projectV2"]
+        issues = project_dict_with_issues["items"]["nodes"]
         yield from issues
 
-        hasAnotherPage = project["items"]["pageInfo"]["hasNextPage"]
+        hasAnotherPage = project_dict_with_issues["items"]["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
-            params["nextPage"] = project["items"]["pageInfo"]["endCursor"]
+            params["nextPage"] = project_dict_with_issues["items"]["pageInfo"][
+                "endCursor"
+            ]
 
 
 def getTeamMetricsForMilestone(
@@ -183,6 +197,32 @@ def getTeamMetricsForMilestone(
 ) -> MilestoneData:
     if logger is None:
         logger = logging.getLogger(__name__)
+
+    # Do some sanity checks on the passed in parameters
+    if sprints < 1:
+        raise ValueError(
+            "Each milestone must contain at least 1 sprint. Revise the config file."
+        )
+    if endDate < startDate:
+        raise ValueError("Milestone end date must be after start date.")
+    try:
+        milestones = getMilestones(organization=org, team=team)
+        matchingMilestone = next(
+            filter(lambda m: m.title == milestone, milestones), None
+        )
+        if matchingMilestone is None:
+            logger.warning(
+                f'Milestone "{milestone}" not found in any repo associated with the team'
+            )
+        elif matchingMilestone.dueOn is not None and matchingMilestone.dueOn != endDate:
+            logger.warning(
+                f"Milestone due date in config doesn't match milestone due date on Github"
+            )
+        else:
+            print(f"Fetching issues associated with milestone {matchingMilestone}")
+    except Exception as e:
+        logger.warning(e)
+
     print(members)
     developers = [member for member in members if member not in managers]
     devPointsClosed = {dev: 0.0 for dev in developers}
@@ -193,7 +233,9 @@ def getTeamMetricsForMilestone(
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
-    for issue_dict in fetchIssuesFromGithub(org=org, team=team):
+
+    # Fetch all issues for the team, drop invalid ones, and apply their points to the correct developers
+    for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger):
         try:
             issue = parseIssue(issue_dict=issue_dict)
         except ParsingError:
