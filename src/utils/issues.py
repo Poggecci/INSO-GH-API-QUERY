@@ -185,6 +185,33 @@ def decay(
     )
 
 
+def whoShouldGetBonus(issue: Issue, managers: list[str]) -> str | None:
+    # attribute documentation bonus to author when a manager has reacted to the issue description with 🎉
+    target = None
+    for reaction in issue.reactions:
+        if (
+            reaction.kind == ReactionKind.HOORAY
+            and reaction.user_login in managers
+            and issue.author
+            not in managers  # Ensure the author isn't a manager as they shouldn't be receiving points
+        ):
+            # Penalize if there are more than 1 valid reactions
+            if target is not None:
+                return None
+            target = issue.author
+    # attribute documentation bonus to user when a manager reacts to a comment with 🎉
+    for comment in issue.comments:
+        if comment.author_login in managers:
+            continue
+        for reaction in comment.reactions:
+            if reaction.kind == ReactionKind.HOORAY and reaction.user_login in managers:
+                # Penalize if there are more than 1 valid reactions
+                if target is not None:
+                    return None
+                target = comment.author_login
+    return target
+
+
 def calculateIssueScores(
     *,
     issue: Issue,
@@ -239,35 +266,14 @@ def calculateIssueScores(
         * (decay(startDate, endDate, issue.createdAt) if useDecay else 1)
         + modifier
     )
-    # attribute documentation bonus to author when a manager has reacted to the issue description with 🎉
+    # attribute documentation bonus to author when a manager has reacted to the issue or comments with 🎉
     documentationBonus = issueScore * 0.1
-    for reaction in issue.reactions:
-        if (
-            reaction.kind == ReactionKind.HOORAY
-            and reaction.user_login in managers
-            and issue.author
-            not in managers  # Ensure the author isn't a manager as they shouldn't be receiving poitns
-        ):
-            logger.info(
-                f"Documentation Bonus given to {issue.author} in [Issue #{issue.number}]({issue.url})"
-            )
-            bonusesByDeveloper[issue.author] += documentationBonus
-            break  # bonus should only be applied once
-    # attribute documentation bonus to user when a manager reacts to a comment with 🎉
-    for comment in issue.comments:
-        if comment.author_login in managers:
-            continue
-        shouldGetBonus = False
-        for reaction in comment.reactions:
-            if reaction.kind == ReactionKind.HOORAY and reaction.user_login:
-                shouldGetBonus = True
-                break
-        if shouldGetBonus:
-            bonusesByDeveloper[issue.author] += documentationBonus
-            logger.info(
-                f"Documentation Bonus given to {issue.author} in [Issue #{issue.number}]({issue.url})"
-            )
-            break  # only attribute the bonus once and to the earliest comment
+    bonusTarget = whoShouldGetBonus(issue=issue, managers=managers)
+    if bonusTarget is not None:
+        logger.info(
+            f"Documentation Bonus given to {bonusTarget} in [Issue #{issue.number}]({issue.url})"
+        )
+        bonusesByDeveloper[bonusTarget] += documentationBonus
 
     # attribute points only to developers in the team
     assignedDevelopers = len((set(issue.assignees) - set(managers)) & (set(developers)))
