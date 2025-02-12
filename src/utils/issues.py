@@ -60,6 +60,7 @@ def parseIssue(*, issue_dict: dict) -> Issue:
     assignees = [
         assignee_dict["login"] for assignee_dict in content["assignees"]["nodes"]
     ]
+    labels = [label["name"] for label in content["labels"]["nodes"]]
     # Currently, we only search for reactions and comments with HOORAY 🎉
     reactions = [
         Reaction(user_login=reaction["user"]["login"], kind=ReactionKind.HOORAY)
@@ -101,12 +102,13 @@ def parseIssue(*, issue_dict: dict) -> Issue:
         closedBy=closedBy,
         milestone=milestone,
         assignees=assignees,
+        labels=labels,
         reactions=reactions,
         comments=comments,
         urgency=urgency,
         difficulty=difficulty,
         modifier=modifier,
-        isLectureTopicTask="[Lecture Topic Task]" in title,
+        isLectureTopicTask="[Lecture Topic Task]" in title or "lecture topic task" in labels,
     )
 
 

@@ -48,6 +48,11 @@ query QueryProjectItemsForTeam(
                             login
                         }
                         }
+                        labels {
+                        nodes {
+                            name
+                        }
+                        }
                         reactions(first: 10, content: HOORAY) {
                         nodes {
                             user {
