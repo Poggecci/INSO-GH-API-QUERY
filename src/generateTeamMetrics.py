@@ -48,7 +48,7 @@ query QueryProjectItemsForTeam(
                             login
                         }
                         }
-                        labels {
+                        labels(first: 10) {
                         nodes {
                             name
                         }
