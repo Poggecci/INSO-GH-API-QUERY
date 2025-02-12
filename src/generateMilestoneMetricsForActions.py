@@ -75,6 +75,9 @@ def generateMetricsFromV2Config(config: dict):
                 sprints=config.get("sprints", 2),
                 minTasksPerSprint=config.get("minTasksPerSprint", 1),
                 shouldCountOpenIssues=config.get("countOpenIssues", False),
+                teamLeadTaskAdditionalPercent=config.get(
+                    "teamLeadTaskAdditionalPercent", 10
+                ),
                 logger=logger,
             )
         except Exception as e:

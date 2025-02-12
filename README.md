@@ -39,6 +39,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
 - `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
 - `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
+- `teamLeadTaskAdditionalPercent` : bonus percent of issue score awarded for being a team lead task (defaults to 10 if not specified)
 
 **Example `gh_metrics_config.json` file:**
 
@@ -68,6 +69,7 @@ When using this repo through actions, the generated metrics will be placed in a 
   "countOpenIssues": false,
   "sprints": 2,
   "minTasksPerSprint": 1,
+  "teamLeadTaskAdditionalPercent": 20
 }
 ```
 
@@ -131,6 +133,7 @@ Replace `your_personal_access_token_here` with the PAT you generated, and replac
 - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
 - `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
 - `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
+- `teamLeadTaskAdditionalPercent` : bonus percent of issue score awarded for being a team lead task (defaults to 10 if not specified)
 
 **Example `exampleActionsConfig.json` file:**
 
@@ -160,7 +163,7 @@ Replace `your_personal_access_token_here` with the PAT you generated, and replac
   "countOpenIssues": false,
   "sprints": 2,
   "minTasksPerSprint": 1,
-  ""
+  "teamLeadTaskAdditionalPercent": 20
 }
 ```
 
@@ -216,6 +219,7 @@ export GITHUB_API_TOKEN=`YOUR_PERSONAL_ACCESS_TOKEN`
    - `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
    - `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
    - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation (defaults to false if not specified)
+   - `teamLeadTaskAdditionalPercent` : bonus percent of issue score awarded for being a team lead task (defaults to 10 if not specified)
 
 2. Run the script from the command line:
 
@@ -247,7 +251,8 @@ poetry run python exportMetricsForCourseMilestone.py exampleConfig.json
   "lectureTopicTaskQuota": 4,
   "sprints": 2,
   "minTasksPerSprint": 1,
-  "countOpenIssues": false
+  "countOpenIssues": false,
+  "teamLeadTaskAdditionalPercent": 20
 }
 ```
 

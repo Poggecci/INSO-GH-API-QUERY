@@ -35,6 +35,7 @@ def create_issue():
             "difficulty": 1.0,
             "modifier": 0.0,
             "isLectureTopicTask": False,
+            "isTeamLeadTask": False,
         }
         default_values.update(kwargs)
         return Issue(**default_values)
@@ -341,6 +342,60 @@ def test_calculate_issue_scores_non_team_member(create_issue, mock_logger):
     assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
     assert "external" not in result.pointsByDeveloper
     mock_logger.warning.assert_called_once()
+
+
+def test_calculate_issue_scores_team_lead_task(create_issue, mock_logger):
+    milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
+    milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
+    issue = create_issue(
+        difficulty=2.0,
+        urgency=3.0,
+        assignees=["dev1"],
+        labels=["team lead task"],
+        isTeamLeadTask=True,
+    )
+
+    result = calculateIssueScores(
+        issue=issue,
+        managers=["manager1"],
+        developers=["dev1"],
+        startDate=milestoneStart,
+        endDate=milestoneEnd,
+        useDecay=False,
+        teamLeadTaskAdditionalPercent=20,
+        logger=mock_logger,
+    )
+
+    assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
+    assert result.bonusesByDeveloper["dev1"] == pytest.approx(1.2)  # 20% of 6.0
+
+
+def test_calculate_issue_scores_multiple_team_lead_task(create_issue, mock_logger):
+    milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
+    milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
+    issue = create_issue(
+        difficulty=2.0,
+        urgency=3.0,
+        assignees=["dev1", "dev2"],
+        labels=["team lead task"],
+        isTeamLeadTask=True,
+    )
+
+    result = calculateIssueScores(
+        issue=issue,
+        managers=["manager1"],
+        developers=["dev1", "dev2"],
+        startDate=milestoneStart,
+        endDate=milestoneEnd,
+        useDecay=False,
+        teamLeadTaskAdditionalPercent=20,
+        logger=mock_logger,
+    )
+
+    assert result.pointsByDeveloper["dev1"] == pytest.approx(3.0)  # Half of 6.0
+    assert result.pointsByDeveloper["dev2"] == pytest.approx(3.0)  # Half of 6.0
+    assert result.bonusesByDeveloper["dev1"] == pytest.approx(0.6)  # 20% of half of 6.0
+    assert result.bonusesByDeveloper["dev2"] == pytest.approx(0.6)  # 20% of half of 6.0
 
 
 # Run the tests

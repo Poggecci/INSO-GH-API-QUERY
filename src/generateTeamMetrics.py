@@ -198,6 +198,7 @@ def getTeamMetricsForMilestone(
     useDecay: bool,
     milestoneGrade: float,
     shouldCountOpenIssues: bool = False,
+    teamLeadTaskAdditionalPercent: float = 10,
     logger: logging.Logger | None = None,
 ) -> MilestoneData:
     if logger is None:
@@ -274,6 +275,7 @@ def getTeamMetricsForMilestone(
             startDate=startDate,
             endDate=endDate,
             useDecay=useDecay,
+            teamLeadTaskAdditionalPercent=teamLeadTaskAdditionalPercent,
             logger=logger,
         )
         # attribute base issue points to developer alongside giving them credit for the completed task

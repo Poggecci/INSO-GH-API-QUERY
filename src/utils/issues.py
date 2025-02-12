@@ -108,7 +108,9 @@ def parseIssue(*, issue_dict: dict) -> Issue:
         urgency=urgency,
         difficulty=difficulty,
         modifier=modifier,
-        isLectureTopicTask="[Lecture Topic Task]" in title or "lecture topic task" in labels,
+        isLectureTopicTask="[Lecture Topic Task]" in title
+        or "lecture topic task" in labels,
+        isTeamLeadTask="team lead task" in labels,
     )
 
 
@@ -222,6 +224,7 @@ def calculateIssueScores(
     startDate: datetime,
     endDate: datetime,
     useDecay: bool,
+    teamLeadTaskAdditionalPercent: float = 10,
     logger: logging.Logger,
 ) -> IssueMetrics:
     """
@@ -276,6 +279,12 @@ def calculateIssueScores(
             f"Documentation Bonus given to {bonusTarget} in [Issue #{issue.number}]({issue.url})"
         )
         bonusesByDeveloper[bonusTarget] += documentationBonus
+
+    if issue.isTeamLeadTask:
+        for dev in issue.assignees:
+            bonusesByDeveloper[dev] += (
+                issueScore / len(issue.assignees) * teamLeadTaskAdditionalPercent / 100
+            )
 
     # attribute points only to developers in the team
     assignedDevelopers = len((set(issue.assignees) - set(managers)) & (set(developers)))

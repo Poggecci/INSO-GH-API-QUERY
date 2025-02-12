@@ -94,6 +94,10 @@ if __name__ == "__main__":
                 useDecay=useDecay,
                 sprints=config_dict.get("sprints", 2),
                 minTasksPerSprint=config_dict.get("minTasksPerSprint", 1),
+                teamLeadTaskAdditionalPercent=config_dict.get(
+                    "teamLeadTaskAdditionalPercent", 10
+                ),
+                shouldCountOpenIssues=config_dict.get("countOpenIssues", False),
             )
             os.makedirs(metricsDirectory, exist_ok=True)
             writeMilestoneToCsv(

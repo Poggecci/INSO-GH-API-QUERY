@@ -63,6 +63,7 @@ class Issue:
     difficulty: float | None
     modifier: float | None
     isLectureTopicTask: bool
+    isTeamLeadTask: bool
 
 
 @dataclass(kw_only=True)
