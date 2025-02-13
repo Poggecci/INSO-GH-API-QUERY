@@ -28,6 +28,7 @@ def create_issue():
             "closedBy": None,
             "milestone": "Milestone #1",
             "assignees": ["user1"],
+            "labels": [],
             "reactions": [],
             "comments": [],
             "urgency": 1.0,
