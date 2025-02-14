@@ -28,6 +28,7 @@ def create_issue():
             "closedBy": None,
             "milestone": "Milestone #1",
             "assignees": ["user1"],
+            "labels": [],
             "reactions": [],
             "comments": [],
             "urgency": 1.0,
@@ -269,7 +270,7 @@ def test_calculate_issue_scores_comment_bonus(create_issue, mock_logger):
         assignees=["dev1"],
         comments=[
             IssueComment(
-                author_login="dev1",
+                author_login="dev2",
                 reactions=[Reaction(user_login="manager1", kind=ReactionKind.HOORAY)],
             )
         ],
@@ -278,7 +279,7 @@ def test_calculate_issue_scores_comment_bonus(create_issue, mock_logger):
     result = calculateIssueScores(
         issue=issue,
         managers=["manager1"],
-        developers=["dev1"],
+        developers=["dev1", "dev2"],
         startDate=milestoneStart,
         endDate=milestoneEnd,
         useDecay=False,
@@ -286,7 +287,40 @@ def test_calculate_issue_scores_comment_bonus(create_issue, mock_logger):
     )
 
     assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
-    assert result.bonusesByDeveloper[issue.author] == pytest.approx(0.6)  # 10% of 6.0
+    assert result.bonusesByDeveloper["dev2"] == pytest.approx(0.6)  # 10% of 6.0
+
+
+def test_calculate_issue_scores_documentation_bonus_double_reaction(
+    create_issue, mock_logger
+):
+    milestoneStart = datetime(year=2023, month=1, day=1, tzinfo=pr_tz)
+    milestoneEnd = datetime(year=2023, month=1, day=31, tzinfo=pr_tz)
+    issue = create_issue(
+        difficulty=2.0,
+        urgency=3.0,
+        assignees=["dev1"],
+        reactions=[Reaction(user_login="manager1", kind=ReactionKind.HOORAY)],
+        comments=[
+            IssueComment(
+                author_login="dev2",
+                reactions=[Reaction(user_login="manager1", kind=ReactionKind.HOORAY)],
+            )
+        ],
+    )
+
+    result = calculateIssueScores(
+        issue=issue,
+        managers=["manager1"],
+        developers=["dev1", "dev2"],
+        startDate=milestoneStart,
+        endDate=milestoneEnd,
+        useDecay=False,
+        logger=mock_logger,
+    )
+
+    assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
+    assert result.bonusesByDeveloper["dev1"] == pytest.approx(0.0)
+    assert result.bonusesByDeveloper["dev2"] == pytest.approx(0.0)
 
 
 def test_calculate_issue_scores_non_team_member(create_issue, mock_logger):

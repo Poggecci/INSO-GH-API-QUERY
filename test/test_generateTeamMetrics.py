@@ -47,6 +47,7 @@ mock_gh_res_with_issue_closed_by_dev = {
                                     }
                                 ]
                             },
+                            "labels": {"nodes": []},
                             "reactions": {"nodes": []},
                             "comments": {"nodes": []},
                         },
@@ -84,6 +85,7 @@ mock_gh_res_v20_milestone = {
                             "timelineItems": {
                                 "nodes": [{"actor": {"login": "manager1"}}]
                             },
+                            "labels": {"nodes": []},
                             "reactions": {"nodes": []},
                             "comments": {"nodes": []},
                         },
@@ -118,6 +120,7 @@ mock_gh_res_with_open_issue = {
                             "closedAt": None,
                             "milestone": {"title": "v1.0"},
                             "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": []},
                             "reactions": {"nodes": []},
                             "comments": {"nodes": []},
                             "timelineItems": {"nodes": []},
@@ -292,6 +295,7 @@ mock_gh_res_issue_only_worked_by_manager = {
                             "closedAt": "2023-01-01T00:00:00Z",
                             "milestone": {"title": "v1.0"},
                             "assignees": {"nodes": [{"login": "manager1"}]},
+                            "labels": {"nodes": []},
                             "reactions": {"nodes": []},
                             "comments": {"nodes": []},
                             "timelineItems": {
@@ -329,6 +333,7 @@ mock_gh_res_issue_with_hooray = {
                             "closedAt": "2023-01-01T00:00:00Z",
                             "milestone": {"title": "v1.0"},
                             "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": []},
                             "reactions": {
                                 "nodes": [
                                     {
@@ -377,6 +382,7 @@ mock_gh_res_issue_with_multiple_devs = {
                                     {"login": "dev2"},
                                 ]
                             },
+                            "labels": {"nodes": []},
                             "reactions": {"nodes": []},
                             "comments": {"nodes": []},
                             "timelineItems": {
@@ -554,6 +560,104 @@ def test_students_get_0_if_under_minimum_tasks_per_sprint(
     # Assert that both developers get 0 if they have not completed the minimum number of tasks per sprint
     assert result.devMetrics["dev1"].expectedGrade == 0.0
     assert result.devMetrics["dev2"].expectedGrade == 0.0
+
+
+mock_gh_res_issues_with_lecture_topic_tasks = {
+    "organization": {
+        "projectV2": {
+            "title": "sample-team",
+            "items": {
+                "pageInfo": {
+                    "endCursor": "end-cursor",
+                    "hasNextPage": False,
+                },
+                "nodes": [
+                    {
+                        "content": {
+                            "url": "https://github.com/org/repo/issues/7",
+                            "number": 7,
+                            "title": "[Lecture Topic Task] Issue Title",
+                            "author": {"login": "dev1"},
+                            "createdAt": "2023-01-01T00:00:00Z",
+                            "closed": True,
+                            "closedAt": "2023-01-01T00:00:00Z",
+                            "milestone": {"title": "v1.0"},
+                            "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": []},
+                            "reactions": {"nodes": []},
+                            "comments": {"nodes": []},
+                            "timelineItems": {
+                                "nodes": [{"actor": {"login": "manager1"}}],
+                            },
+                        },
+                        "Urgency": {"number": 3},
+                        "Difficulty": {"number": 2},
+                        "Modifier": {"number": 1},
+                    },
+                    {
+                        "content": {
+                            "url": "https://github.com/org/repo/issues/8",
+                            "number": 8,
+                            "title": "Issue Title",
+                            "author": {"login": "dev1"},
+                            "createdAt": "2023-01-01T00:00:00Z",
+                            "closed": True,
+                            "closedAt": "2023-01-01T00:00:00Z",
+                            "milestone": {"title": "v1.0"},
+                            "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": [{"name": "lecture topic task"}]},
+                            "reactions": {"nodes": []},
+                            "comments": {"nodes": []},
+                            "timelineItems": {
+                                "nodes": [{"actor": {"login": "manager1"}}],
+                            },
+                        },
+                        "Urgency": {"number": 3},
+                        "Difficulty": {"number": 2},
+                        "Modifier": {"number": 1},
+                    },
+                ],
+            },
+        }
+    }
+}
+
+
+@patch("src.generateTeamMetrics.getProject")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
+def test_issues_with_lecture_topic_task_label(
+    mock_runGraphqlQuery, mock_getProject, logger
+):
+    mock_getProject.return_value = mock_getProject
+    mock_runGraphqlQuery.return_value = mock_gh_res_issues_with_lecture_topic_tasks
+
+    org = "sample-org"
+    team = "sample-team"
+    milestone = "v1.0"
+    members = ["dev1", "manager1"]
+    managers = ["manager1"]
+    startDate = datetime(2023, 1, 1, tzinfo=pytz.UTC)
+    endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
+    useDecay = True
+    milestoneGrade = 90
+    sprints = 1
+    minTasksPerSprint = 0
+    result = getTeamMetricsForMilestone(
+        org=org,
+        team=team,
+        milestone=milestone,
+        members=members,
+        managers=managers,
+        startDate=startDate,
+        endDate=endDate,
+        useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
+        milestoneGrade=milestoneGrade,
+        logger=logger,
+    )
+
+    assert result.devMetrics["dev1"].lectureTopicTasksClosed == 2
 
 
 if __name__ == "__main__":

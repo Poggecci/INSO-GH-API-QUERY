@@ -56,6 +56,7 @@ class Issue:
     closedBy: str | None
     milestone: str | None
     assignees: list[str] = field(default_factory=list)
+    labels: list[str] = field(default_factory=list)
     reactions: list[Reaction] = field(default_factory=list)
     comments: list[IssueComment] = field(default_factory=list)
     urgency: float | None
