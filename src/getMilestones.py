@@ -7,14 +7,16 @@ from src.utils.queryRunner import runGraphqlQuery
 get_milestones_query = """
 query GetRepositoryMilestones($org: String!, $team: String!) {
   organization(login: $org) {
-    team(slug: $team) {
-      repositories(first: 100) {
-        nodes {
-          milestones(first: 100) {
-            nodes {
-              url
-              title
-              dueOn
+    teams(query: $team, first: 1) {
+      nodes{
+        repositories(first: 100) {
+          nodes {
+            milestones(first: 100) {
+              nodes {
+                url
+                title
+                dueOn
+              }
             }
           }
         }
@@ -43,7 +45,9 @@ def getMilestones(*, organization: str, team: str) -> list[Milestone]:
     params = {"org": organization, "team": team}
     milestones = []
     response: dict = runGraphqlQuery(query=get_milestones_query, variables=params)
-    repositories = response["organization"]["team"]["repositories"]["nodes"]
+    repositories = response["organization"]["teams"]["nodes"][0]["repositories"][
+        "nodes"
+    ]
     for repo in repositories:
         # Get milestones for current repository
         repo_milestones = repo["milestones"]["nodes"]
