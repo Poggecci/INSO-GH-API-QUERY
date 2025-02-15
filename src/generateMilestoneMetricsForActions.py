@@ -17,7 +17,7 @@ from src.getTeamMembers import getTeamMembers
 from src.utils.discussions import (
     findWeeklyDiscussionParticipation,
     getDiscussions,
-    getWeekIndex,
+    getWeeks,
 )
 from src.utils.models import MilestoneData
 
@@ -25,7 +25,6 @@ from src.utils.models import MilestoneData
 def generateMetricsFromV2Config(config: dict):
     team = config["projectName"]
     organization = os.environ["ORGANIZATION"]
-    repository = os.environ.get("REPOSITORY")
     milestones: dict = config["milestones"]
     managers = config["managers"]
     print("Team: ", team)
@@ -68,6 +67,7 @@ def generateMetricsFromV2Config(config: dict):
             endDate = datetime.now(tz=pr_tz)
             useDecay = False
         team_metrics = MilestoneData()
+        discussionParticipation = {}
         try:
             team_metrics = getTeamMetricsForMilestone(
                 org=organization,
@@ -84,6 +84,13 @@ def generateMetricsFromV2Config(config: dict):
                 shouldCountOpenIssues=config.get("countOpenIssues", False),
                 logger=logger,
             )
+            discussionParticipation = findWeeklyDiscussionParticipation(
+                members=set(members),
+                discussions=getDiscussions(org=organization, team=team),
+                milestone=milestone,
+                milestoneStart=startDate,
+                milestoneEnd=endDate,
+            )
         except Exception as e:
             logger.exception(e)
         strippedMilestoneName = milestone.replace(" ", "")
@@ -96,32 +103,11 @@ def generateMetricsFromV2Config(config: dict):
             md_file_path=output_markdown_path,
             minTasksPerSprint=config.get("minTasksPerSprint", 1),
         )
-        if repository is not None:
-            participation = findWeeklyDiscussionParticipation(
-                members=set(members),
-                discussions=getDiscussions(org=organization, repository=repository),
-                discussionFilter=lambda _: True,
-                milestoneStart=startDate,
-                milestoneEnd=endDate,
-            )
-            weeks = (
-                getWeekIndex(
-                    dateOfInterest=endDate,
-                    milestoneStart=startDate,
-                    milestoneEnd=endDate,
-                )
-                + 1
-            )
-            writeWeeklyDiscussionParticipationToMarkdown(
-                participation=participation,
-                weeks=weeks,
-                md_file_path=output_markdown_path,
-            )
-        else:
-            logger.warning(
-                "Repository name not specified. Discussion participation will not be generated."
-            )
-
+        writeWeeklyDiscussionParticipationToMarkdown(
+            participation=discussionParticipation,
+            weeks=getWeeks(milestoneStart=startDate, milestoneEnd=endDate),
+            md_file_path=output_markdown_path,
+        )
         writeLogsToMarkdown(
             log_file_path=logFileName, md_file_path=output_markdown_path
         )

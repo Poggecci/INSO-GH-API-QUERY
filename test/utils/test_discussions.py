@@ -113,7 +113,7 @@ class TestFindWeeklyDiscussionParticipation:
         return [
             Discussion(
                 author="user1",
-                title="Week 0 Discussion",
+                title="Scrum Prep Milestone 0 - Week 1",
                 body="Test",
                 category=Category(id=0, name="General"),
                 comments=[
@@ -125,7 +125,7 @@ class TestFindWeeklyDiscussionParticipation:
             ),
             Discussion(
                 author="user2",
-                title="Week 1 Discussion",
+                title="Scrum Prep Milestone 0 - Week 2",
                 body="Test",
                 category=Category(id=0, name="General"),
                 comments=[
@@ -142,34 +142,32 @@ class TestFindWeeklyDiscussionParticipation:
     def test_participation_tracking(self, sample_discussions, milestone_dates):
         start, end = milestone_dates
         members = {"user1", "user2"}
-        filter_func = lambda d: True  # Accept all discussions
 
         participation = findWeeklyDiscussionParticipation(
             members=members,
             discussions=sample_discussions,
-            discussionFilter=filter_func,
+            milestone="Milestone 0",
             milestoneStart=start,
             milestoneEnd=end,
         )
 
-        assert participation["user1"] == {0, 1}  # Week 0 discussion, Week 1 comment
-        assert participation["user2"] == {0, 1}  # Week 0 comment, Week 1 discussion
+        assert participation["user1"] == {0, 1}  # Week 1 discussion, Week 2 comment
+        assert participation["user2"] == {0, 1}  # Week 1 comment, Week 2 discussion
 
-    def test_filtered_participation(self, sample_discussions, milestone_dates):
+    def test_no_milestone_discussion(self, sample_discussions, milestone_dates):
         start, end = milestone_dates
         members = {"user1", "user2"}
-        filter_func = lambda d: "Week 0" in d.title
 
         participation = findWeeklyDiscussionParticipation(
             members=members,
             discussions=sample_discussions,
-            discussionFilter=filter_func,
+            milestone="Milestone 1",
             milestoneStart=start,
             milestoneEnd=end,
         )
 
-        assert participation["user1"] == {0}  # Only Week 0 discussion
-        assert participation["user2"] == {0}  # Only Week 0 comment
+        assert len(participation["user1"]) == 0  # No discussion for Milestone 1
+        assert len(participation["user2"]) == 0  # No discussion for Milestone 1
 
 
 # Test calculateWeeklyDiscussionPenalties function

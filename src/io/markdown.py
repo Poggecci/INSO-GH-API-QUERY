@@ -74,7 +74,7 @@ def writeWeeklyDiscussionParticipationToMarkdown(
         md_file.write("\n## Weekly Discussion Participation\n\n")
         md_file.write("| Developer |")
         for week in range(weeks):
-            md_file.write(f" Week #{week} |")
+            md_file.write(f" Week #{week + 1} |")
         md_file.write(" Penalty |\n")
         md_file.write("|" + "---|" * (weeks + 2) + "\n")
 

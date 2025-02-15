@@ -9,36 +9,42 @@ from src.utils.queryRunner import runGraphqlQuery
 team_scrum_prep_discussions_query = """
 query QueryScrumPrepForTeam (
   $owner: String!, 
-  $repositoryName: String!,
+  $team: String!,
   $category: ID,
   $cursor: String) {
     organization(login: $owner) {
-        repository(name: $repositoryName) {
-            discussions(first: 100, categoryId: $category, after: $cursor) {
-                pageInfo {
-                    hasNextPage
-                    endCursor
-                }
-                nodes {
-                    author {
-                        login
-                    }
-                    title    
-                    body
-                    category{
-                        id
-                        name
-                    }
-                    comments(first: 100) {
-                        nodes {
-                            author {
-                                login
+        teams(query: $team, first: 1) {
+            nodes {
+                repositories(first: 1) {
+                    nodes {
+                        discussions(first: 100, categoryId: $category, after: $cursor) {
+                            pageInfo {
+                                hasNextPage
+                                endCursor
                             }
-                            publishedAt
-                            body
+                            nodes {
+                                author {
+                                    login
+                                }
+                                title    
+                                body
+                                category{
+                                    id
+                                    name
+                                }
+                                comments(first: 100) {
+                                    nodes {
+                                        author {
+                                            login
+                                        }
+                                        publishedAt
+                                        body
+                                    }
+                                }
+                                publishedAt
+                            }
                         }
                     }
-                    publishedAt
                 }
             }
         }
@@ -103,7 +109,7 @@ def parseDiscussion(*, discussion_dict: dict) -> Discussion:
 
 
 def getDiscussionDicts(
-    *, org: str, repository: str, category: int | None = None
+    *, org: str, team: str, category: int | None = None
 ) -> Iterator[dict]:
     """
     Retrieves GitHub discussion data through GraphQL API as an iterator of dictionaries.
@@ -113,7 +119,7 @@ def getDiscussionDicts(
 
     Args:
         org (str): GitHub organization name
-        repository (str): Name of the repository within the organization
+        team (str): Name of the team within the organization
         category (int | None): Optional category ID to filter discussions
 
     Returns:
@@ -125,11 +131,11 @@ def getDiscussionDicts(
         ValueError: If organization or repository parameters are invalid
 
     Examples:
-        >>> discussions = getDiscussionDicts(org="myorg", repository="myrepo")
+        >>> discussions = getDiscussionDicts(org="myorg", team="myteam")
         >>> first_discussion = next(discussions)
         >>> print(first_discussion["title"])
     """
-    params: dict[str, Any] = {"owner": org, "repositoryName": repository}
+    params: dict[str, Any] = {"owner": org, "team": team}
     if category is not None:
         params["category"] = category
     hasAnotherPage = True
@@ -137,22 +143,19 @@ def getDiscussionDicts(
         response: dict = runGraphqlQuery(
             query=team_scrum_prep_discussions_query, variables=params
         )
-        discussion_dicts: list[dict] = response["data"]["organization"]["repository"][
-            "discussions"
-        ]["nodes"]
+        discussion_info: dict = response["organization"]["teams"]["nodes"][0][
+            "repositories"
+        ]["nodes"][0]["discussions"]
+        discussion_dicts: list[dict] = discussion_info["nodes"]
         yield from discussion_dicts
 
-        hasAnotherPage = response["data"]["organization"]["repository"]["discussions"][
-            "pageInfo"
-        ]["hasNextPage"]
+        hasAnotherPage = discussion_info["pageInfo"]["hasNextPage"]
         if hasAnotherPage:
-            params["cursor"] = response["data"]["organization"]["repository"][
-                "discussions"
-            ]["pageInfo"]["endCursor"]
+            params["cursor"] = discussion_info["pageInfo"]["endCursor"]
 
 
 def getDiscussions(
-    *, org: str, repository: str, category: int | None = None
+    *, org: str, team: str, category: int | None = None
 ) -> list[Discussion]:
     """
     Retrieves and parses all GitHub discussions from a repository into Discussion objects.
@@ -162,7 +165,7 @@ def getDiscussions(
 
     Args:
         org (str): GitHub organization name
-        repository (str): Name of the repository within the organization
+        team (str): Name of the team within the organization
         category (int | None): Optional category ID to filter discussions
 
     Returns:
@@ -180,7 +183,7 @@ def getDiscussions(
     """
     return [
         parseDiscussion(discussion_dict=d)
-        for d in getDiscussionDicts(org=org, repository=repository, category=category)
+        for d in getDiscussionDicts(org=org, team=team, category=category)
     ]
 
 
@@ -231,7 +234,7 @@ def findWeeklyDiscussionParticipation(
     *,
     members: set[str],
     discussions: list[Discussion],
-    discussionFilter: Callable[[Discussion], bool],
+    milestone: str,
     milestoneStart: datetime,
     milestoneEnd: datetime,
 ) -> dict[str, set[int]]:
@@ -244,7 +247,7 @@ def findWeeklyDiscussionParticipation(
     Args:
         members (set[str]): Set of team member GitHub usernames
         discussions (list[Discussion]): List of Discussion objects to analyze
-        discussionFilter (Callable[[Discussion], bool]): Function to filter relevant discussions
+        milestone (str): Name of current milestone
         milestoneStart (datetime): Start date of the milestone period
         milestoneEnd (datetime): End date of the milestone period
 
@@ -254,18 +257,21 @@ def findWeeklyDiscussionParticipation(
 
     Examples:
         >>> members = {"alice", "bob"}
-        >>> filter_func = lambda d: "standup" in d.title.lower()
         >>> participation = findWeeklyDiscussionParticipation(
         ...     members=members,
         ...     discussions=discussions,
-        ...     discussionFilter=filter_func,
+        ...     milestone="Milestone 1",
         ...     milestoneStart=datetime(2024, 1, 1),
         ...     milestoneEnd=datetime(2024, 1, 31)
         ... )
         >>> print(participation["alice"])  # Weeks alice participated
         {0, 1, 2}
     """
-    filteredDiscussions = filter(discussionFilter, discussions)
+    filteredDiscussions = filter(
+        lambda d: f"Scrum Prep {milestone} - Week {getWeekIndex(dateOfInterest=d.publishedAt, milestoneStart=milestoneStart, milestoneEnd=milestoneEnd) + 1}"
+        == d.title,
+        discussions,
+    )
     participation = {member: set() for member in members}
     for discussion in filteredDiscussions:
         # attribute the discussion to the author if appropriate
@@ -340,3 +346,15 @@ def calculateWeeklyDiscussionPenalties(
         penalties[member] = min(100, penalty)
 
     return penalties
+
+
+def getWeeks(milestoneStart: datetime, milestoneEnd: datetime):
+    # Get the total number of weeks within the milestone
+    return (
+        getWeekIndex(
+            dateOfInterest=milestoneEnd,
+            milestoneStart=milestoneStart,
+            milestoneEnd=milestoneEnd,
+        )
+        + 1
+    )
