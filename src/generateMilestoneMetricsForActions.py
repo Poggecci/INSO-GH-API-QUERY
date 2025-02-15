@@ -9,10 +9,16 @@ from src.io.markdown import (
     writeLogsToMarkdown,
     writeMilestoneToMarkdown,
     writeSprintTaskCompletionToMarkdown,
+    writeWeeklyDiscussionParticipationToMarkdown,
 )
 from src.legacy.generateMilestoneMetricsForActions import generateMetricsFromV1Config
 from src.utils.constants import pr_tz
 from src.getTeamMembers import getTeamMembers
+from src.utils.discussions import (
+    findWeeklyDiscussionParticipation,
+    getDiscussions,
+    getWeeks,
+)
 from src.utils.models import MilestoneData
 
 
@@ -61,6 +67,7 @@ def generateMetricsFromV2Config(config: dict):
             endDate = datetime.now(tz=pr_tz)
             useDecay = False
         team_metrics = MilestoneData()
+        discussionParticipation = {}
         try:
             team_metrics = getTeamMetricsForMilestone(
                 org=organization,
@@ -77,6 +84,13 @@ def generateMetricsFromV2Config(config: dict):
                 shouldCountOpenIssues=config.get("countOpenIssues", False),
                 logger=logger,
             )
+            discussionParticipation = findWeeklyDiscussionParticipation(
+                members=set(members),
+                discussions=getDiscussions(org=organization, team=team),
+                milestone=milestone,
+                milestoneStart=startDate,
+                milestoneEnd=endDate,
+            )
         except Exception as e:
             logger.exception(e)
         strippedMilestoneName = milestone.replace(" ", "")
@@ -88,6 +102,11 @@ def generateMetricsFromV2Config(config: dict):
             milestone_data=team_metrics,
             md_file_path=output_markdown_path,
             minTasksPerSprint=config.get("minTasksPerSprint", 1),
+        )
+        writeWeeklyDiscussionParticipationToMarkdown(
+            participation=discussionParticipation,
+            weeks=getWeeks(milestoneStart=startDate, milestoneEnd=endDate),
+            md_file_path=output_markdown_path,
         )
         writeLogsToMarkdown(
             log_file_path=logFileName, md_file_path=output_markdown_path

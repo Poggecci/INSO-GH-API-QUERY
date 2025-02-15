@@ -39,7 +39,7 @@ class Reaction:
 
 
 @dataclass(kw_only=True)
-class Comment:
+class IssueComment:
     author_login: str
     reactions: list[Reaction] = field(default_factory=list)
 
@@ -58,7 +58,7 @@ class Issue:
     assignees: list[str] = field(default_factory=list)
     labels: list[str] = field(default_factory=list)
     reactions: list[Reaction] = field(default_factory=list)
-    comments: list[Comment] = field(default_factory=list)
+    comments: list[IssueComment] = field(default_factory=list)
     urgency: float | None
     difficulty: float | None
     modifier: float | None
@@ -91,3 +91,26 @@ class Milestone:
     url: str
     title: str
     dueOn: datetime | None
+
+
+@dataclass(kw_only=True)
+class Category:
+    name: str
+    id: int
+
+
+@dataclass(kw_only=True)
+class DiscussionComment:
+    author: str
+    body: str
+    publishedAt: datetime
+
+
+@dataclass(kw_only=True)
+class Discussion:
+    author: str
+    title: str
+    body: str
+    category: Category
+    comments: list[DiscussionComment]
+    publishedAt: datetime

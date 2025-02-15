@@ -4,7 +4,7 @@ from collections import defaultdict
 from unittest.mock import MagicMock
 from src.utils.constants import pr_tz
 from src.utils.issues import calculateIssueScores, decay, shouldCountIssue
-from src.utils.models import Issue, IssueMetrics, Reaction, ReactionKind, Comment
+from src.utils.models import Issue, IssueMetrics, Reaction, ReactionKind, IssueComment
 
 
 # Mock the logging module
@@ -269,7 +269,7 @@ def test_calculate_issue_scores_comment_bonus(create_issue, mock_logger):
         urgency=3.0,
         assignees=["dev1"],
         comments=[
-            Comment(
+            IssueComment(
                 author_login="dev2",
                 reactions=[Reaction(user_login="manager1", kind=ReactionKind.HOORAY)],
             )
@@ -301,7 +301,7 @@ def test_calculate_issue_scores_documentation_bonus_double_reaction(
         assignees=["dev1"],
         reactions=[Reaction(user_login="manager1", kind=ReactionKind.HOORAY)],
         comments=[
-            Comment(
+            IssueComment(
                 author_login="dev2",
                 reactions=[Reaction(user_login="manager1", kind=ReactionKind.HOORAY)],
             )

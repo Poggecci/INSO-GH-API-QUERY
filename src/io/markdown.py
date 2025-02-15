@@ -1,4 +1,5 @@
 from datetime import datetime
+from src.utils.discussions import calculateWeeklyDiscussionPenalties
 from src.utils.models import MilestoneData
 from src.utils.constants import pr_tz
 
@@ -60,6 +61,34 @@ def writeSprintTaskCompletionToMarkdown(
             for sprint_tasks in metrics.tasksBySprint:
                 md_file.write(f" {sprint_tasks}/{minTasksPerSprint} |")
             md_file.write("\n")
+
+
+def writeWeeklyDiscussionParticipationToMarkdown(
+    participation: dict, weeks: int, md_file_path: str
+):
+    penalties = calculateWeeklyDiscussionPenalties(
+        participation=participation, weeks=weeks
+    )
+
+    with open(md_file_path, mode="a") as md_file:
+        md_file.write("\n## Weekly Discussion Participation\n\n")
+        md_file.write("| Developer |")
+        for week in range(weeks):
+            md_file.write(f" Week #{week + 1} |")
+        md_file.write(" Penalty |\n")
+        md_file.write("|" + "---|" * (weeks + 2) + "\n")
+
+        for dev in participation.keys():
+            md_file.write(
+                f"| {dev} | "
+                + " | ".join(
+                    [
+                        "Yes" if week in participation[dev] else "No"
+                        for week in range(weeks)
+                    ]
+                )
+                + f" | {str(penalties[dev])} |\n"
+            )
 
 
 def writeLogsToMarkdown(log_file_path: str, md_file_path: str):
