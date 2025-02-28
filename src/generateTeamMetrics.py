@@ -238,6 +238,8 @@ def getTeamMetricsForMilestone(
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
+    devPointsByLabel = {dev: {} for dev in developers}
+    milestoneLabels = set()
 
     # Fetch all issues for the team, drop invalid ones, and apply their points to the correct developers
     for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger):
@@ -294,6 +296,13 @@ def getTeamMetricsForMilestone(
             if issue.isLectureTopicTask:
                 devLectureTopicTasks[dev] += 1
 
+            # assign issue score to labels per developer
+            for label in issue.labels:
+                devPointsByLabel[dev][label] = (
+                    devPointsByLabel[dev].get(label, 0) + score
+                )
+                milestoneLabels.add(label)
+
         # attribute bonuses for developers
         for dev, bonus in issueMetrics.bonusesByDeveloper.items():
             devPointsClosed[dev] += bonus
@@ -335,5 +344,11 @@ def getTeamMetricsForMilestone(
             percentContribution=contribution * 100.0,
             expectedGrade=expectedGrade,
             lectureTopicTasksClosed=devLectureTopicTasks[dev],
+            pointPercentByLabel={
+                label: devPointsByLabel[dev].get(label, 0)
+                / sum(devPointsByLabel[dev].values())
+                * 100
+                for label in milestoneLabels
+            },
         )
     return milestoneData
