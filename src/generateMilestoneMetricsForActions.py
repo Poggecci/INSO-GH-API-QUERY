@@ -8,6 +8,7 @@ from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.io.markdown import (
     writeLogsToMarkdown,
     writeMilestoneToMarkdown,
+    writePointPercentByLabelToMarkdown,
     writeSprintTaskCompletionToMarkdown,
     writeWeeklyDiscussionParticipationToMarkdown,
 )
@@ -107,6 +108,9 @@ def generateMetricsFromV2Config(config: dict):
             participation=discussionParticipation,
             weeks=getWeeks(milestoneStart=startDate, milestoneEnd=endDate),
             md_file_path=output_markdown_path,
+        )
+        writePointPercentByLabelToMarkdown(
+            milestone_data=team_metrics, md_file_path=output_markdown_path
         )
         writeLogsToMarkdown(
             log_file_path=logFileName, md_file_path=output_markdown_path

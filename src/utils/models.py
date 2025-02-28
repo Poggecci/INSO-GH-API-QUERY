@@ -11,6 +11,7 @@ class DeveloperMetrics:
     percentContribution: float = 0  # pointsClosed / (totalPoints) * %100
     expectedGrade: float = 0  # floor((pointsClosed / trimmedMean) * %100 , %100)
     lectureTopicTasksClosed: int = 0
+    pointPercentByLabel: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
