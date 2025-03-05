@@ -71,7 +71,7 @@ When using this repo through actions, the generated metrics will be placed in a 
   "lectureTopicTaskQuota": 4,
   "countOpenIssues": false,
   "sprints": 2,
-  "minTasksPerSprint": 1,
+  "minTasksPerSprint": 1
 }
 ```
 
@@ -163,8 +163,7 @@ Replace `your_personal_access_token_here` with the PAT you generated, and replac
   "lectureTopicTaskQuota": 4,
   "countOpenIssues": false,
   "sprints": 2,
-  "minTasksPerSprint": 1,
-  ""
+  "minTasksPerSprint": 1
 }
 ```
 
