@@ -345,9 +345,7 @@ def getTeamMetricsForMilestone(
             expectedGrade=expectedGrade,
             lectureTopicTasksClosed=devLectureTopicTasks[dev],
             pointPercentByLabel={
-                label: devPointsByLabel[dev].get(label, 0)
-                / sum(devPointsByLabel[dev].values())
-                * 100
+                label: devPointsByLabel[dev].get(label, 0) / devPointsClosed[dev] * 100
                 for label in milestoneLabels
             },
         )
