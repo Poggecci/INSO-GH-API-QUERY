@@ -45,10 +45,10 @@ def writeSprintTaskCompletionToMarkdown(
 
             # Check if this is the current sprint
             is_current_sprint = sprint_start <= current_date <= sprint_end
-            current_indicator = "[current] " if is_current_sprint else ""
+            current_indicator = " [current]" if is_current_sprint else ""
 
             md_file.write(
-                f" {current_indicator}S{sprint+1} ({sprint_start.strftime('%Y/%m/%d %I:%M%p')} - {sprint_end.strftime('%Y/%m/%d %I:%M%p')}) |"
+                f" Sprint {sprint+1}{current_indicator}<br>{sprint_start.strftime('%Y/%m/%d, %I:%M %p')}<br>{sprint_end.strftime('%Y/%m/%d, %I:%M %p')} |"
             )
         md_file.write("\n")
 
