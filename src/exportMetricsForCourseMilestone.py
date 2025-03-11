@@ -8,6 +8,7 @@ from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.getTeamMembers import getTeamMembers
 
 from src.utils.models import MilestoneData
+from src.utils.parseDateTime import get_milestone_start, get_milestone_end
 
 
 def writeMilestoneToCsv(milestone_data: MilestoneData, csv_file_path: str):
@@ -26,13 +27,6 @@ def writeMilestoneToCsv(milestone_data: MilestoneData, csv_file_path: str):
                     round(metrics.expectedGrade, 1),
                 ]
             )
-
-
-def ensureDatetimeLocalized(aDateTime: datetime) -> datetime:
-    if aDateTime.tzinfo is None or aDateTime.tzinfo.utcoffset(aDateTime) is None:
-        return pr_tz.localize(aDateTime)
-    else:
-        return aDateTime
 
 
 if __name__ == "__main__":
@@ -64,14 +58,8 @@ if __name__ == "__main__":
             endDate = datetime.now(tz=pr_tz)
             useDecay = False
         else:
-            startDate = ensureDatetimeLocalized(
-                datetime.fromisoformat(
-                    config_dict["milestoneStartsOn"],
-                )
-            )
-            endDate = ensureDatetimeLocalized(
-                datetime.fromisoformat(config_dict["milestoneEndsOn"])
-            )
+            startDate = get_milestone_start(config_dict["milestoneStartsOn"])
+            endDate = get_milestone_end(config_dict["milestoneEndsOn"])
             useDecay = True
 
         print("Organization: ", organization)

@@ -219,7 +219,10 @@ def getTeamMetricsForMilestone(
             logger.warning(
                 f'Milestone "{milestone}" not found in any repo associated with the team'
             )
-        elif matchingMilestone.dueOn is not None and matchingMilestone.dueOn != endDate:
+        elif (
+            matchingMilestone.dueOn is not None
+            and matchingMilestone.dueOn.date() != endDate.date()
+        ):
             logger.warning(
                 f"Milestone due date in config doesn't match milestone due date on Github"
             )

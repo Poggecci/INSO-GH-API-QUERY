@@ -3,7 +3,6 @@ from datetime import datetime
 import json
 
 from dotenv import load_dotenv
-from src.exportMetricsForCourseMilestone import ensureDatetimeLocalized
 from src.getTeamMembers import getTeamMembers
 
 from src.utils.discussions import (
@@ -12,6 +11,7 @@ from src.utils.discussions import (
     getDiscussions,
     getWeeks,
 )
+from src.utils.parseDateTime import get_milestone_start, get_milestone_end
 
 
 def write_discussion_participation_data_to_csv(
@@ -45,14 +45,8 @@ if __name__ == "__main__":
         course_data = json.load(course_config)
     organization = course_data["organization"]
     metricsDirectory = course_data["metricsDirectory"]
-    startDate = ensureDatetimeLocalized(
-        datetime.fromisoformat(
-            course_data["milestoneStartsOn"],
-        )
-    )
-    endDate = ensureDatetimeLocalized(
-        datetime.fromisoformat(course_data["milestoneEndsOn"])
-    )
+    startDate = get_milestone_start(course_data["milestoneStartsOn"])
+    endDate = get_milestone_end(course_data["milestoneEndsOn"])
     teams = course_data["teams"]
     print("Organization: ", course_data["organization"])
     for team, team_data in teams.items():

@@ -48,7 +48,7 @@ def writeSprintTaskCompletionToMarkdown(
             current_indicator = "[current] " if is_current_sprint else ""
 
             md_file.write(
-                f" {current_indicator}S{sprint+1} ({sprint_start.strftime('%Y/%m/%d')}-{sprint_end.strftime('%Y/%m/%d')}) |"
+                f" {current_indicator}S{sprint+1} ({sprint_start.strftime('%Y/%m/%d %I:%M%p')} - {sprint_end.strftime('%Y/%m/%d %I:%M%p')}) |"
             )
         md_file.write("\n")
 

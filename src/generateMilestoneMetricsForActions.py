@@ -20,6 +20,7 @@ from src.utils.discussions import (
     getWeeks,
 )
 from src.utils.models import MilestoneData
+from src.utils.parseDateTime import get_milestone_start, get_milestone_end
 
 
 def generateMetricsFromV2Config(config: dict):
@@ -47,12 +48,8 @@ def generateMetricsFromV2Config(config: dict):
         logger.addHandler(logFileHandler)
 
         try:
-            startDate = pr_tz.localize(
-                datetime.fromisoformat(f"{mData.get('startDate')}T00:00:00")
-            )
-            endDate = pr_tz.localize(
-                datetime.fromisoformat(f"{mData.get('endDate')}T23:59:59")
-            )
+            startDate = get_milestone_start(mData.get("startDate"))
+            endDate = get_milestone_end(mData.get("endDate"))
             useDecay = True
         except Exception as e:
             print(f"Error while parsing milestone dates: {e}")
