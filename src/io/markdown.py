@@ -91,6 +91,34 @@ def writeWeeklyDiscussionParticipationToMarkdown(
             )
 
 
+def writePointPercentByLabelToMarkdown(
+    milestone_data: MilestoneData, md_file_path: str
+):
+    with open(md_file_path, mode="a") as md_file:
+        md_file.write("\n## Point Percent by Label\n\n")
+        first_read_done = False
+        labels = []
+        for dev, metrics in milestone_data.devMetrics.items():
+            if not first_read_done:
+                labels = list(metrics.pointPercentByLabel.keys())
+                if len(labels) == 0:
+                    md_file.write("There are no labels assigned to any issue\n")
+                    break
+                md_file.write("| Developer | " + " | ".join(labels) + " |\n")
+                md_file.write("|---|" + "---|" * len(labels) + "\n")
+                first_read_done = True
+            md_file.write(
+                f"| {dev} | "
+                + " | ".join(
+                    [
+                        str(round(metrics.pointPercentByLabel[label], 1)) + "%"
+                        for label in labels
+                    ]
+                )
+                + " |\n"
+            )
+
+
 def writeLogsToMarkdown(log_file_path: str, md_file_path: str):
     with open(log_file_path, mode="r") as log_file:
         with open(md_file_path, mode="a") as md_file:

@@ -660,5 +660,134 @@ def test_issues_with_lecture_topic_task_label(
     assert result.devMetrics["dev1"].lectureTopicTasksClosed == 2
 
 
+mock_gh_res_issues_points_percent_by_label = {
+    "organization": {
+        "projectV2": {
+            "title": "sample-team",
+            "items": {
+                "pageInfo": {
+                    "endCursor": "end-cursor",
+                    "hasNextPage": False,
+                },
+                "nodes": [
+                    {
+                        "content": {
+                            "url": "https://github.com/org/repo/issues/9",
+                            "number": 9,
+                            "title": "Issue Title",
+                            "author": {"login": "dev1"},
+                            "createdAt": "2023-01-01T00:00:00Z",
+                            "closed": True,
+                            "closedAt": "2023-01-01T00:00:00Z",
+                            "milestone": {"title": "v1.0"},
+                            "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": [{"name": "1"}]},
+                            "reactions": {"nodes": []},
+                            "comments": {"nodes": []},
+                            "timelineItems": {
+                                "nodes": [{"actor": {"login": "manager1"}}],
+                            },
+                        },
+                        "Urgency": {"number": 1},
+                        "Difficulty": {"number": 2},
+                        "Modifier": {"number": 0},
+                    },
+                    {
+                        "content": {
+                            "url": "https://github.com/org/repo/issues/10",
+                            "number": 10,
+                            "title": "Issue Title",
+                            "author": {"login": "dev1"},
+                            "createdAt": "2023-01-01T00:00:00Z",
+                            "closed": True,
+                            "closedAt": "2023-01-01T00:00:00Z",
+                            "milestone": {"title": "v1.0"},
+                            "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": [{"name": "1"}, {"name": "2"}]},
+                            "reactions": {"nodes": []},
+                            "comments": {"nodes": []},
+                            "timelineItems": {
+                                "nodes": [{"actor": {"login": "manager1"}}],
+                            },
+                        },
+                        "Urgency": {"number": 1},
+                        "Difficulty": {"number": 3},
+                        "Modifier": {"number": 0},
+                    },
+                    {
+                        "content": {
+                            "url": "https://github.com/org/repo/issues/11",
+                            "number": 11,
+                            "title": "Issue Title",
+                            "author": {"login": "dev1"},
+                            "createdAt": "2023-01-01T00:00:00Z",
+                            "closed": True,
+                            "closedAt": "2023-01-01T00:00:00Z",
+                            "milestone": {"title": "v1.0"},
+                            "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": [{"name": "2"}, {"name": "3"}]},
+                            "reactions": {"nodes": []},
+                            "comments": {"nodes": []},
+                            "timelineItems": {
+                                "nodes": [{"actor": {"login": "manager1"}}],
+                            },
+                        },
+                        "Urgency": {"number": 1},
+                        "Difficulty": {"number": 5},
+                        "Modifier": {"number": 0},
+                    },
+                ],
+            },
+        }
+    }
+}
+
+
+@patch("src.generateTeamMetrics.getProject")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
+def test_issues_points_percent_by_label(mock_runGraphqlQuery, mock_getProject, logger):
+    mock_getProject.return_value = mock_getProject
+    mock_runGraphqlQuery.return_value = mock_gh_res_issues_points_percent_by_label
+
+    org = "sample-org"
+    team = "sample-team"
+    milestone = "v1.0"
+    members = ["dev1", "manager1"]
+    managers = ["manager1"]
+    startDate = datetime(2023, 1, 1, tzinfo=pytz.UTC)
+    endDate = datetime(2023, 12, 31, tzinfo=pytz.UTC)
+    useDecay = True
+    milestoneGrade = 90
+    sprints = 1
+    minTasksPerSprint = 0
+    result = getTeamMetricsForMilestone(
+        org=org,
+        team=team,
+        milestone=milestone,
+        members=members,
+        managers=managers,
+        startDate=startDate,
+        endDate=endDate,
+        useDecay=useDecay,
+        sprints=sprints,
+        minTasksPerSprint=minTasksPerSprint,
+        milestoneGrade=milestoneGrade,
+        logger=logger,
+    )
+
+    pointsPercentByLabel = result.devMetrics["dev1"].pointPercentByLabel
+    totalPoints = result.devMetrics["dev1"].pointsClosed
+    assert totalPoints == 10
+    assert pointsPercentByLabel["1"] == pytest.approx(
+        5 / totalPoints * 100
+    )  # Issues 1 and 2 total to 5 points and contain "1" label
+    assert pointsPercentByLabel["2"] == pytest.approx(
+        8 / totalPoints * 100
+    )  # Issues 2 and 3 total to 8 points and contain "2" label
+    assert pointsPercentByLabel["3"] == pytest.approx(
+        5 / totalPoints * 100
+    )  # Issue 3 totals to 5 points and contain "3" label
+
+
 if __name__ == "__main__":
     pytest.main()
