@@ -2,6 +2,10 @@
 
 This script generates team metrics for a specified milestone in a GitHub organization. It collects data on points closed and percent contribution for each developer in the specified teams and outputs the results to CSV files. You can now also use Github Actions generate the metrics as a Markdown that is stored in a separate branch of your repository. Checkout [this](https://github.com/Poggecci/INSO-GH-API-QUERY/blob/main/scoring.md) to learn more about how issues are counted.
 
+### Labels
+
+The script will output the points percent associated to each label assigned to your issues. For example, if you have 3 issues that total to 10 points where issue #1 has label "1" assigned with a score of 2, issue #2 has labels "1" and "2" with a score of 3, and issue #3 has labels "2" and "3" with a score of 5, then the points percent for label "1" would be (2+3)/10, label "2" would be (3+5)/10, and label "3" would be 5/10. A use for this feature can be keeping track of specific developer roles such as creating a label used for tracking team lead tasks.
+
 ## Usage
 
 ### Github Actions (Recommended for students)
@@ -67,8 +71,7 @@ When using this repo through actions, the generated metrics will be placed in a 
   "lectureTopicTaskQuota": 4,
   "countOpenIssues": false,
   "sprints": 2,
-  "minTasksPerSprint": 1,
-  ""
+  "minTasksPerSprint": 1
 }
 ```
 
@@ -160,8 +163,7 @@ Replace `your_personal_access_token_here` with the PAT you generated, and replac
   "lectureTopicTaskQuota": 4,
   "countOpenIssues": false,
   "sprints": 2,
-  "minTasksPerSprint": 1,
-  ""
+  "minTasksPerSprint": 1
 }
 ```
 

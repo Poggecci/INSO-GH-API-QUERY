@@ -49,6 +49,11 @@ query QueryProjectItemsForTeam(
                             login
                         }
                         }
+                        labels(first: 10) {
+                        nodes {
+                            name
+                        }
+                        }
                         reactions(first: 10, content: HOORAY) {
                         nodes {
                             user {
@@ -218,7 +223,10 @@ def getTeamMetricsForMilestone(
             logger.warning(
                 f'Milestone "{milestone}" not found in any repo associated with the team'
             )
-        elif matchingMilestone.dueOn is not None and matchingMilestone.dueOn != endDate:
+        elif (
+            matchingMilestone.dueOn is not None
+            and matchingMilestone.dueOn.date() != endDate.date()
+        ):
             logger.warning(
                 f"Milestone due date in config doesn't match milestone due date on Github"
             )
@@ -237,6 +245,8 @@ def getTeamMetricsForMilestone(
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
+    devPointsByLabel = {dev: {} for dev in developers}
+    milestoneLabels = set()
 
     # Fetch all issues for the team, drop invalid ones, and apply their points to the correct developers
     for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger):
@@ -302,6 +312,13 @@ def getTeamMetricsForMilestone(
             if issue.isLectureTopicTask:
                 devLectureTopicTasks[dev] += 1
 
+            # assign issue score to labels per developer
+            for label in issue.labels:
+                devPointsByLabel[dev][label] = (
+                    devPointsByLabel[dev].get(label, 0) + score
+                )
+                milestoneLabels.add(label)
+
         # attribute bonuses for developers
         for dev, bonus in issueMetrics.bonusesByDeveloper.items():
             devPointsClosed[dev] += bonus
@@ -343,5 +360,9 @@ def getTeamMetricsForMilestone(
             percentContribution=contribution * 100.0,
             expectedGrade=expectedGrade,
             lectureTopicTasksClosed=devLectureTopicTasks[dev],
+            pointPercentByLabel={
+                label: devPointsByLabel[dev].get(label, 0) / max(1, devPointsClosed[dev]) * 100
+                for label in milestoneLabels
+            },
         )
     return milestoneData

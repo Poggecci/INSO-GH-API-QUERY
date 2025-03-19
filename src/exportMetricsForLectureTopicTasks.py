@@ -33,13 +33,13 @@ if __name__ == "__main__":
         course_data = json.load(course_config)
     organization = course_data["organization"]
     metricsDirectory = course_data["metricsDirectory"]
-    teams_and_managers = course_data["teams"]
+    teams = course_data["teams"]
     lecture_topic_task_quota = course_data["lectureTopicTaskQuota"]
     print("Organization: ", course_data["organization"])
     lecture_topic_task_metrics_by_team = {}
-    for team, managers in teams_and_managers.items():
+    for team, team_data in teams.items():
         print("Team: ", team)
-        print("Managers: ", managers)
+        print("Managers: ", team_data["managers"])
         members = getTeamMembers(organization, team)
         lecture_topic_task_metrics_by_team[team] = getLectureTopicTaskMetrics(
             org=organization, team=team, members=members

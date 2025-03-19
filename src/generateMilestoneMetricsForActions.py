@@ -8,12 +8,20 @@ from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.io.markdown import (
     writeLogsToMarkdown,
     writeMilestoneToMarkdown,
+    writePointPercentByLabelToMarkdown,
     writeSprintTaskCompletionToMarkdown,
+    writeWeeklyDiscussionParticipationToMarkdown,
 )
 from src.legacy.generateMilestoneMetricsForActions import generateMetricsFromV1Config
 from src.utils.constants import pr_tz
 from src.getTeamMembers import getTeamMembers
+from src.utils.discussions import (
+    findWeeklyDiscussionParticipation,
+    getDiscussions,
+    getWeeks,
+)
 from src.utils.models import MilestoneData
+from src.utils.parseDateTime import get_milestone_start, get_milestone_end
 
 
 def generateMetricsFromV2Config(config: dict):
@@ -41,12 +49,8 @@ def generateMetricsFromV2Config(config: dict):
         logger.addHandler(logFileHandler)
 
         try:
-            startDate = pr_tz.localize(
-                datetime.fromisoformat(f"{mData.get('startDate')}T00:00:00")
-            )
-            endDate = pr_tz.localize(
-                datetime.fromisoformat(f"{mData.get('endDate')}T23:59:59")
-            )
+            startDate = get_milestone_start(mData.get("startDate"))
+            endDate = get_milestone_end(mData.get("endDate"))
             useDecay = True
         except Exception as e:
             print(f"Error while parsing milestone dates: {e}")
@@ -61,6 +65,7 @@ def generateMetricsFromV2Config(config: dict):
             endDate = datetime.now(tz=pr_tz)
             useDecay = False
         team_metrics = MilestoneData()
+        discussionParticipation = {}
         try:
             team_metrics = getTeamMetricsForMilestone(
                 org=organization,
@@ -77,6 +82,13 @@ def generateMetricsFromV2Config(config: dict):
                 shouldCountOpenIssues=config.get("countOpenIssues", False),
                 logger=logger,
             )
+            discussionParticipation = findWeeklyDiscussionParticipation(
+                members=set(members),
+                discussions=getDiscussions(org=organization, team=team),
+                milestone=milestone,
+                milestoneStart=startDate,
+                milestoneEnd=endDate,
+            )
         except Exception as e:
             logger.exception(e)
         strippedMilestoneName = milestone.replace(" ", "")
@@ -88,6 +100,14 @@ def generateMetricsFromV2Config(config: dict):
             milestone_data=team_metrics,
             md_file_path=output_markdown_path,
             minTasksPerSprint=config.get("minTasksPerSprint", 1),
+        )
+        writeWeeklyDiscussionParticipationToMarkdown(
+            participation=discussionParticipation,
+            weeks=getWeeks(milestoneStart=startDate, milestoneEnd=endDate),
+            md_file_path=output_markdown_path,
+        )
+        writePointPercentByLabelToMarkdown(
+            milestone_data=team_metrics, md_file_path=output_markdown_path
         )
         writeLogsToMarkdown(
             log_file_path=logFileName, md_file_path=output_markdown_path
