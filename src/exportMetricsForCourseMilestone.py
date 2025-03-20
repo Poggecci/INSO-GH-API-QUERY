@@ -76,7 +76,7 @@ if __name__ == "__main__":
                 milestone=teamdata["milestone"],
                 milestoneGrade=teamdata["milestoneGrade"],
                 members=members,
-                managers=teamdata["managers"],
+                managers=[manager["name"] for manager in teamdata["managers"]],
                 startDate=startDate,
                 endDate=endDate,
                 useDecay=useDecay,
