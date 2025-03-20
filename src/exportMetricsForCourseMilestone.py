@@ -83,6 +83,7 @@ if __name__ == "__main__":
                 sprints=config_dict.get("sprints", 2),
                 minTasksPerSprint=config_dict.get("minTasksPerSprint", 1),
                 shouldCountOpenIssues=config_dict.get("countOpenIssues", False),
+                issuePreProcessingHooks=teamdata.get("issuePreProcessingHooks", []),
             )
             os.makedirs(metricsDirectory, exist_ok=True)
             writeMilestoneToCsv(

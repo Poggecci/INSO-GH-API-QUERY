@@ -1,10 +1,15 @@
 import pytest
 from datetime import datetime, timedelta
-from collections import defaultdict
 from unittest.mock import MagicMock
 from src.utils.constants import pr_tz
-from src.utils.issues import calculateIssueScores, decay, shouldCountIssue
+from src.utils.issues import (
+    applyIssuePreProcessingHooks,
+    calculateIssueScores,
+    decay,
+    shouldCountIssue,
+)
 from src.utils.models import Issue, IssueMetrics, Reaction, ReactionKind, IssueComment
+from textwrap import dedent
 
 
 # Mock the logging module
@@ -40,6 +45,11 @@ def create_issue():
         return Issue(**default_values)
 
     return _create_issue
+
+
+@pytest.fixture
+def milestone_dates():
+    return {"startDate": datetime(2024, 1, 1), "endDate": datetime(2024, 3, 31)}
 
 
 # Tests for should_count_issue function
@@ -341,6 +351,108 @@ def test_calculate_issue_scores_non_team_member(create_issue, mock_logger):
     assert result.pointsByDeveloper["dev1"] == pytest.approx(6.0)
     assert "external" not in result.pointsByDeveloper
     mock_logger.warning.assert_called_once()
+
+
+def test_close_issue_on_start_date(create_issue, milestone_dates):
+    hooks = [
+        dedent(
+            """\
+            if issue.number == 1:
+                issue.closedAt = startDate
+                issue.closed = True
+            """
+        )
+    ]
+    modified_issue = applyIssuePreProcessingHooks(
+        hooks=hooks, issue=create_issue(), milestone="Q1 2024", **milestone_dates
+    )
+    assert modified_issue.closedAt == milestone_dates["startDate"]
+    assert modified_issue.closed == True
+
+
+def test_set_urgency_based_on_title(create_issue, milestone_dates):
+    issue = create_issue(title="URGENT: Fix critical bug")
+    hooks = [
+        dedent(
+            """
+            if 'urgent' in issue.title.lower():
+                issue.urgency = 5.0
+            """
+        )
+    ]
+    modified_issue = applyIssuePreProcessingHooks(
+        hooks=hooks, issue=issue, milestone="Q1 2024", **milestone_dates
+    )
+    assert modified_issue.urgency == 5.0
+
+
+def test_modify_difficulty_based_on_comments(create_issue, milestone_dates):
+    issue = create_issue(
+        comments=[
+            IssueComment(author_login="user1"),
+            IssueComment(author_login="user2"),
+        ]
+    )
+    hooks = [
+        dedent(
+            """\
+            if len(issue.comments) > 1:
+                issue.difficulty = (issue.difficulty or 1.0) * 1.5
+            """
+        )
+    ]
+    modified_issue = applyIssuePreProcessingHooks(
+        hooks=hooks, issue=issue, milestone="Q1 2024", **milestone_dates
+    )
+    assert modified_issue.difficulty == 1.5
+
+
+def test_set_lecture_topic_based_on_milestone(create_issue, milestone_dates):
+    hooks = [
+        dedent(
+            """\
+            if 'lecture' in milestone.lower():
+                issue.isLectureTopicTask = True
+            """
+        )
+    ]
+    modified_issue = applyIssuePreProcessingHooks(
+        hooks=hooks,
+        issue=create_issue(),
+        milestone="Lecture Series Q1",
+        **milestone_dates
+    )
+    assert modified_issue.isLectureTopicTask == True
+
+
+def test_multiple_hooks_applied_sequentially(create_issue, milestone_dates):
+    issue = create_issue(title="Important: Review lecture material")
+    hooks = [
+        dedent(
+            """\
+            if 'important' in issue.title.lower():
+                issue.urgency = 4.0
+            """
+        ),
+        dedent(
+            """\
+            if 'lecture' in issue.title.lower():
+                issue.isLectureTopicTask = True
+            """
+        ),
+        dedent(
+            """\
+            if issue.urgency and issue.urgency > 3.0:
+                issue.difficulty = 3.0
+            """
+        ),
+    ]
+    modified_issue = applyIssuePreProcessingHooks(
+        hooks=hooks, issue=issue, milestone="Q1 2024", **milestone_dates
+    )
+    assert modified_issue.urgency == 4.0
+    assert modified_issue.isLectureTopicTask == True
+    assert modified_issue.difficulty == 3.0
 
 
 # Run the tests

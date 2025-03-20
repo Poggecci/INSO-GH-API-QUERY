@@ -295,3 +295,88 @@ def calculateIssueScores(
         pointsByDeveloper=baseIssueScoresByDeveloper,
         bonusesByDeveloper=bonusesByDeveloper,
     )
+
+
+def applyIssuePreProcessingHooks(
+    *,
+    hooks: list[str],
+    issue: Issue,
+    milestone: str,
+    startDate: datetime,
+    endDate: datetime,
+) -> Issue:
+    """
+    Apply a series of preprocessing hooks to modify an Issue object.
+
+    This function executes a list of Python code snippets (hooks) that can modify
+    the given Issue object and access other relevant milestone information.
+    Each hook is executed in the order it appears in the list, with access to
+    the current state of the Issue object and milestone data. The current issue
+    is available through an `issue` variable passed into the exec() call alongside the hook.
+
+    Args:
+        hooks : List[str]
+            A list of Python code snippets to be executed as preprocessing hooks.
+            Each hook should be a string containing valid Python code.
+
+        issue : Issue
+            The Issue object to be processed and potentially modified by the hooks.
+
+        milestone : str
+            The name or identifier of the current milestone. This is made available
+            to the hooks for potential use in decision-making or modifications.
+
+        startDate : datetime
+            The start date of the current milestone. Available to hooks for
+            timeline-based logic or modifications.
+
+        endDate : datetime
+            The end date of the current milestone. Available to hooks for
+            timeline-based logic or modifications.
+
+    Returns:
+        The potentially modified Issue object after all hooks have been applied.
+
+    Warnings:
+        - Security Risk: This function uses exec() to run the provided hooks.
+        Ensure that all hooks come from trusted sources and are properly sanitized
+        before execution. Malicious hooks could potentially execute harmful code.
+        Please don't use this function unless you know what you're doing.
+
+        - Scope Limitation: Hooks only have access to the variables explicitly
+        provided (issue, milestone, startDate, endDate). Any other required data
+        should be encapsulated within these variables or the Issue object itself.
+
+    Examples:
+        hooks = [
+            '''
+            if issue.number == 1:
+                issue.closedAt = startDate
+            ''',
+            '''
+            if 'urgent' in issue.title.lower():
+                issue.urgency = max(issue.urgency or 0, 4.0)
+            '''
+        ]
+        modified_issue = applyIssuePreProcessingHooks(
+            hooks=hooks,
+            issue=original_issue,
+            milestone="Q2 Release",
+            startDate=datetime(2024, 4, 1),
+            endDate=datetime(2024, 6, 30)
+        )
+    """
+    for hook in hooks:
+        # Create a local scope with the variables we want to expose to the hook
+        local_vars = {
+            "issue": issue,
+            "milestone": milestone,
+            "startDate": startDate,
+            "endDate": endDate,
+        }
+        # Execute the hook in the context of local_vars
+        exec(hook, None, local_vars)
+        # Update the issue with any changes made by the hook
+        issue = local_vars["issue"]
+
+    return issue
