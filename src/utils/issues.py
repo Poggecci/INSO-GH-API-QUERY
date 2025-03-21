@@ -108,7 +108,8 @@ def parseIssue(*, issue_dict: dict) -> Issue:
         urgency=urgency,
         difficulty=difficulty,
         modifier=modifier,
-        isLectureTopicTask="[Lecture Topic Task]" in title or "lecture topic task" in labels,
+        isLectureTopicTask="[Lecture Topic Task]" in title
+        or "lecture topic task" in labels,
     )
 
 
@@ -116,7 +117,7 @@ def shouldCountIssue(
     *,
     issue: Issue,
     logger: logging.Logger,
-    currentMilestone: str,
+    currentMilestone: str | None,
     managers: list[str],
     shouldCountOpenIssues: bool,
 ) -> bool:
@@ -151,7 +152,7 @@ def shouldCountIssue(
             f"[Issue #{issue.number}]({issue.url}) is not associated with a milestone."
         )
         return False
-    if issue.milestone != currentMilestone:
+    if currentMilestone is not None and issue.milestone != currentMilestone:
         return False
     if issue.closed:
         if issue.closedBy is not None and issue.closedBy not in managers:
