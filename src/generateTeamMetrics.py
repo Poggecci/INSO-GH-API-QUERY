@@ -206,6 +206,30 @@ def fetchProcessedIssues(
     managers: list[str],
     shouldCountOpenIssues: bool = False,
 ) -> Iterator[Issue]:
+    """
+    This function will fetch all team issues from Github and process them accordingly
+    by applying specified hooks and filtering issues that should not be counted.
+
+    Args:
+        org : str
+            Organization name
+        team : str
+            Team name
+        logger : Logger
+            Logger to use
+        hooks : List[str]
+            List of hooks to apply per issue before filtering them
+        milestone : str
+            Milestone name. Will ignore milestone filtering if left null
+        startDate : datetime
+            Date of milestone start
+        endDate : datetime
+            Date of milestone end
+        managers : List[str]
+            List of manager names
+        shouldCountOpenIssues : bool
+            Determines whether to filter open issues or not
+    """
     for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger):
         try:
             issue = parseIssue(issue_dict=issue_dict)
@@ -254,6 +278,20 @@ def fetchProcessedIssues(
 def getLectureTopicTaskMetricsFromIssues(
     issues: Iterator[Issue], members: list[str], logger: logging.Logger
 ) -> LectureTopicTaskData:
+    """
+    Read issues from iterator to calculate lecture topic task metrics.
+
+    Non lecture topic task issues are ignored. If a non 1 amount of developers
+    are assigned to the issue then it is skipped.
+
+    Args:
+        issues : Iterator[Issue]
+            Iterator of all issues to analyze
+        members : List[str]
+            List of all developers
+        logger : Logger
+            Logger to use
+    """
     lectureTopicTaskData = LectureTopicTaskData()
     lectureTopicTaskData.lectureTopicTasksByDeveloper = {
         member: 0 for member in members
@@ -273,12 +311,35 @@ def getLectureTopicTaskMetricsFromIssues(
     return lectureTopicTaskData
 
 
-def iteratorSplitter(iterator: Iterator, queue1: Queue, queue2: Queue):
+def iteratorSplitter(
+    iterator: Iterator[Issue], queue1: Queue[Issue | None], queue2: Queue[Issue | None]
+):
+    """
+    Add values received from the iterator to 2 individual queues, essentially splitting
+    the iterator into 2.
+
+    Args:
+        iterator : Iterator
+            Data source
+        queue1 : Queue
+            One of the queues to add iterator data to
+        queue2 : Queue
+            The other queue to add iterator data to
+    """
     for item in iterator:
         queue1.put(item)
         queue2.put(item)
     queue1.put(None)
     queue2.put(None)
+
+
+def getIteratorFromQueue(queue: Queue[Issue]) -> Iterator[Issue]:
+    """
+    Convert queue to an iterator.
+
+    End is marked when value is null.
+    """
+    return iter(queue.get, None)
 
 
 def getTeamMetricsForMilestone(
@@ -366,13 +427,13 @@ def getTeamMetricsForMilestone(
         # Run concurrently to obtain lecture topic task data in parallel with issue metrics data
         future = executor.submit(
             getLectureTopicTaskMetricsFromIssues,
-            iter(lectureTopicTaskQueue.get, None),
+            getIteratorFromQueue(lectureTopicTaskQueue),
             members,
             logger,
         )
 
         # Fetch all issues for the team, drop invalid ones, and apply their points to the correct developers
-        for issue in iter(issueMetricsQueue.get, None):
+        for issue in getIteratorFromQueue(issueMetricsQueue):
             issueMetrics = calculateIssueScores(
                 issue=issue,
                 managers=managers,

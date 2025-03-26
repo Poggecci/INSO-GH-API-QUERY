@@ -29,7 +29,7 @@ To achieve a good grade each milestone, students should:
 
 4. **Take on Varied Tasks**: Work on a mix of tasks with different Difficulty and Urgency levels.
 
-5. **Complete Lecture Topic Tasks**: These are tracked independently of milestones (they are counted at the end of the course). These are issues relating to topics present in the lectures and unique to the course (ie. a task relating to setting up Integration Testing while you're taking the INSO4117 course). You can mark a task as a Lecture Topic task by adding "`[Lecture Topic Task]`" to the issue title. Students are expected to complete at least **4** by the end of the course.
+5. **Complete Lecture Topic Tasks**: These are issues relating to topics present in the lectures and unique to the course (ie. a task relating to setting up Integration Testing while you're taking the INSO4117 course). You can mark a task as a Lecture Topic task by adding "`[Lecture Topic Task]`" to the issue title or by adding a label titled "`lecture topic task`" to the issue. Students are expected to complete at least **4** total by the end of the course, where they must complete at least **1** lecture topic task in at least **2** milestones.
 
 ## Factors Affecting Issue Scoring
 
