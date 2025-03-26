@@ -293,19 +293,40 @@ def getLectureTopicTaskMetricsFromIssues(
             Logger to use
     """
     lectureTopicTaskData = LectureTopicTaskData()
-    lectureTopicTaskData.lectureTopicTasksByDeveloper = {
-        member: 0 for member in members
+    lectureTopicTaskData.lectureTopicTasksByDeveloperByMilestone = {
+        member: {} for member in members
     }
 
     for issue in issues:
+        # Skip issue if no milestone is assigned
+        if issue.milestone is None:
+            logger.warning(
+                f"[Issue #{issue.number}]({issue.url}) does not have a milestone assigned so lecture topic task points were ignored"
+            )
+            continue
+        # Add milestone before isLectureTopicTask filtering so it includes milestones where no one did any LTTs
+        lectureTopicTaskData.totalMilestones.add(issue.milestone)
+
+        # Skip issue if it is not a lecture topic task
         if not issue.isLectureTopicTask:
             continue
+
+        # Skip issue if it does not have only one assignee
         if len(issue.assignees) != 1:
             logger.warning(
                 f"[Issue #{issue.number}]({issue.url}) does not have only 1 assigned developer so lecture topic task points for this issue will be ignored"
             )
             continue
-        lectureTopicTaskData.lectureTopicTasksByDeveloper[issue.assignees[0]] += 1
+
+        # Track metrics
+        tasks_by_milestone = (
+            lectureTopicTaskData.lectureTopicTasksByDeveloperByMilestone[
+                issue.assignees[0]
+            ]
+        )
+        if tasks_by_milestone.get(issue.milestone) is None:
+            tasks_by_milestone[issue.milestone] = 0
+        tasks_by_milestone[issue.milestone] += 1
         lectureTopicTaskData.totalLectureTopicTasks += 1
 
     return lectureTopicTaskData
@@ -507,9 +528,11 @@ def getTeamMetricsForMilestone(
             pointsClosed=devPointsClosed[dev],
             percentContribution=contribution * 100.0,
             expectedGrade=expectedGrade,
-            lectureTopicTasksClosed=lectureTopicTaskData.lectureTopicTasksByDeveloper[
+            lectureTopicTasksClosed=lectureTopicTaskData.lectureTopicTasksByDeveloperByMilestone[
                 dev
-            ],
+            ].get(
+                milestone, 0
+            ),
             pointPercentByLabel={
                 label: devPointsByLabel[dev].get(label, 0)
                 / max(1, devPointsClosed[dev])

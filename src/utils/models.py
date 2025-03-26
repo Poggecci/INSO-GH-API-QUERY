@@ -26,7 +26,8 @@ class MilestoneData:
 @dataclass
 class LectureTopicTaskData:
     totalLectureTopicTasks: int = 0
-    lectureTopicTasksByDeveloper: dict[str, int] = field(default_factory=dict)
+    totalMilestones: set[str] = field(default_factory=set)
+    lectureTopicTasksByDeveloperByMilestone: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
 class ReactionKind(StrEnum):
