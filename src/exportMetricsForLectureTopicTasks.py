@@ -39,10 +39,15 @@ if __name__ == "__main__":
     lecture_topic_task_metrics_by_team = {}
     for team, team_data in teams.items():
         print("Team: ", team)
-        print("Managers: ", team_data["managers"])
+        managers = [manager["name"] for manager in team_data["managers"]]
+        print("Managers: ", managers)
         members = getTeamMembers(organization, team)
         lecture_topic_task_metrics_by_team[team] = getLectureTopicTaskMetrics(
-            org=organization, team=team, members=members
+            org=organization,
+            team=team,
+            members=members,
+            managers=managers,
+            shouldCountOpenIssues=course_data.get("countOpenIssues", False),
         )
         os.makedirs(metricsDirectory, exist_ok=True)
         write_lecture_topic_task_data_to_csv(
