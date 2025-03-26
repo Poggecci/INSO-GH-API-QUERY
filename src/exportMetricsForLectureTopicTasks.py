@@ -8,15 +8,32 @@ from src.getTeamMembers import getTeamMembers
 from src.utils.models import LectureTopicTaskData
 
 
+def met_quota(developer_tasks_by_milestone: dict[str, int], task_quota: int):
+    milestones_worked = 0
+    total_points = 0
+    for points in developer_tasks_by_milestone.values():
+        if points > 0:
+            milestones_worked += 1
+            total_points += points
+    return total_points >= task_quota and milestones_worked >= 2
+
+
 def write_lecture_topic_task_data_to_csv(
     ltt_data: LectureTopicTaskData, csv_file_path: str, task_quota: int
 ):
     with open(csv_file_path, mode="w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["Developer", "Lecture Topic Tasks Completed", "Met Quota"])
-        # writer.writerow(["Total", ltt_data.totalLectureTopicTasks, "N/A"])
-        for developer, tasks_closed in ltt_data.lectureTopicTasksByDeveloper.items():
-            writer.writerow([developer, tasks_closed, tasks_closed >= task_quota])
+        milestones = sorted(list(ltt_data.totalMilestones))
+        writer.writerow(["Developer"] + milestones + ["Met Quota"])
+        for (
+            developer,
+            tasks_by_milestone,
+        ) in ltt_data.lectureTopicTasksByDeveloperByMilestone.items():
+            writer.writerow(
+                [developer]
+                + [tasks_by_milestone.get(milestone, 0) for milestone in milestones]
+                + [met_quota(tasks_by_milestone, task_quota)]
+            )
 
 
 if __name__ == "__main__":
