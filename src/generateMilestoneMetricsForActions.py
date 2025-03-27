@@ -39,9 +39,19 @@ def generateMetricsFromV2Config(config: dict):
             "the same as your Team name on Github. Remember both the Github Project and "
             "The Github Team need to have the same name (this is whitespace and case sensitive!)."
         )
+
+    loggingLevels = [logging.ERROR, logging.INFO, logging.DEBUG]
+    configVerbosity = int(config.get("verbosity", 1))
+    if configVerbosity < 0 or configVerbosity >= len(loggingLevels):
+        print(
+            f"Verbosity value must be within [0, {len(loggingLevels)}). Default value 1 will be used."
+        )
+        configVerbosity = 1
+    verbosity = loggingLevels[configVerbosity]
+
     for milestone, mData in milestones.items():
         logger = logging.getLogger(milestone)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(verbosity)
         logFileName = f"{milestone}-{team}-{organization}.log"
         logFileHandler = logging.FileHandler(logFileName)
         formatter = logging.Formatter("%(levelname)s: %(message)s")
@@ -88,6 +98,7 @@ def generateMetricsFromV2Config(config: dict):
                 milestone=milestone,
                 milestoneStart=startDate,
                 milestoneEnd=endDate,
+                logger=logger,
             )
         except Exception as e:
             logger.exception(e)
@@ -105,6 +116,7 @@ def generateMetricsFromV2Config(config: dict):
             participation=discussionParticipation,
             weeks=getWeeks(milestoneStart=startDate, milestoneEnd=endDate),
             md_file_path=output_markdown_path,
+            logger=logger,
         )
         writePointPercentByLabelToMarkdown(
             milestone_data=team_metrics, md_file_path=output_markdown_path

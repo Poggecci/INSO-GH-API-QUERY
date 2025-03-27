@@ -237,6 +237,7 @@ def findWeeklyDiscussionParticipation(
     milestone: str,
     milestoneStart: datetime,
     milestoneEnd: datetime,
+    logger: logging.Logger | None = None,
 ) -> dict[str, set[int]]:
     """
     Tracks weekly participation of team members in GitHub discussions.
@@ -267,10 +268,17 @@ def findWeeklyDiscussionParticipation(
         >>> print(participation["alice"])  # Weeks alice participated
         {0, 1, 2}
     """
-    filteredDiscussions = filter(
-        lambda d: f"Scrum Prep {milestone} - Week {getWeekIndex(dateOfInterest=d.publishedAt, milestoneStart=milestoneStart, milestoneEnd=milestoneEnd) + 1}"
-        == d.title,
-        discussions,
+    if logger is None:
+        logger = logging.getLogger(__name__)
+    filteredDiscussions = list(
+        filter(
+            lambda d: f"Scrum Prep {milestone} - Week {getWeekIndex(dateOfInterest=d.publishedAt, milestoneStart=milestoneStart, milestoneEnd=milestoneEnd) + 1}"
+            == d.title,
+            discussions,
+        )
+    )
+    logger.debug(
+        f"Scrum prep discussions: {[disc.title for disc in filteredDiscussions]}"
     )
     participation = {member: set() for member in members}
     for discussion in filteredDiscussions:
@@ -282,6 +290,9 @@ def findWeeklyDiscussionParticipation(
         )
         if discussionWeek != -1 and discussion.author in members:
             participation[discussion.author].add(discussionWeek)
+            logger.debug(
+                f"{discussion.author} participated in week {discussionWeek + 1}'s discussion"
+            )
         # attribute participation for the comments as well
         for comment in discussion.comments:
             commentWeek = getWeekIndex(
@@ -291,12 +302,15 @@ def findWeeklyDiscussionParticipation(
             )
             if discussionWeek != -1 and comment.author in members:
                 participation[comment.author].add(commentWeek)
+                logger.debug(
+                    f"{comment.author} participated in week {discussionWeek + 1}'s discussion"
+                )
 
     return participation
 
 
 def calculateWeeklyDiscussionPenalties(
-    participation: dict[str, set[int]], weeks: int
+    participation: dict[str, set[int]], weeks: int, logger: logging.Logger | None = None
 ) -> dict[str, float]:
     """
     Penalties for team members based on their weekly discussion activity.
@@ -326,8 +340,14 @@ def calculateWeeklyDiscussionPenalties(
         >>> print(scores["charlie"])  # missed thrice consecutively so 2 + (2+1) + (2+1+1)
         9.0
     """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
     penaltyPerMissedWeek = 2  # 2 points deducted from milestone grade
     consecutiveMissesPenalty = 1  # additional penalty per consecutive miss after first
+    logger.debug(
+        f"Penalty per missed week: {penaltyPerMissedWeek}, penalty for consecutive misses: {consecutiveMissesPenalty}"
+    )
 
     penalties = {}
 
@@ -338,12 +358,18 @@ def calculateWeeklyDiscussionPenalties(
         for week in range(weeks):
             if week not in participated_weeks:
                 penalty += penaltyPerMissedWeek
+                logger.debug(f"{member} missed week {week+1}, penalty was applied")
                 consecutive_misses += 1
-                penalty += (consecutive_misses - 1) * consecutiveMissesPenalty
+                additional_penalty = (consecutive_misses - 1) * consecutiveMissesPenalty
+                penalty += additional_penalty
+                logger.debug(
+                    f"{member} has missed {consecutive_misses} weeks consecutively. Additional penalty of {additional_penalty} was applied"
+                )
             else:
                 consecutive_misses = 0
         # Ensure penalty doesn't exceed 100
         penalties[member] = min(100, penalty)
+        logger.debug(f"Finalized penalty for {member}: {penalties[member]}")
 
     return penalties
 
