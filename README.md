@@ -43,6 +43,7 @@ When using this repo through actions, the generated metrics will be placed in a 
 - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
 - `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
 - `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
+- `verbosity` : number indicating logging level. Verbosity of 0 = only exceptions logged, 1 = info and warnings + exceptions, 2 = everything + debug info. Defaults to `1`.
 
 **Example `gh_metrics_config.json` file:**
 
@@ -71,7 +72,8 @@ When using this repo through actions, the generated metrics will be placed in a 
   "lectureTopicTaskQuota": 4,
   "countOpenIssues": false,
   "sprints": 2,
-  "minTasksPerSprint": 1
+  "minTasksPerSprint": 1,
+  "verbosity": 1
 }
 ```
 
@@ -135,6 +137,7 @@ Replace `your_personal_access_token_here` with the PAT you generated, and replac
 - `countOpenIssues` : boolean flag to determine if open issues should be included in the score calculation. Useful when trying to estimate how the developer points will look like by the end of a milestone. Defaults to `false`.
 - `sprints` : number of sprints in the milestone (defaults to 2 if not specified)
 - `minTasksPerSprint` : minimum number of tasks expected to be completed per sprint (defaults to 1 if not specified)
+- `verbosity` : number indicating logging level. Verbosity of 0 = only exceptions logged, 1 = info and warnings + exceptions, 2 = everything + debug info. Defaults to `1`.
 
 **Example `exampleActionsConfig.json` file:**
 
@@ -163,7 +166,8 @@ Replace `your_personal_access_token_here` with the PAT you generated, and replac
   "lectureTopicTaskQuota": 4,
   "countOpenIssues": false,
   "sprints": 2,
-  "minTasksPerSprint": 1
+  "minTasksPerSprint": 1,
+  "verbosity": 1
 }
 ```
 

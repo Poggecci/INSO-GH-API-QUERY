@@ -269,6 +269,7 @@ def calculateIssueScores(
         * (decay(startDate, endDate, issue.createdAt) if useDecay else 1)
         + modifier
     )
+    logger.debug(f"Issue #{issue.number} score: {issueScore}")
     # attribute documentation bonus to author when a manager has reacted to the issue or comments with 🎉
     documentationBonus = issueScore * 0.1
     bonusTarget = whoShouldGetBonus(issue=issue, managers=managers)
@@ -280,6 +281,9 @@ def calculateIssueScores(
 
     # attribute points only to developers in the team
     assignedDevelopers = len((set(issue.assignees) - set(managers)) & (set(developers)))
+    logger.debug(
+        f"Issue #{issue.number} assigned developers count: {assignedDevelopers}"
+    )
     distributedScore = (
         issueScore / assignedDevelopers if assignedDevelopers > 0 else issueScore
     )

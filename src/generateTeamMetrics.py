@@ -328,6 +328,9 @@ def getLectureTopicTaskMetricsFromIssues(
             tasks_by_milestone[issue.milestone] = 0
         tasks_by_milestone[issue.milestone] += 1
         lectureTopicTaskData.totalLectureTopicTasks += 1
+        logger.debug(
+            f"Issue #{issue.number} was marked as a lecture topic task for {issue.assignees[0]} in {issue.milestone}"
+        )
 
     return lectureTopicTaskData
 
@@ -394,6 +397,7 @@ def getTeamMetricsForMilestone(
         raise ValueError("Milestone end date must be after start date.")
     try:
         milestones = getMilestones(organization=org, team=team)
+        logger.debug(f"Milestones found: {[m.title for m in milestones]}")
         matchingMilestone = next(
             filter(lambda m: m.title == milestone, milestones), None
         )
@@ -415,6 +419,7 @@ def getTeamMetricsForMilestone(
 
     print(members)
     developers = [member for member in members if member not in managers]
+    logger.debug(f"Developers: {developers}, Managers: {managers}")
     devPointsClosed = {dev: 0.0 for dev in developers}
     devTasksCompleted = {dev: [0 for _ in range(sprints)] for dev in developers}
     totalPointsClosed = 0.0
@@ -422,6 +427,7 @@ def getTeamMetricsForMilestone(
     sprintCutoffs = generateSprintCutoffs(
         startDate=startDate, endDate=endDate, sprints=sprints
     )
+    logger.debug(f"Sprint cutoffs: {sprintCutoffs}")
     devPointsByLabel = {dev: {} for dev in developers}
     milestoneLabels = set()
 
@@ -455,6 +461,7 @@ def getTeamMetricsForMilestone(
 
         # Fetch all issues for the team, drop invalid ones, and apply their points to the correct developers
         for issue in getIteratorFromQueue(issueMetricsQueue):
+            logger.debug(f"Calculating scores for issue #{issue.number}")
             issueMetrics = calculateIssueScores(
                 issue=issue,
                 managers=managers,
@@ -467,6 +474,9 @@ def getTeamMetricsForMilestone(
             # attribute base issue points to developer alongside giving them credit for the completed task
             for dev, score in issueMetrics.pointsByDeveloper.items():
                 devPointsClosed[dev] += score
+                logger.debug(
+                    f"{dev} now has closed {round(devPointsClosed[dev], 1)} points total"
+                )
                 # attribute task completion to appropriate sprint
                 taskCompletionDate = (
                     issue.closedAt if issue.closedAt is not None else issue.createdAt
@@ -498,6 +508,7 @@ def getTeamMetricsForMilestone(
     devBenchmark = max(
         1, min(untrimmedAverage, trimmedAverage) / (milestoneGrade / 100)
     )
+    logger.debug(f"Dev benchmark: {devBenchmark}")
 
     milestoneData.totalPointsClosed = totalPointsClosed
     for dev in developers:

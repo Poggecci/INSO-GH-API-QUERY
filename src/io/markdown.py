@@ -2,6 +2,7 @@ from datetime import datetime
 from src.utils.discussions import calculateWeeklyDiscussionPenalties
 from src.utils.models import MilestoneData
 from src.utils.constants import pr_tz
+import logging
 
 
 def writeMilestoneToMarkdown(milestone_data: MilestoneData, md_file_path: str):
@@ -64,10 +65,16 @@ def writeSprintTaskCompletionToMarkdown(
 
 
 def writeWeeklyDiscussionParticipationToMarkdown(
-    participation: dict, weeks: int, md_file_path: str
+    participation: dict,
+    weeks: int,
+    md_file_path: str,
+    logger: logging.Logger | None = None,
 ):
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
     penalties = calculateWeeklyDiscussionPenalties(
-        participation=participation, weeks=weeks
+        participation=participation, weeks=weeks, logger=logger
     )
 
     with open(md_file_path, mode="a") as md_file:
@@ -122,8 +129,10 @@ def writePointPercentByLabelToMarkdown(
 def writeLogsToMarkdown(log_file_path: str, md_file_path: str):
     with open(log_file_path, mode="r") as log_file:
         with open(md_file_path, mode="a") as md_file:
-            md_file.write("# Metrics Generation Logs\n\n")
-            md_file.write("| Message |\n")
-            md_file.write("| ------- |\n")
-            for log_message in log_file.readlines():
-                md_file.write("| " + log_message.strip("\n") + " |\n")
+            log_messages = log_file.readlines()
+            if len(log_messages) > 0:
+                md_file.write("# Metrics Generation Logs\n\n")
+                md_file.write("| Message |\n")
+                md_file.write("| ------- |\n")
+                for log_message in log_messages:
+                    md_file.write("| " + log_message.strip("\n") + " |\n")
