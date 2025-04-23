@@ -558,8 +558,8 @@ def test_students_get_0_if_under_minimum_tasks_per_sprint(
     )
 
     # Assert that both developers get 0 if they have not completed the minimum number of tasks per sprint
-    assert result.devMetrics["dev1"].expectedGrade == 0.0
-    assert result.devMetrics["dev2"].expectedGrade == 0.0
+    assert result.devMetrics["dev1"].individualGrade == 0.0
+    assert result.devMetrics["dev2"].individualGrade == 0.0
 
 
 mock_gh_res_issues_with_lecture_topic_tasks = {

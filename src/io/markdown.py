@@ -10,19 +10,19 @@ def writeMilestoneToMarkdown(milestone_data: MilestoneData, md_file_path: str):
         md_file.write("# Milestone Data\n\n")
         md_file.write(f"## Date Generated: {datetime.now().date()}\n")
         md_file.write(
-            "| Developer | Points Closed | Percent Contribution | Projected Grade | Lecture Topic Tasks |\n"
+            "| Developer | Points Closed | Percent Contribution | Indivudal Grade | Milestone Grade | Lecture Topic Tasks |\n"
         )
         md_file.write(
-            "| --------- | ------------- | -------------------- | --------------- | ------------------- |\n"
+            "| --------- | ------------- | -------------------- | --------------- | --------------- | ------------------- |\n"
         )
         totalLectureTopicTasks = 0
         for developer, metrics in milestone_data.devMetrics.items():
             totalLectureTopicTasks += metrics.lectureTopicTasksClosed
             md_file.write(
-                f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.expectedGrade, 1)}% | {metrics.lectureTopicTasksClosed} |\n"
+                f"| {developer} | {round(metrics.pointsClosed, 1)} | {round(metrics.percentContribution, 1)}% | {round(metrics.individualGrade, 1)}% | {round(metrics.milestoneGrade, 1)}% | {metrics.lectureTopicTasksClosed} |\n"
             )
         md_file.write(
-            f"| Total | {milestone_data.totalPointsClosed} | /100% | /100% | {totalLectureTopicTasks} |\n"
+            f"| Total | {milestone_data.totalPointsClosed} | /100% | /100% | /100% | {totalLectureTopicTasks} |\n"
         )
         md_file.write("\n")
 

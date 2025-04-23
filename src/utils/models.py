@@ -9,7 +9,8 @@ class DeveloperMetrics:
     tasksBySprint: list[int] = field(default_factory=list)
     pointsClosed: float = 0
     percentContribution: float = 0  # pointsClosed / (totalPoints) * %100
-    expectedGrade: float = 0  # floor((pointsClosed / trimmedMean) * %100 , %100)
+    individualGrade: float = 0  # floor((pointsClosed / trimmedMean) * %100 , %100)
+    milestoneGrade: float = 0
     lectureTopicTasksClosed: int = 0
     pointPercentByLabel: dict[str, float] = field(default_factory=dict)
 

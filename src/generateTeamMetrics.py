@@ -120,9 +120,10 @@ query QueryProjectItemsForTeam(
 
 
 def outliersRemovedAverage(scores: ValuesView[float], /) -> float:
-    smallest_elem = min(scores, default=0)
-    largestVal = max(scores, default=0)
-    newLength = len(list(scores)) - (largestVal != 0) - (smallest_elem != 0)
+    non_zero_scores = [s for s in scores if s > 0]
+    smallest_elem = min(non_zero_scores, default=0)
+    largestVal = max(non_zero_scores, default=0)
+    newLength = len(list(scores)) - 2
     total = sum(scores, start=0) - largestVal - smallest_elem
     return total / max(1, newLength)
 
@@ -518,9 +519,7 @@ def getTeamMetricsForMilestone(
         currentSprint = getCurrentSprintIndex(
             date=pr_tz.localize(datetime.today()), cutoffs=sprintCutoffs
         )
-        expectedGrade = min(
-            (devPointsClosed[dev] / devBenchmark) * milestoneGrade, 100.0
-        )
+        individualGrade = min(devPointsClosed[dev] / devBenchmark * 100, 100.0)
         for sprintIdx in range(currentSprint + 1):
             if devTasksCompleted[dev][sprintIdx] < minTasksPerSprint:
                 sprintDateRange = getFormattedSprintDateRange(
@@ -533,12 +532,13 @@ def getTeamMetricsForMilestone(
                     f"{dev} hasn't completed the minimum {minTasksPerSprint} task(s) required for sprint {sprintDateRange}"
                 )
                 if not shouldCountOpenIssues:
-                    expectedGrade = 0.0
+                    individualGrade = 0.0
         milestoneData.devMetrics[dev] = DeveloperMetrics(
             tasksBySprint=devTasksCompleted[dev],
             pointsClosed=devPointsClosed[dev],
             percentContribution=contribution * 100.0,
-            expectedGrade=expectedGrade,
+            individualGrade=individualGrade,
+            milestoneGrade=milestoneGrade * 0.4 + individualGrade * 0.6,
             lectureTopicTasksClosed=lectureTopicTaskData.lectureTopicTasksByDeveloperByMilestone[
                 dev
             ].get(
