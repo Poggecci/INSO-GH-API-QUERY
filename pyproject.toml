@@ -16,6 +16,7 @@ types-requests = "^2.32"
 pytz = "^2024.1"
 types-pytz = "^2024.2"
 python-dotenv = "^1.0.1"
+pydantic = "^2.11.3"
 
 
 
