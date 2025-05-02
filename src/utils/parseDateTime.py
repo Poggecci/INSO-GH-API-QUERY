@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from src.utils.constants import pr_tz, default_start_time, default_end_time
 
 
@@ -13,6 +13,14 @@ def parse_iso_datetime(iso_string: str) -> tuple[datetime, bool, bool]:
         "T" in iso_string,
         dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None,
     )
+
+
+def safe_parse_iso_date(iso_string: str) -> date | None:
+    try:
+        date, _, _ = parse_iso_datetime(iso_string)
+    except ValueError:
+        return None
+    return date.date()
 
 
 def get_milestone_start(iso_string: str) -> datetime:

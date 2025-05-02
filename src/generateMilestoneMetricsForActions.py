@@ -3,6 +3,7 @@ import json
 import os
 import logging
 import sys
+from typing import Any
 from dotenv import load_dotenv
 from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.io.markdown import (
@@ -21,17 +22,24 @@ from src.utils.discussions import (
     getWeeks,
 )
 from src.utils.models import MilestoneData
-from src.utils.parseDateTime import get_milestone_start, get_milestone_end
+from src.utils.parseDateTime import (
+    get_milestone_start,
+    get_milestone_end,
+    safe_parse_iso_date,
+)
+from src.utils.autoExtractMilestone import auto_extract_milestone
+import argparse
 
 
-def generateMetricsFromV2Config(config: dict):
+def generateMetricsFromV2Config(
+    config: dict[str, Any], optimize_milestone_fetch: bool = False
+):
     team = config["projectName"]
     organization = os.environ["ORGANIZATION"]
-    milestones: dict = config["milestones"]
+    milestones: dict[str, Any] = config["milestones"]
     managers = config["managers"]
     print("Team: ", team)
     print("Managers: ", managers)
-    print("Milestones: ", ", ".join(milestones.keys()))
     members = getTeamMembers(organization, team)
     if len(members) == 0:
         print(
@@ -49,6 +57,18 @@ def generateMetricsFromV2Config(config: dict):
         configVerbosity = 1
     verbosity = loggingLevels[configVerbosity]
 
+    if optimize_milestone_fetch:
+        milestone = auto_extract_milestone(
+            datetime.now(tz=pr_tz).date(),
+            [
+                (m, safe_parse_iso_date(data.get("startDate")))
+                for m, data in milestones.items()
+            ],
+        )
+        if milestone is not None:
+            milestones = {milestone: milestones[milestone]}
+
+    print("Milestones: ", ", ".join(milestones.keys()))
     for milestone, mData in milestones.items():
         logger = logging.getLogger(milestone)
         logger.setLevel(verbosity)
@@ -130,12 +150,21 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please pass in the path to your config (See README.md for how to do it)")
         exit(0)
-    _, course_config_file, *_ = sys.argv
     load_dotenv()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("course_config_file")
+    parser.add_argument(
+        "--no-optimize-milestone-fetch", action="store_false", default=True
+    )
+    args = parser.parse_args()
+    course_config_file = args.course_config_file
     with open(course_config_file) as course_config:
         course_data: dict = json.load(course_config)
     version: str = course_data.get("version", "1.0")
     if version.startswith("1."):
         generateMetricsFromV1Config(config=course_data)
     elif version.startswith("2."):
-        generateMetricsFromV2Config(config=course_data)
+        generateMetricsFromV2Config(
+            config=course_data,
+            optimize_milestone_fetch=args.no_optimize_milestone_fetch,
+        )
