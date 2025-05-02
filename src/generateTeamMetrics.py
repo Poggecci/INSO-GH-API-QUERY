@@ -335,9 +335,7 @@ def getLectureTopicTaskMetricsFromIssues(
     return lectureTopicTaskData
 
 
-def iteratorSplitter(
-    iterator: Iterator[Issue], queue1: Queue[Issue | None], queue2: Queue[Issue | None]
-):
+def iteratorSplitter(iterator: Iterator[Issue], queues: list[Queue[Issue | None]]):
     """
     Add values received from the iterator to 2 individual queues, essentially splitting
     the iterator into 2.
@@ -350,11 +348,18 @@ def iteratorSplitter(
         queue2 : Queue
             The other queue to add iterator data to
     """
-    for item in iterator:
-        queue1.put(item)
-        queue2.put(item)
-    queue1.put(None)
-    queue2.put(None)
+
+    def add_to_queues(item):
+        for queue in queues:
+            queue.put(item)
+
+    try:
+        for item in iterator:
+            add_to_queues(item)
+        add_to_queues(None)
+
+    except Exception as e:
+        add_to_queues(e)
 
 
 def getIteratorFromQueue(queue: Queue[Issue]) -> Iterator[Issue]:
@@ -363,7 +368,14 @@ def getIteratorFromQueue(queue: Queue[Issue]) -> Iterator[Issue]:
 
     End is marked when value is null.
     """
-    return iter(queue.get, None)
+
+    def queueIteratorNext():
+        value = queue.get()
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    return iter(queueIteratorNext, None)
 
 
 def getTeamMetricsForMilestone(
@@ -446,7 +458,8 @@ def getTeamMetricsForMilestone(
     # Split issues iterator to read for both issue metrics and lecture topic task metrics
     issueMetricsQueue, lectureTopicTaskQueue = Queue(), Queue()
     thread = Thread(
-        target=iteratorSplitter, args=(issues, issueMetricsQueue, lectureTopicTaskQueue)
+        target=iteratorSplitter,
+        args=(issues, [issueMetricsQueue, lectureTopicTaskQueue]),
     )
     thread.start()
 
