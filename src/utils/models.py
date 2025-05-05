@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 from src.utils.constants import pr_tz
-from pydantic import BaseModel
 
 
 @dataclass
@@ -16,7 +15,8 @@ class DeveloperMetrics:
     pointPercentByLabel: dict[str, float] = field(default_factory=dict)
 
 
-class MilestoneData(BaseModel):
+@dataclass
+class MilestoneData:
     sprints: int = 2
     totalPointsClosed: float = 0
     startDate: datetime = datetime.now(tz=pr_tz)
@@ -28,9 +28,7 @@ class MilestoneData(BaseModel):
 class LectureTopicTaskData:
     totalLectureTopicTasks: int = 0
     totalMilestones: set[str] = field(default_factory=set)
-    lectureTopicTasksByDeveloperByMilestone: dict[str, dict[str, int]] = field(
-        default_factory=dict
-    )
+    lectureTopicTasksByDeveloperByMilestone: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
 class ReactionKind(StrEnum):

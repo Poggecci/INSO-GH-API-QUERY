@@ -3,8 +3,7 @@ import json
 from datetime import datetime
 
 from dotenv import load_dotenv
-from src.io.json_dump import smartDumpMilestoneMetrics
-from src.utils.constants import pr_tz, json_time_placeholder
+from src.utils.constants import pr_tz
 from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.getTeamMembers import getTeamMembers
 
@@ -80,11 +79,10 @@ if __name__ == "__main__":
             print("Managers: ", teamdata["managers"])
             print("Milestone: ", teamdata["milestone"])
             members = getTeamMembers(organization, team)
-            milestone = teamdata["milestone"]
             team_metrics[team] = getTeamMetricsForMilestone(
                 org=organization,
                 team=team,
-                milestone=milestone,
+                milestone=teamdata["milestone"],
                 milestoneGrade=teamdata["milestoneGrade"],
                 members=members,
                 managers=[manager["name"] for manager in teamdata["managers"]],
@@ -99,9 +97,5 @@ if __name__ == "__main__":
             os.makedirs(metricsDirectory, exist_ok=True)
             writeMilestoneToCsv(
                 team_metrics[team],
-                f"{metricsDirectory}/{milestone}-{team}-{organization}.csv",
-            )
-            smartDumpMilestoneMetrics(
-                milestone_data=team_metrics[team],
-                json_file_format=f"{milestone}-{team}-{organization}.dump.{json_time_placeholder}.json",
+                f"{metricsDirectory}/{teamdata['milestone']}-{team}-{organization}.csv",
             )

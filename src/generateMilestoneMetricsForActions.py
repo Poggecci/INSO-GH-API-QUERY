@@ -5,7 +5,6 @@ import logging
 import sys
 from dotenv import load_dotenv
 from src.generateTeamMetrics import getTeamMetricsForMilestone
-from src.io.json_dump import smartDumpMilestoneMetrics
 from src.io.markdown import (
     writeLogsToMarkdown,
     writeMilestoneToMarkdown,
@@ -14,7 +13,7 @@ from src.io.markdown import (
     writeWeeklyDiscussionParticipationToMarkdown,
 )
 from src.legacy.generateMilestoneMetricsForActions import generateMetricsFromV1Config
-from src.utils.constants import pr_tz, json_time_placeholder
+from src.utils.constants import pr_tz
 from src.getTeamMembers import getTeamMembers
 from src.utils.discussions import (
     findWeeklyDiscussionParticipation,
@@ -107,10 +106,6 @@ def generateMetricsFromV2Config(config: dict):
         output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
         writeMilestoneToMarkdown(
             milestone_data=team_metrics, md_file_path=output_markdown_path
-        )
-        smartDumpMilestoneMetrics(
-            milestone_data=team_metrics,
-            json_file_format=f"{milestone}-{team}-{organization}.dump.{json_time_placeholder}.json",
         )
         writeSprintTaskCompletionToMarkdown(
             milestone_data=team_metrics,

@@ -561,7 +561,7 @@ def getTeamMetricsForMilestone(
                 label: devPointsByLabel[dev].get(label, 0)
                 / max(1, devPointsClosed[dev])
                 * 100
-                for label in sorted(milestoneLabels)    # Ensure order is maintained for diff
+                for label in milestoneLabels
             },
         )
     return milestoneData
