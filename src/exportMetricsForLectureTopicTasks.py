@@ -1,5 +1,6 @@
 import csv
 import json
+import logging
 
 from dotenv import load_dotenv
 from src.generateLectureTopicTaskMetrics import getLectureTopicTaskMetrics
@@ -59,12 +60,30 @@ if __name__ == "__main__":
         managers = [manager["name"] for manager in team_data["managers"]]
         print("Managers: ", managers)
         members = getTeamMembers(organization, team)
+        milestone = team_data["milestone"]
+        print("Milestone: ", milestone)
+        loggingLevels = [logging.ERROR, logging.INFO, logging.DEBUG]
+        configVerbosity = int(team_data.get("verbosity", 1))
+        if configVerbosity < 0 or configVerbosity >= len(loggingLevels):
+            print(
+                f"Verbosity value must be within [0, {len(loggingLevels)}). Default value 1 will be used."
+            )
+            configVerbosity = 1
+        verbosity = loggingLevels[configVerbosity]
+        logger = logging.getLogger(milestone)
+        logger.setLevel(verbosity)
+        logFileName = f"{milestone}-{team}-{organization}.log"
+        logFileHandler = logging.FileHandler(logFileName)
+        formatter = logging.Formatter("%(levelname)s: %(message)s")
+        logFileHandler.setFormatter(formatter)
+        logger.addHandler(logFileHandler)
         lecture_topic_task_metrics_by_team[team] = getLectureTopicTaskMetrics(
             org=organization,
             team=team,
             members=members,
             managers=managers,
             shouldCountOpenIssues=course_data.get("countOpenIssues", False),
+            logger=logger,
         )
         os.makedirs(metricsDirectory, exist_ok=True)
         write_lecture_topic_task_data_to_csv(
