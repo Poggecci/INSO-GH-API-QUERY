@@ -1,5 +1,6 @@
 import csv
 import json
+import logging
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -77,8 +78,25 @@ if __name__ == "__main__":
         for team, teamdata in teams_and_teamdata.items():
             print("Team: ", team)
             print("Managers: ", teamdata["managers"])
-            print("Milestone: ", teamdata["milestone"])
+            milestone = teamdata["milestone"]
+            print("Milestone: ", milestone)
             members = getTeamMembers(organization, team)
+            loggingLevels = [logging.ERROR, logging.INFO, logging.DEBUG]
+            configVerbosity = int(teamdata.get("verbosity", 1))
+            if configVerbosity < 0 or configVerbosity >= len(loggingLevels):
+                print(
+                    f"Verbosity value must be within [0, {len(loggingLevels)}). Default value 1 will be used."
+                )
+                configVerbosity = 1
+            verbosity = loggingLevels[configVerbosity]
+            logger = logging.getLogger(milestone)
+            logger.setLevel(verbosity)
+            logFileName = f"{milestone}-{team}-{organization}.log"
+            logFileHandler = logging.FileHandler(logFileName)
+            formatter = logging.Formatter("%(levelname)s: %(message)s")
+            logFileHandler.setFormatter(formatter)
+            logger.addHandler(logFileHandler)
+
             team_metrics[team] = getTeamMetricsForMilestone(
                 org=organization,
                 team=team,
@@ -93,6 +111,7 @@ if __name__ == "__main__":
                 minTasksPerSprint=config_dict.get("minTasksPerSprint", 1),
                 shouldCountOpenIssues=config_dict.get("countOpenIssues", False),
                 issuePreProcessingHooks=teamdata.get("issuePreProcessingHooks", []),
+                logger=logger,
             )
             os.makedirs(metricsDirectory, exist_ok=True)
             writeMilestoneToCsv(

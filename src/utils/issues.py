@@ -270,6 +270,7 @@ def calculateIssueScores(
         + modifier
     )
     logger.debug(f"Issue #{issue.number} score: {issueScore}")
+    logger.debug(f"Issue #{issue.number} labeled: {issue.labels}")
     # attribute documentation bonus to author when a manager has reacted to the issue or comments with 🎉
     documentationBonus = issueScore * 0.1
     bonusTarget = whoShouldGetBonus(issue=issue, managers=managers)
