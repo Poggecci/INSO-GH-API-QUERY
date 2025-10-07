@@ -108,8 +108,8 @@ def parseIssue(*, issue_dict: dict) -> Issue:
         urgency=urgency,
         difficulty=difficulty,
         modifier=modifier,
-        isLectureTopicTask="[Lecture Topic Task]" in title
-        or "lecture topic task" in [l.lower() for l in labels],
+        isLectureTopicTask=("[Lecture Topic Task]" in title
+                            or "lecture topic task" in [l.lower() for l in labels]),
     )
 
 
