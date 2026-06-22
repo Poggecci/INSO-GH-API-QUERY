@@ -1,0 +1,37 @@
+# CI Pipeline and Metrics Generation
+
+## Purpose
+
+- `ci.yml` — runs pytest on every push, pull request, and manual trigger across multiple OS and Poetry versions
+- `dev-metrics.yml` — daily automated metrics generation workflow for student repositories (copied into student repos)
+
+## Ownership
+
+- `ci.yml` — CI pipeline for the INSO Metrics repository itself
+- `dev-metrics.yml` — workflow template copied into student repositories for daily metrics generation
+
+## Local Contracts
+
+- CI matrix: Python 3.11, Poetry 1.2.2 and 1.7.1, ubuntu-22.04/macOS/Windows
+- CI runs `poetry install` then `poetry run pytest`
+- `dev-metrics.yml` runs daily at 00:00 UTC and on manual trigger
+- Metrics workflow checks out INSO-GH-API-QUERY repo, installs Poetry deps, runs `generateMilestoneMetricsForActions.py` with `gh_metrics_config.json`
+- Metrics workflow requires `GH_API_TOKEN` secret with `read:org` and `read:project` scopes
+- Metrics workflow requires `ORGANIZATION` env var (set to `${{ github.repository_owner }}`)
+- Output Markdown files are committed to `inso-metrics` branch and a PR is created to merge into main
+- Workflow permissions: `contents: write`, `pull-requests: write`
+
+## Work Guidance
+
+- Keep CI Python version in sync with `pyproject.toml` (`^3.11`)
+- Do not add live API calls to CI — tests must remain fully mocked
+- When updating the metrics workflow, ensure compatibility with student repository setup
+
+## Verification
+
+- CI workflow runs automatically on push and PR
+- Metrics workflow can be manually triggered from GitHub Actions UI
+
+## Child DOX Index
+
+No child DOX files.
