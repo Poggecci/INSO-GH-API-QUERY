@@ -212,23 +212,29 @@ def _generate_chart_html(
         function buildDatasets(metric) {{
             const labels = rawData.issueNumbers.map(n => '#' + n);
             const datasets = [];
-            rawData.developers.forEach((dev, i) => {{
-                if (!selectedDevs.has(dev)) return;
-                const values = rawData.issueNumbers.map(issueNum => {{
-                    const val = rawData.chartData[dev][metric][issueNum];
-                    return val !== undefined ? val : null;
-                }});
-                datasets.push({{
-                    label: dev,
-                    data: values,
-                    borderColor: devColor(i),
-                    backgroundColor: devColor(i) + '33',
-                    tension: 0.3,
-                    fill: false,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    spanGaps: true,
-                }});
+            const selectedDevsArray = rawData.developers.filter((d, i) => selectedDevs.has(d));
+            if (selectedDevsArray.length === 0) return {{ labels, datasets }};
+            const values = rawData.issueNumbers.map(issueNum => {{
+                const vals = selectedDevsArray
+                    .map(dev => rawData.chartData[dev][metric][issueNum])
+                    .filter(v => v !== undefined && v !== null);
+                if (vals.length === 0) return null;
+                if (aggregation === 'sum') return vals.reduce((a, b) => a + b, 0);
+                return vals.reduce((a, b) => a + b, 0) / vals.length;
+            }});
+            const label = aggregation === 'sum'
+                ? `Sum of ${{selectedDevsArray.length}} dev(s)`
+                : `Average of ${{selectedDevsArray.length}} dev(s)`;
+            datasets.push({{
+                label: label,
+                data: values,
+                borderColor: '#0969da',
+                backgroundColor: '#0969da' + '33',
+                tension: 0.3,
+                fill: false,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                spanGaps: true,
             }});
             return {{ labels, datasets }};
         }}
