@@ -97,7 +97,8 @@ query QueryProjectItemsForTeam(
                                         login
                                     }
                                     assignee {
-                                        login
+                                        ... on User { login }
+                                        ... on Bot { login }
                                     }
                                     createdAt
                                 }
