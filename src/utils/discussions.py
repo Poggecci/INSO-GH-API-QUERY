@@ -315,10 +315,10 @@ def calculateWeeklyDiscussionPenalties(
     """
     Penalties for team members based on their weekly discussion activity.
 
-    Penalties start at 0 and are incremented based on missed weeks. Each missed week incurs a base
-    penalty, with additional penalties for consecutive missed weeks. Consecutive miss penalties
-    do not apply to the first missed week in a sequence. Penalties are meant to be subtracted from
-    a score of 100.
+    Each missed week incurs an exponentially increasing penalty based on which week
+    was missed: week 1 = 1%, week 2 = 2%, week 3 = 4%, week 4 = 8%, etc.
+    The penalty for missing week w (1-indexed) is 2^(w-1). Penalties are meant to be
+    subtracted from a score of 100.
 
     Args:
         participation (dict[str, set[int]]): Dictionary mapping member names to sets of week
@@ -331,42 +331,32 @@ def calculateWeeklyDiscussionPenalties(
     Examples:
         >>> participation = {
         ...     "alice": {0, 1, 2, 3},  # Perfect participation
-        ...     "bob": {0, 2},          # Missed weeks 1 and 3
-        ...     "charlie": {3}          # Missed weeks 0, 1, 2
+        ...     "bob": {0, 2},          # Missed weeks 2 and 4
+        ...     "charlie": {3}          # Missed weeks 1, 2, 3
         ... }
-        >>> penalties = scoreWeeklyDiscussionParticipation(participation, weeks=4)
-        >>> print(scores["alice"])  # Perfect attendance means no penalties
+        >>> penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
+        >>> print(penalties["alice"])  # Perfect attendance means no penalties
         0.0
-        >>> print(scores["charlie"])  # missed thrice consecutively so 2 + (2+1) + (2+1+1)
-        9.0
+        >>> print(penalties["charlie"])  # missed weeks 1,2,3: 1 + 2 + 4 = 7
+        7.0
     """
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    penaltyPerMissedWeek = 2  # 2 points deducted from milestone grade
-    consecutiveMissesPenalty = 1  # additional penalty per consecutive miss after first
-    logger.debug(
-        f"Penalty per missed week: {penaltyPerMissedWeek}, penalty for consecutive misses: {consecutiveMissesPenalty}"
-    )
+    logger.debug("Penalty per missed week: 2^(week_index), i.e., 1, 2, 4, 8, ...")
 
     penalties = {}
 
     for member, participated_weeks in participation.items():
         penalty = 0.0
-        consecutive_misses = 0
 
         for week in range(weeks):
             if week not in participated_weeks:
-                penalty += penaltyPerMissedWeek
-                logger.debug(f"{member} missed week {week+1}, penalty was applied")
-                consecutive_misses += 1
-                additional_penalty = (consecutive_misses - 1) * consecutiveMissesPenalty
-                penalty += additional_penalty
+                week_penalty = 2 ** week
+                penalty += week_penalty
                 logger.debug(
-                    f"{member} has missed {consecutive_misses} weeks consecutively. Additional penalty of {additional_penalty} was applied"
+                    f"{member} missed week {week+1}, penalty of {week_penalty} was applied"
                 )
-            else:
-                consecutive_misses = 0
         # Ensure penalty doesn't exceed 100
         penalties[member] = min(100, penalty)
         logger.debug(f"Finalized penalty for {member}: {penalties[member]}")

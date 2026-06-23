@@ -13,6 +13,8 @@ class DeveloperMetrics:
     milestoneGrade: float = 0
     lectureTopicTasksClosed: int = 0
     pointPercentByLabel: dict[str, float] = field(default_factory=dict)
+    # Cycle/lead time data: list of (issue_number, cycle_time_hours, lead_time_hours)
+    issueTimings: list[tuple[int | None, float, float]] = field(default_factory=list)
 
 
 @dataclass
@@ -42,6 +44,18 @@ class Reaction:
 
 
 @dataclass(kw_only=True)
+class TimelineEvent:
+    """Represents a timeline event on a GitHub issue."""
+    event_type: str  # "closed", "assigned", "cross_referenced"
+    actor: str | None
+    created_at: datetime | None
+    assignee: str | None = None  # For AssignedEvent
+    pr_number: int | None = None  # For CrossReferencedEvent with PR
+    pr_url: str | None = None
+    pr_merged: bool | None = None
+
+
+@dataclass(kw_only=True)
 class IssueComment:
     author_login: str
     reactions: list[Reaction] = field(default_factory=list)
@@ -62,6 +76,7 @@ class Issue:
     labels: list[str] = field(default_factory=list)
     reactions: list[Reaction] = field(default_factory=list)
     comments: list[IssueComment] = field(default_factory=list)
+    timeline: list[TimelineEvent] = field(default_factory=list)
     urgency: float | None
     difficulty: float | None
     modifier: float | None

@@ -177,15 +177,40 @@ class TestCalculateWeeklyDiscussionPenalties:
         penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
         assert penalties["user1"] == 0.0
 
-    def test_single_miss(self):
-        participation = {"user1": {0, 1, 3}}  # Missed week 2
+    def test_single_miss_week1(self):
+        participation = {"user1": {1, 2, 3}}  # Missed week 1
         penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
-        assert penalties["user1"] == 2.0  # Base penalty for one miss
+        assert penalties["user1"] == 1.0  # 2^0 = 1
 
-    def test_consecutive_misses(self):
-        participation = {"user1": {0, 3}}  # Missed weeks 1 and 2 consecutively
+    def test_single_miss_week2(self):
+        participation = {"user1": {0, 2, 3}}  # Missed week 2
         penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
-        assert penalties["user1"] == 5.0  # 2 + (2 + 1)
+        assert penalties["user1"] == 2.0  # 2^1 = 2
+
+    def test_single_miss_week3(self):
+        participation = {"user1": {0, 1, 3}}  # Missed week 3
+        penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
+        assert penalties["user1"] == 4.0  # 2^2 = 4
+
+    def test_single_miss_week4(self):
+        participation = {"user1": {0, 1, 2}}  # Missed week 4
+        penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
+        assert penalties["user1"] == 8.0  # 2^3 = 8
+
+    def test_consecutive_misses_weeks_1_2_3(self):
+        participation = {"user1": {3}}  # Missed weeks 1, 2, 3
+        penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
+        assert penalties["user1"] == 7.0  # 1 + 2 + 4 = 7
+
+    def test_all_weeks_missed_4_weeks(self):
+        participation = {"user1": set()}  # Missed all 4 weeks
+        penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
+        assert penalties["user1"] == 15.0  # 1 + 2 + 4 + 8 = 15
+
+    def test_non_consecutive_misses(self):
+        participation = {"user1": {1, 3}}  # Missed weeks 1 and 3
+        penalties = calculateWeeklyDiscussionPenalties(participation, weeks=4)
+        assert penalties["user1"] == 5.0  # 1 + 4 = 5
 
     def test_max_penalty(self):
         participation = {"user1": set()}  # Missed all weeks

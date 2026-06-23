@@ -8,6 +8,7 @@
 ## Ownership
 
 - `markdown.py` — all Markdown output functions
+- `charts.py` — interactive HTML chart generator for cycle/lead time graphs using Chart.js
 
 ## Local Contracts
 

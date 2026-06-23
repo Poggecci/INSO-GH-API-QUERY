@@ -20,7 +20,7 @@
 - `exportMetricsForCourseMilestone.py` — local professor run; reads v1.0 local config, outputs CSV files
 - `exportMetricsForLectureTopicTasks.py` — standalone lecture topic task CSV exporter for local professor run
 - `exportMetricsForDiscussionParticipation.py` — standalone discussion participation CSV exporter for local professor run
-- `generateTeamMetrics.py` — core metrics engine; fetches issues via GraphQL, calculates scores, sprint completion, and LTT metrics concurrently
+- `generateTeamMetrics.py` — core metrics engine; fetches issues via GraphQL, calculates scores, sprint completion, LTT metrics, and cycle/lead time per developer concurrently
 - `getProject.py`, `getMilestones.py`, `getTeamMembers.py`, `getTeams.py` — GitHub GraphQL API fetchers
 - `generateLectureTopicTaskMetrics.py` — wrapper that fetches processed issues and delegates to LTT metric calculation
 - GraphQL queries are inline strings in the modules that use them
