@@ -7,7 +7,7 @@
 
 ## Ownership
 
-- `models.py` — all dataclasses (`Issue`, `Milestone`, `Project`, `Discussion`, `DeveloperMetrics`, `MilestoneData`, `LectureTopicTaskData`, `IssueMetrics`, `Reaction`, `IssueComment`, `Category`, `DiscussionComment`, `ParsingError`, `ReactionKind`)
+- `models.py` — all dataclasses (`Issue`, `Milestone`, `Project`, `Discussion`, `DeveloperMetrics`, `MilestoneData`, `LectureTopicTaskData`, `IssueMetrics`, `Reaction`, `IssueComment`, `Category`, `DiscussionComment`, `ParsingError`, `ReactionKind`, `TimelineEvent`)
 - `issues.py` — issue parsing, scoring, decay, bonus calculation, pre-processing hooks
 - `discussions.py` — discussion parsing, weekly participation tracking, penalty calculation
 - `queryRunner.py` — single GraphQL API endpoint runner
@@ -25,7 +25,7 @@
 - `shouldCountIssue` filters by milestone match, closure by manager, urgency/difficulty population, and open-issue flag
 - `whoShouldGetBonus` returns `None` if multiple valid 🎉 reactions exist (penalizes ambiguity)
 - `applyIssuePreProcessingHooks` uses `exec()` — hooks must come from trusted sources only
-- `calculateWeeklyDiscussionPenalties` applies 2 points per missed week plus escalating consecutive-miss penalties, capped at 100
+- `calculateWeeklyDiscussionPenalties` applies exponentially increasing penalties per missed week: week 1 = 1pt, week 2 = 2pt, week 3 = 4pt, week 4 = 8pt (formula: 2^(week_index)), capped at 100
 - `get_milestone_start` defaults to 08:00, `get_milestone_end` defaults to 20:00 in `America/Puerto_Rico` timezone
 
 ## Work Guidance

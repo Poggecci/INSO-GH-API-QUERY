@@ -8,6 +8,7 @@ from src.utils.models import (
     Reaction,
     ReactionKind,
     Issue,
+    TimelineEvent,
 )
 
 
@@ -82,9 +83,58 @@ def parseIssue(*, issue_dict: dict) -> Issue:
     if content["closedAt"] is not None:
         closedAt = datetime.fromisoformat(str(content["closedAt"]))
 
+    # Parse timeline events (may contain CLOSED_EVENT, ASSIGNED_EVENT, CROSS_REFERENCED_EVENT)
+    timeline: list[TimelineEvent] = []
     closedBy = None
-    if len(content["timelineItems"]["nodes"]) > 0:
-        closedBy = content["timelineItems"]["nodes"][-1]["actor"]["login"]
+    for node in content.get("timelineItems", {}).get("nodes", []):
+        if "actor" in node:  # ClosedEvent or AssignedEvent or CrossReferencedEvent
+            actor = node["actor"]["login"] if node["actor"] else None
+            created_at = None
+            if "createdAt" in node:
+                created_at = datetime.fromisoformat(node["createdAt"])
+            # Determine event type based on available fields
+            if "assignee" in node:  # AssignedEvent
+                assignee = None
+                if node["assignee"]:
+                    assignee = node["assignee"].get("login")
+                timeline.append(
+                    TimelineEvent(
+                        event_type="assigned",
+                        actor=actor,
+                        created_at=created_at,
+                        assignee=assignee,
+                    )
+                )
+            elif "source" in node:  # CrossReferencedEvent
+                source = node.get("source", {})
+                pr_number = source.get("number")
+                pr_url = source.get("url")
+                pr_merged = source.get("merged")
+                timeline.append(
+                    TimelineEvent(
+                        event_type="cross_referenced",
+                        actor=actor,
+                        created_at=created_at,
+                        pr_number=pr_number,
+                        pr_url=pr_url,
+                        pr_merged=pr_merged,
+                    )
+                )
+            else:  # ClosedEvent (fallback, no assignee or source)
+                timeline.append(
+                    TimelineEvent(
+                        event_type="closed",
+                        actor=actor,
+                        created_at=created_at,
+                    )
+                )
+                if closedBy is None:
+                    closedBy = actor
+
+    # Fallback: if no ClosedEvent in timeline, try the old approach
+    if closedBy is None and len(content.get("timelineItems", {}).get("nodes", [])) > 0:
+        nodes = content["timelineItems"]["nodes"]
+        closedBy = nodes[-1].get("actor", {}).get("login") if nodes[-1].get("actor") else None
 
     milestone: str | None = None
     if content["milestone"] is not None:
@@ -105,6 +155,7 @@ def parseIssue(*, issue_dict: dict) -> Issue:
         labels=labels,
         reactions=reactions,
         comments=comments,
+        timeline=timeline,
         urgency=urgency,
         difficulty=difficulty,
         modifier=modifier,

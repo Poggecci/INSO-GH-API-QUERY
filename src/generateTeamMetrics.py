@@ -84,12 +84,38 @@ query QueryProjectItemsForTeam(
                             }
                         }
                         }
-                        timelineItems(last: 1, itemTypes : [CLOSED_EVENT]){
+                        timelineItems(last: 50, itemTypes : [CLOSED_EVENT, ASSIGNED_EVENT, CROSS_REFERENCED_EVENT]) {
                             nodes {
                                 ... on ClosedEvent {
-                                        actor {
-                                            login
+                                    actor {
+                                        login
+                                    }
+                                    createdAt
+                                }
+                                ... on AssignedEvent {
+                                    actor {
+                                        login
+                                    }
+                                    assignee {
+                                        login
+                                    }
+                                    createdAt
+                                }
+                                ... on CrossReferencedEvent {
+                                    actor {
+                                        login
+                                    }
+                                    createdAt
+                                    source {
+                                        __typename
+                                        ... on PullRequest {
+                                            number
+                                            title
+                                            state
+                                            merged
+                                            url
                                         }
+                                    }
                                 }
                             }
                         }
@@ -456,6 +482,10 @@ def getTeamMetricsForMilestone(
         shouldCountOpenIssues=shouldCountOpenIssues,
     )
 
+    devIssueTimings: dict[str, list[tuple[int | None, float, float]]] = {
+        dev: [] for dev in developers
+    }
+
     # Split issues iterator to read for both issue metrics and lecture topic task metrics
     issueMetricsQueue, lectureTopicTaskQueue = Queue(), Queue()
     thread = Thread(
@@ -485,6 +515,23 @@ def getTeamMetricsForMilestone(
                 useDecay=useDecay,
                 logger=logger,
             )
+            # Calculate cycle time and lead time for this issue
+            lead_time_hours = 0.0
+            cycle_time_hours = 0.0
+            if issue.closedAt is not None:
+                lead_time_hours = (issue.closedAt - issue.createdAt).total_seconds() / 3600.0
+                # Find the first assignment event for the developer(s) who closed the issue
+                first_assigned_at = None
+                for event in issue.timeline:
+                    if event.event_type == "assigned" and event.created_at is not None:
+                        if first_assigned_at is None or event.created_at < first_assigned_at:
+                            first_assigned_at = event.created_at
+                if first_assigned_at is not None:
+                    cycle_time_hours = (issue.closedAt - first_assigned_at).total_seconds() / 3600.0
+                else:
+                    # Fallback: use createdAt if no assignment event found
+                    cycle_time_hours = lead_time_hours
+
             # attribute base issue points to developer alongside giving them credit for the completed task
             for dev, score in issueMetrics.pointsByDeveloper.items():
                 devPointsClosed[dev] += score
@@ -501,6 +548,10 @@ def getTeamMetricsForMilestone(
                 devTasksCompleted[dev][sprintIndex] += 1
                 # update total points closed metric
                 totalPointsClosed += score
+                # track cycle/lead time per developer
+                devIssueTimings[dev].append(
+                    (issue.number, cycle_time_hours, lead_time_hours)
+                )
 
                 # assign issue score to labels per developer
                 for label in issue.labels:
@@ -563,5 +614,6 @@ def getTeamMetricsForMilestone(
                 * 100
                 for label in milestoneLabels
             },
+            issueTimings=devIssueTimings.get(dev, []),
         )
     return milestoneData

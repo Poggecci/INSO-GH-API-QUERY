@@ -13,6 +13,7 @@ from src.io.markdown import (
     writeSprintTaskCompletionToMarkdown,
     writeWeeklyDiscussionParticipationToMarkdown,
 )
+from src.io.charts import writeCycleLeadTimeChart
 from src.legacy.generateMilestoneMetricsForActions import generateMetricsFromV1Config
 from src.utils.constants import pr_tz
 from src.getTeamMembers import getTeamMembers
@@ -143,6 +144,12 @@ def generateMetricsFromV2Config(
         )
         writeLogsToMarkdown(
             log_file_path=logFileName, md_file_path=output_markdown_path
+        )
+        output_chart_path = f"{strippedMilestoneName}-{team}-{organization}.html"
+        writeCycleLeadTimeChart(
+            milestone_data=team_metrics,
+            html_file_path=output_chart_path,
+            logger=logger,
         )
 
 
