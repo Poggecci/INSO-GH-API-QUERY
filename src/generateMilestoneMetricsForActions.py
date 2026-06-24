@@ -13,7 +13,7 @@ from src.io.markdown import (
     writeSprintTaskCompletionToMarkdown,
     writeWeeklyDiscussionParticipationToMarkdown,
 )
-from src.io.charts import writeCycleLeadTimeChart
+from src.io.charts import writeCycleLeadTimeChart, writeIndexPage, getChartUrl
 from src.legacy.generateMilestoneMetricsForActions import generateMetricsFromV1Config
 from src.utils.constants import pr_tz
 from src.getTeamMembers import getTeamMembers
@@ -70,6 +70,7 @@ def generateMetricsFromV2Config(
             milestones = {milestone: milestones[milestone]}
 
     print("Milestones: ", ", ".join(milestones.keys()))
+    chart_files: list[tuple[str, str]] = []
     for milestone, mData in milestones.items():
         logger = logging.getLogger(milestone)
         logger.setLevel(verbosity)
@@ -150,6 +151,23 @@ def generateMetricsFromV2Config(
             milestone_data=team_metrics,
             html_file_path=output_chart_path,
             logger=logger,
+        )
+        # Add link to interactive chart in Markdown report
+        pages_base_url = os.environ.get("PAGES_BASE_URL", "")
+        if pages_base_url:
+            chart_url = getChartUrl(pages_base_url, output_chart_path)
+            with open(output_markdown_path, mode="a") as md_file:
+                md_file.write(f"\n## 📊 Interactive Charts\n\n")
+                md_file.write(f"[View Cycle Time & Lead Time Charts]({chart_url})\n")
+            logger.info(f"Chart link added to Markdown report: {chart_url}")
+        chart_files.append((milestone, output_chart_path))
+
+    # Generate index page listing all chart files
+    if chart_files:
+        writeIndexPage(
+            chart_files=chart_files,
+            index_file_path="index.html",
+            logger=logging.getLogger(__name__),
         )
 
 

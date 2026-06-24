@@ -1,6 +1,72 @@
 import json
 import logging
+import os
 from src.utils.models import MilestoneData
+
+
+def getChartUrl(pages_base_url: str, html_filename: str) -> str:
+    """Build the full GitHub Pages URL for a chart file."""
+    base = pages_base_url.rstrip("/")
+    return f"{base}/metrics/{html_filename}"
+
+
+def writeIndexPage(
+    chart_files: list[tuple[str, str]],
+    index_file_path: str,
+    logger: logging.Logger | None = None,
+):
+    """
+    Generates an index.html landing page listing all available chart files.
+
+    Args:
+        chart_files: List of (display_name, html_filename) tuples
+        index_file_path: Path to write the index.html file
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    items_html = "\n".join(
+        f'        <li><a href="metrics/{fname}">{name}</a></li>'
+        for name, fname in chart_files
+    )
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Metrics Charts</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 40px;
+            background: #f6f8fa;
+            color: #1f2328;
+        }}
+        h1 {{ font-size: 1.5rem; }}
+        ul {{ list-style: none; padding: 0; }}
+        li {{
+            margin: 0.5rem 0;
+            padding: 0.75rem 1rem;
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+        }}
+        a {{ color: #0969da; text-decoration: none; font-weight: 500; }}
+        a:hover {{ text-decoration: underline; }}
+    </style>
+</head>
+<body>
+    <h1>📊 Interactive Metrics Charts</h1>
+    <ul>
+{items_html}
+    </ul>
+</body>
+</html>"""
+
+    with open(index_file_path, mode="w") as f:
+        f.write(html)
+    logger.info(f"Index page written to {index_file_path}")
 
 
 def writeCycleLeadTimeChart(
