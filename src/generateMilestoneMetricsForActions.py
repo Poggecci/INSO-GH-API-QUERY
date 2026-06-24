@@ -124,7 +124,7 @@ def generateMetricsFromV2Config(
             )
         except Exception as e:
             logger.exception(e)
-        strippedMilestoneName = milestone.replace(" ", "")
+        strippedMilestoneName = milestone.replace(" ", "").replace("#", "")
         output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
         writeMilestoneToMarkdown(
             milestone_data=team_metrics, md_file_path=output_markdown_path
