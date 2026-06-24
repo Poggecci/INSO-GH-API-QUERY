@@ -486,6 +486,9 @@ def getTeamMetricsForMilestone(
     devIssueTimings: dict[str, list[tuple[int | None, float, float]]] = {
         dev: [] for dev in developers
     }
+    devPointsTimeline: dict[str, list[tuple[str, float]]] = {
+        dev: [] for dev in developers
+    }
 
     # Split issues iterator to read for both issue metrics and lecture topic task metrics
     issueMetricsQueue, lectureTopicTaskQueue = Queue(), Queue()
@@ -553,6 +556,9 @@ def getTeamMetricsForMilestone(
                 devIssueTimings[dev].append(
                     (issue.number, cycle_time_hours, lead_time_hours)
                 )
+                # track cumulative points timeline (closed date, points earned)
+                closed_date = (issue.closedAt or issue.createdAt).isoformat()
+                devPointsTimeline[dev].append((closed_date, score))
 
                 # assign issue score to labels per developer
                 for label in issue.labels:
@@ -616,5 +622,6 @@ def getTeamMetricsForMilestone(
                 for label in milestoneLabels
             },
             issueTimings=devIssueTimings.get(dev, []),
+            pointsTimeline=devPointsTimeline.get(dev, []),
         )
     return milestoneData

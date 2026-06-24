@@ -13,7 +13,7 @@ from src.io.markdown import (
     writeSprintTaskCompletionToMarkdown,
     writeWeeklyDiscussionParticipationToMarkdown,
 )
-from src.io.charts import writeCycleLeadTimeChart, writeIndexPage, getChartUrl
+from src.io.charts import writeCycleLeadTimeChart, writeIndexPage, getChartUrl, writeCumulativeTimelineChart
 from src.legacy.generateMilestoneMetricsForActions import generateMetricsFromV1Config
 from src.utils.constants import pr_tz
 from src.getTeamMembers import getTeamMembers
@@ -160,7 +160,20 @@ def generateMetricsFromV2Config(
                 md_file.write(f"\n## 📊 Interactive Charts\n\n")
                 md_file.write(f"[View Cycle Time & Lead Time Charts]({chart_url})\n")
             logger.info(f"Chart link added to Markdown report: {chart_url}")
+        # Generate cumulative contribution timeline chart
+        output_timeline_path = f"{strippedMilestoneName}-timeline-{team}-{organization}.html"
+        writeCumulativeTimelineChart(
+            milestone_data=team_metrics,
+            html_file_path=output_timeline_path,
+            logger=logger,
+        )
+        if pages_base_url:
+            timeline_url = getChartUrl(pages_base_url, output_timeline_path)
+            with open(output_markdown_path, mode="a") as md_file:
+                md_file.write(f"[View Cumulative Contribution Timeline]({timeline_url})\n")
+            logger.info(f"Timeline chart link added to Markdown report: {timeline_url}")
         chart_files.append((milestone, output_chart_path))
+        chart_files.append((f"{milestone} - Timeline", output_timeline_path))
 
     # Generate index page listing all chart files
     if chart_files:
