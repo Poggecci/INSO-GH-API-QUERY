@@ -351,3 +351,241 @@ def _generate_chart_html(
     </script>
 </body>
 </html>"""
+
+
+def writeCumulativeTimelineChart(
+    milestone_data: MilestoneData,
+    html_file_path: str,
+    logger: logging.Logger | None = None,
+):
+    """
+    Generates an interactive HTML file showing cumulative points closed per day
+    across the milestone, with one line per developer. Makes bursty contribution
+    patterns (flat then spike near sprint end) immediately visible.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    developers = list(milestone_data.devMetrics.keys())
+
+    # Build a sorted list of all unique dates across all developers
+    all_dates = set()
+    for dev in developers:
+        for date_str, _ in milestone_data.devMetrics[dev].pointsTimeline:
+            all_dates.add(date_str[:10])  # Truncate to day
+
+    # Include milestone start and end dates for context
+    all_dates.add(milestone_data.startDate.strftime("%Y-%m-%d"))
+    all_dates.add(milestone_data.endDate.strftime("%Y-%m-%d"))
+    sorted_dates = sorted(all_dates)
+
+    # Build cumulative data per developer per day
+    chart_data = {}
+    for dev in developers:
+        # Group points by day and sort
+        daily_points = {}
+        for date_str, points in milestone_data.devMetrics[dev].pointsTimeline:
+            day = date_str[:10]
+            daily_points[day] = daily_points.get(day, 0) + points
+
+        # Build cumulative array aligned to sorted_dates
+        cumulative = 0.0
+        cum_array = []
+        for day in sorted_dates:
+            cumulative += daily_points.get(day, 0)
+            cum_array.append(round(cumulative, 1))
+        chart_data[dev] = cum_array
+
+    html_content = _generate_timeline_html(
+        developers=developers,
+        dates=sorted_dates,
+        chart_data=chart_data,
+        milestone_start=milestone_data.startDate.strftime("%Y-%m-%d"),
+        milestone_end=milestone_data.endDate.strftime("%Y-%m-%d"),
+    )
+
+    with open(html_file_path, mode="w") as f:
+        f.write(html_content)
+    logger.info(f"Cumulative timeline chart written to {html_file_path}")
+
+
+def _generate_timeline_html(
+    developers: list[str],
+    dates: list[str],
+    chart_data: dict,
+    milestone_start: str,
+    milestone_end: str,
+) -> str:
+    json_data = json.dumps({
+        "developers": developers,
+        "dates": dates,
+        "chartData": chart_data,
+    })
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cumulative Contribution Timeline — {milestone_start} to {milestone_end}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background: #f6f8fa;
+            color: #1f2328;
+        }}
+        h1 {{ font-size: 1.5rem; margin-bottom: 0.25rem; }}
+        .subtitle {{ color: #656d76; margin-bottom: 1rem; }}
+        .controls {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }}
+        .dev-checkboxes {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }}
+        .dev-chip {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 999px;
+            padding: 0.25rem 0.66rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }}
+        .dev-chip:hover {{ background: #f3f4f6; }}
+        .dev-chip input {{ margin: 0; cursor: pointer; }}
+        .dev-chip.checked {{
+            background: #ddf4ff;
+            border-color: #54aeff;
+            color: #0969da;
+        }}
+        .chart-container {{
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }}
+        .chart-container h2 {{ font-size: 1.1rem; margin: 0 0 0.5rem 0; }}
+        .chart-wrapper {{ position: relative; height: 400px; }}
+    </style>
+</head>
+<body>
+    <h1>📈 Cumulative Contribution Timeline</h1>
+    <p class="subtitle">Milestone: {milestone_start} â {milestone_end} â Steady slopes indicate consistent contributors; flat lines followed by spikes indicate bursty work patterns.</p>
+
+    <div class="controls">
+        <button onclick="selectAll(true)" style="font-size:0.85rem;border:1px solid #d0d7de;border-radius:6px;padding:0.4rem 0.8rem;background:#fff;cursor:pointer;">Select All</button>
+        <button onclick="selectAll(false)" style="font-size:0.85rem;border:1px solid #d0d7de;border-radius:6px;padding:0.4rem 0.8rem;background:#fff;cursor:pointer;">Deselect All</button>
+    </div>
+
+    <div class="dev-checkboxes" id="dev-checkboxes"></div>
+
+    <div class="chart-container">
+        <h2>Cumulative Points Closed Per Day</h2>
+        <div class="chart-wrapper"><canvas id="timelineChart"></canvas></div>
+    </div>
+
+    <script>
+        const rawData = {json_data};
+        let selectedDevs = new Set(rawData.developers);
+        let timelineChart;
+
+        const COLORS = [
+            '#0969da', '#1a7f37', '#bf3989', '#d1242f', '#9333ea',
+            '#ca8a04', '#0891b2', '#4a154b', '#2d33be', '#bc4b00'
+        ];
+
+        function devColor(i) {{
+            return COLORS[i % COLORS.length];
+        }}
+
+        function renderCheckboxes() {{
+            const container = document.getElementById('dev-checkboxes');
+            container.innerHTML = '';
+            rawData.developers.forEach((dev, i) => {{
+                const chip = document.createElement('label');
+                chip.className = 'dev-chip' + (selectedDevs.has(dev) ? ' checked' : '');
+                chip.innerHTML = `<input type="checkbox" ${{selectedDevs.has(dev) ? 'checked' : ''}} onchange="toggleDev('${{dev}}')"><span style="width:10px;height:10px;border-radius:50%;background:${{devColor(i)}};display:inline-block;"></span>${{dev}}`;
+                container.appendChild(chip);
+            }});
+        }}
+
+        function toggleDev(dev) {{
+            if (selectedDevs.has(dev)) selectedDevs.delete(dev);
+            else selectedDevs.add(dev);
+            renderCheckboxes();
+            updateChart();
+        }}
+
+        function selectAll(on) {{
+            selectedDevs = on ? new Set(rawData.developers) : new Set();
+            renderCheckboxes();
+            updateChart();
+        }}
+
+        function updateChart() {{
+            if (timelineChart) timelineChart.destroy();
+            const labels = rawData.dates;
+            const datasets = [];
+            rawData.developers.forEach((dev, i) => {{
+                if (!selectedDevs.has(dev)) return;
+                datasets.push({{
+                    label: dev,
+                    data: rawData.chartData[dev],
+                    borderColor: devColor(i),
+                    backgroundColor: devColor(i) + '33',
+                    tension: 0.1,
+                    fill: false,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    spanGaps: true,
+                }});
+            }});
+            timelineChart = new Chart(document.getElementById('timelineChart'), {{
+                type: 'line',
+                data: {{ labels, datasets }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {{
+                        tooltip: {{
+                            callbacks: {{
+                                label: function(ctx) {{
+                                    return ctx.dataset.label + ': ' + ctx.parsed.y + ' pts';
+                                }}
+                            }}
+                        }},
+                        legend: {{ position: 'bottom' }}
+                    }},
+                    scales: {{
+                        y: {{
+                            beginAtZero: true,
+                            title: {{ display: true, text: 'Cumulative Points Closed' }}
+                        }},
+                        x: {{
+                            title: {{ display: true, text: 'Date' }},
+                            ticks: {{ maxRotation: 45, autoSkip: true, maxTicksLimit: 15 }}
+                        }}
+                    }}
+                }}
+            }});
+        }}
+
+        renderCheckboxes();
+        updateChart();
+    </script>
+</body>
+</html>""";

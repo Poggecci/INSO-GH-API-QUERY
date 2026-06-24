@@ -15,6 +15,8 @@ class DeveloperMetrics:
     pointPercentByLabel: dict[str, float] = field(default_factory=dict)
     # Cycle/lead time data: list of (issue_number, cycle_time_hours, lead_time_hours)
     issueTimings: list[tuple[int | None, float, float]] = field(default_factory=list)
+    # Cumulative points timeline: list of (closed_date_iso_string, points_earned)
+    pointsTimeline: list[tuple[str, float]] = field(default_factory=list)
 
 
 @dataclass
