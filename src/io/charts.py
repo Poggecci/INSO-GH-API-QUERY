@@ -1,13 +1,14 @@
 import json
 import logging
 import os
+from urllib.parse import quote
 from src.utils.models import MilestoneData
 
 
 def getChartUrl(pages_base_url: str, html_filename: str) -> str:
-    """Build the full GitHub Pages URL for a chart file."""
+    """Build the full GitHub Pages URL for a chart file, URL-encoding the filename."""
     base = pages_base_url.rstrip("/")
-    return f"{base}/metrics/{html_filename}"
+    return f"{base}/metrics/{quote(html_filename)}"
 
 
 def writeIndexPage(
@@ -26,7 +27,7 @@ def writeIndexPage(
         logger = logging.getLogger(__name__)
 
     items_html = "\n".join(
-        f'        <li><a href="metrics/{fname}">{name}</a></li>'
+        f'        <li><a href="metrics/{quote(fname)}">{name}</a></li>'
         for name, fname in chart_files
     )
 
