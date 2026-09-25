@@ -113,3 +113,44 @@ def test_deleting_store_forces_full_reload(tmp_path, sample_item):
     (tmp_path / "store.json").unlink()
     fresh = loadIssueStore(path)
     assert fresh["issues"] == {}
+
+
+def test_fetch_fallback_uses_store_when_live_fetch_fails(tmp_path, sample_item):
+    """When live paging fails and a store exists, stored items are yielded."""
+    import logging
+    from unittest.mock import patch
+
+    from src.generateTeamMetrics import fetchIssuesFromGithub
+
+    path = str(tmp_path / "store.json")
+    store = loadIssueStore(path)
+    mergeIssueItems(store, [sample_item], org="org", projectNumber=1)
+    saveIssueStore(path, store)
+
+    mock_project = Project = type("P", (), {"number": 1, "public": True})
+    with patch("src.generateTeamMetrics.getProject", return_value=mock_project), \
+         patch("src.generateTeamMetrics.runGraphqlQuery", side_effect=ConnectionError("401")):
+        items = list(fetchIssuesFromGithub(
+            org="org", team="team", logger=logging.getLogger(__name__),
+            dataStorePath=path,
+        ))
+    assert len(items) == 1
+    assert items[0]["content"]["url"] == "https://github.com/org/repo/issues/1"
+
+
+def test_fetch_without_store_reraises_live_failure():
+    """Without a store, a live fetch failure propagates."""
+    import logging
+    import pytest
+    from unittest.mock import patch
+
+    from src.generateTeamMetrics import fetchIssuesFromGithub
+
+    mock_project = type("P", (), {"number": 1, "public": True})
+    with patch("src.generateTeamMetrics.getProject", return_value=mock_project), \
+         patch("src.generateTeamMetrics.runGraphqlQuery", side_effect=ConnectionError("401")):
+        with pytest.raises(ConnectionError):
+            list(fetchIssuesFromGithub(
+                org="org", team="team", logger=logging.getLogger(__name__),
+                dataStorePath=None,
+            ))
