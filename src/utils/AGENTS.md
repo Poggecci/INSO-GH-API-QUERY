@@ -15,6 +15,7 @@
 - `constants.py` — timezone (`pr_tz`), default times, token retrieval
 - `milestones.py`, `project.py` — GraphQL response parsers for milestones and projects
 - `autoExtractMilestone.py` — milestone auto-selection based on current date
+- `dataStore.py` — persistent local issue store: JSON cache of fetched project items
 
 ## Local Contracts
 
@@ -26,6 +27,11 @@
 - `whoShouldGetBonus` returns `None` if multiple valid 🎉 reactions exist (penalizes ambiguity)
 - `applyIssuePreProcessingHooks` uses `exec()` — hooks must come from trusted sources only
 - `calculateWeeklyDiscussionPenalties` applies 2 points per missed week plus escalating consecutive-miss penalties, capped at 100
+- `dataStore.py` — persistent local issue store used when config provides a `dataStore` path:
+  - Store is a JSON file keyed by issue URL; deleting or renaming the file forces a complete reload
+  - Fetched items are merged into the store; issues that dropped off the project board are retained from the store
+  - If live fetching fails and a store exists, stored data is used as a fallback
+  - Store format version is checked; incompatible or corrupt stores are replaced with a fresh one
 - `get_milestone_start` defaults to 08:00, `get_milestone_end` defaults to 20:00 in `America/Puerto_Rico` timezone
 
 ## Work Guidance

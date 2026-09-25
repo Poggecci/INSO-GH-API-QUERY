@@ -20,6 +20,7 @@ from src.utils.models import (
     ParsingError,
 )
 from src.utils.queryRunner import runGraphqlQuery
+from src.utils.dataStore import loadIssueStore, saveIssueStore, mergeIssueItems
 from concurrent.futures import ThreadPoolExecutor
 
 # Check out https://docs.github.com/en/graphql/guides/introduction-to-graphql#schema to understand this query better
@@ -48,6 +49,7 @@ query QueryProjectItemsForTeam(
                         login
                         }
                         createdAt
+                        updatedAt
                         closedAt
                         closed
                         milestone {
@@ -166,8 +168,18 @@ def generateSprintCutoffs(
 
 
 def fetchIssuesFromGithub(
-    *, org: str, team: str, logger: logging.Logger | None = None
+    *, org: str, team: str, logger: logging.Logger | None = None,
+    dataStorePath: str | None = None,
 ) -> Iterator[dict]:
+    """
+    Fetch all project items for a team from GitHub and yield them as raw dicts.
+
+    When dataStorePath is provided, fetched items are merged into a persistent
+    local store and the merged contents (including items that previously
+    existed but dropped off the project board) are yielded. If the live fetch
+    fails and a store exists, the stored data is used as a fallback.
+    Delete the store file to force a complete reload.
+    """
     if not logger:
         logger = logging.getLogger()
 
@@ -180,19 +192,44 @@ def fetchIssuesFromGithub(
             " have permissions for viewing private projects."
         )
 
+    store = loadIssueStore(dataStorePath) if dataStorePath else None
+
     params = {"owner": org, "team": team, "projectNumber": project.number}
     hasAnotherPage = True
-    while hasAnotherPage:
-        response: dict = runGraphqlQuery(query=get_team_issues, variables=params)
-        project_dict_with_issues: dict = response["organization"]["projectV2"]
-        issues = project_dict_with_issues["items"]["nodes"]
-        yield from issues
+    fetchedPages: list[list[dict]] = []
+    try:
+        while hasAnotherPage:
+            response: dict = runGraphqlQuery(query=get_team_issues, variables=params)
+            project_dict_with_issues: dict = response["organization"]["projectV2"]
+            issues = project_dict_with_issues["items"]["nodes"]
+            fetchedPages.append(issues)
 
-        hasAnotherPage = project_dict_with_issues["items"]["pageInfo"]["hasNextPage"]
-        if hasAnotherPage:
-            params["nextPage"] = project_dict_with_issues["items"]["pageInfo"][
-                "endCursor"
-            ]
+            hasAnotherPage = project_dict_with_issues["items"]["pageInfo"]["hasNextPage"]
+            if hasAnotherPage:
+                params["nextPage"] = project_dict_with_issues["items"]["pageInfo"][
+                    "endCursor"
+                ]
+    except Exception:
+        # Fall back to the persisted store when live fetching fails
+        if store and store["issues"]:
+            logger.warning(
+                "Live fetch failed; falling back to locally stored issue data"
+            )
+            for entry in store["issues"].values():
+                yield entry["data"]
+            return
+        raise
+
+    if dataStorePath:
+        for page in fetchedPages:
+            mergeIssueItems(store, page, org=org, projectNumber=project.number)
+        saveIssueStore(dataStorePath, store)
+        # Yield from the merged store so items that dropped off the board persist
+        for entry in store["issues"].values():
+            yield entry["data"]
+    else:
+        for page in fetchedPages:
+            yield from page
 
 
 def fetchProcessedIssues(
@@ -206,6 +243,7 @@ def fetchProcessedIssues(
     endDate: datetime | None = None,
     managers: list[str],
     shouldCountOpenIssues: bool = False,
+    dataStorePath: str | None = None,
 ) -> Iterator[Issue]:
     """
     This function will fetch all team issues from Github and process them accordingly
@@ -231,7 +269,7 @@ def fetchProcessedIssues(
         shouldCountOpenIssues : bool
             Determines whether to filter open issues or not
     """
-    for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger):
+    for issue_dict in fetchIssuesFromGithub(org=org, team=team, logger=logger, dataStorePath=dataStorePath):
         try:
             issue = parseIssue(issue_dict=issue_dict)
         except ParsingError:
@@ -395,6 +433,7 @@ def getTeamMetricsForMilestone(
     shouldCountOpenIssues: bool = False,
     issuePreProcessingHooks: list[str] | None = None,
     logger: logging.Logger | None = None,
+    dataStorePath: str | None = None,
 ) -> MilestoneData:
     if issuePreProcessingHooks is None:
         issuePreProcessingHooks = []
@@ -454,6 +493,7 @@ def getTeamMetricsForMilestone(
         endDate=endDate,
         managers=managers,
         shouldCountOpenIssues=shouldCountOpenIssues,
+        dataStorePath=dataStorePath,
     )
 
     # Split issues iterator to read for both issue metrics and lecture topic task metrics

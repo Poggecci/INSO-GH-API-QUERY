@@ -11,6 +11,7 @@
 - `test/utils/test_issues.py` — unit tests for `shouldCountIssue`, `decay`, `calculateIssueScores`, `applyIssuePreProcessingHooks`
 - `test/utils/test_discussions.py` — unit tests for discussion parsing, week indexing, participation tracking, and penalty calculation
 - `test/utils/test_autoExtractMilestone.py` — unit tests for milestone auto-extraction logic
+- `test/utils/test_dataStore.py` — unit tests for the persistent issue store: load/save round-trip, key generation, merge behavior, corrupt/incompatible store handling, and full-reload-after-delete
 
 ## Local Contracts
 

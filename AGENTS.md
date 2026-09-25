@@ -33,6 +33,7 @@
 - Config JSON schemas differ between Actions (v2.0: `projectName`, `milestones` dict) and local professor run (`organization`, `teams` dict)
 - `GITHUB_API_TOKEN` environment variable is required for all API calls
 - `ORGANIZATION` environment variable is required for GitHub Actions runs
+- `dataStore` config key (optional, both Actions v2.0 and local professor run): path to a persistent JSON store of fetched project items. When set, fetched items are merged into the store, issues that dropped off the project board are retained, and live-fetch failures fall back to stored data. Deleting or renaming the store file forces a complete reload.
 - Issue scoring formula: `Score = (Difficulty * Urgency * Decay) + Modifier` with optional 10% documentation bonus
 - Sprint failure (fewer than `minTasksPerSprint` in any sprint) results in individual grade of 0
 - `scoring.md` documents the grading rules for students — keep it in sync with code changes

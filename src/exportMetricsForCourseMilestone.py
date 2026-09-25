@@ -112,6 +112,7 @@ if __name__ == "__main__":
                 shouldCountOpenIssues=config_dict.get("countOpenIssues", False),
                 issuePreProcessingHooks=teamdata.get("issuePreProcessingHooks", []),
                 logger=logger,
+                dataStorePath=config_dict.get("dataStore"),
             )
             os.makedirs(metricsDirectory, exist_ok=True)
             writeMilestoneToCsv(

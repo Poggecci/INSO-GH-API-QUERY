@@ -111,6 +111,7 @@ def generateMetricsFromV2Config(
                 minTasksPerSprint=config.get("minTasksPerSprint", 1),
                 shouldCountOpenIssues=config.get("countOpenIssues", False),
                 logger=logger,
+                dataStorePath=config.get("dataStore"),
             )
             discussionParticipation = findWeeklyDiscussionParticipation(
                 members=set(members),
