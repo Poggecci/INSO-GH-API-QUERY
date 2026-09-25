@@ -32,6 +32,7 @@
   - Fetched items are merged into the store; issues that dropped off the project board are retained from the store
   - If live fetching fails and a store exists, stored data is used as a fallback
   - Store format version is checked; incompatible or corrupt stores are replaced with a fresh one
+  - **Design decision (2026-09-25): full board scan on every fetch — no incremental fetch.** Projects v2 field edits (Urgency, Difficulty, Modifier) do NOT update the underlying issue's `updatedAt`: the GraphQL `IssueTimelineItemsItemType` enum has no field-value-changed event (only ADDED_TO_PROJECT_V2_EVENT, PROJECT_V2_ITEM_STATUS_CHANGED_EVENT, REMOVED_FROM_PROJECT_V2_EVENT), so a REST search on `updated:>=` would silently miss score-field changes. Verified empirically impossible to test on live archived data (mutations off-limits) and settled via schema introspection. Revisit only if GitHub adds field-change events to issue timelines.
 - `get_milestone_start` defaults to 08:00, `get_milestone_end` defaults to 20:00 in `America/Puerto_Rico` timezone
 
 ## Work Guidance
