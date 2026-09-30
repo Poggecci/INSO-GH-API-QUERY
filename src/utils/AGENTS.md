@@ -7,7 +7,7 @@
 
 ## Ownership
 
-- `models.py` — all dataclasses (`Issue`, `Milestone`, `Project`, `Discussion`, `DeveloperMetrics`, `MilestoneData`, `LectureTopicTaskData`, `IssueMetrics`, `Reaction`, `IssueComment`, `Category`, `DiscussionComment`, `ParsingError`, `ReactionKind`, `TimelineEvent`)
+- `models.py` — all dataclasses (`Issue`, `Milestone`, `Project`, `Discussion`, `DeveloperMetrics`, `MilestoneData`, `LectureTopicTaskData`, `IssueMetrics`, `Reaction`, `IssueComment`, `Category`, `DiscussionComment`, `ParsingError`, `ReactionKind`, `TimelineEvent`); `DeveloperMetrics.issueTimings` holds `(issue_number, cycle_hours, lead_hours, closed_date_iso, issue_title)` for closed issues only
 - `issues.py` — issue parsing, scoring, decay, bonus calculation, pre-processing hooks
 - `discussions.py` — discussion parsing, weekly participation tracking, penalty calculation
 - `queryRunner.py` — single GraphQL API endpoint runner
