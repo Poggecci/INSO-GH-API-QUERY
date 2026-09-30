@@ -312,7 +312,7 @@ def _generate_chart_html(
 
         function scatterDataset(pts) {{
             return {{
-                data: pts.map(p => ({{ x: addHours(p.x, jitter(p.issue)), y: p.y, issue: p.issue, title: p.title, dev: p.dev }})),
+                data: pts.map(p => ({{ x: new Date(addHours(p.x, jitter(p.issue)) + 'T12:00:00Z'), y: p.y, issue: p.issue, title: p.title, dev: p.dev }})),
                 showLine: false,
                 pointRadius: 5,
                 pointHoverRadius: 7,
@@ -376,7 +376,7 @@ def _generate_chart_html(
                 if (trend.length > 0) {{
                     datasets.push({{
                         label: `Moving avg (${{pts.length}} issues)`,
-                        data: trend.map(p => ({{ x: p.x, y: Math.round(p.y * 10) / 10 }})),
+                        data: trend.map(p => ({{ x: new Date(p.x + 'T12:00:00Z'), y: Math.round(p.y * 10) / 10 }})),
                         showLine: true,
                         borderColor: '#57606a',
                         backgroundColor: '#57606a',
@@ -393,7 +393,7 @@ def _generate_chart_html(
                 if (agg.length > 0) {{
                     datasets.push({{
                         label: `Sum of ${{pts.length}} issues`,
-                        data: agg.map(p => ({{ x: p.x, y: Math.round(p.y * 10) / 10 }})),
+                        data: agg.map(p => ({{ x: new Date(p.x + 'T12:00:00Z'), y: Math.round(p.y * 10) / 10 }})),
                         showLine: true,
                         borderColor: '#0969da',
                         backgroundColor: '#0969da33',
