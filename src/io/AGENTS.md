@@ -8,7 +8,7 @@
 ## Ownership
 
 - `markdown.py` — all Markdown output functions
-- `charts.py` — interactive HTML chart generator for cycle/lead time graphs using Chart.js
+- `charts.py` — interactive HTML chart generator: cycle/lead time scatter over the milestone timeline (x = issue closed date) using Chart.js, and cumulative contribution timeline
 
 ## Local Contracts
 

@@ -483,7 +483,7 @@ def getTeamMetricsForMilestone(
         shouldCountOpenIssues=shouldCountOpenIssues,
     )
 
-    devIssueTimings: dict[str, list[tuple[int | None, float, float]]] = {
+    devIssueTimings: dict[str, list[tuple[int | None, float, float, str, str]]] = {
         dev: [] for dev in developers
     }
     devPointsTimeline: dict[str, list[tuple[str, float]]] = {
@@ -522,6 +522,7 @@ def getTeamMetricsForMilestone(
             # Calculate cycle time and lead time for this issue
             lead_time_hours = 0.0
             cycle_time_hours = 0.0
+            closed_date_iso: str | None = None
             if issue.closedAt is not None:
                 lead_time_hours = (issue.closedAt - issue.createdAt).total_seconds() / 3600.0
                 # Find the first assignment event for the developer(s) who closed the issue
@@ -535,6 +536,7 @@ def getTeamMetricsForMilestone(
                 else:
                     # Fallback: use createdAt if no assignment event found
                     cycle_time_hours = lead_time_hours
+                closed_date_iso = issue.closedAt.isoformat()
 
             # attribute base issue points to developer alongside giving them credit for the completed task
             for dev, score in issueMetrics.pointsByDeveloper.items():
@@ -552,10 +554,11 @@ def getTeamMetricsForMilestone(
                 devTasksCompleted[dev][sprintIndex] += 1
                 # update total points closed metric
                 totalPointsClosed += score
-                # track cycle/lead time per developer
-                devIssueTimings[dev].append(
-                    (issue.number, cycle_time_hours, lead_time_hours)
-                )
+                # track cycle/lead time per developer (closed issues only: open issues have no closure date to plot)
+                if closed_date_iso is not None:
+                    devIssueTimings[dev].append(
+                        (issue.number, cycle_time_hours, lead_time_hours, closed_date_iso, issue.title)
+                    )
                 # track cumulative points timeline (closed date, points earned)
                 closed_date = (issue.closedAt or issue.createdAt).isoformat()
                 devPointsTimeline[dev].append((closed_date, score))
