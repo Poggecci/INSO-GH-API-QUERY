@@ -88,11 +88,11 @@ def writeCycleLeadTimeChart(
 
     developers = list(milestone_data.devMetrics.keys())
 
-    # Per-developer scatter points: (closed_date_iso, cycle_hours, lead_hours, issue_number, title)
+    # Per-developer scatter points: closed date, cycle/lead hours, issue number, title, URL
     chart_data: dict[str, list[dict]] = {}
     for dev in developers:
         points = []
-        for issue_num, cycle, lead, closed_iso, title in milestone_data.devMetrics[
+        for issue_num, cycle, lead, closed_iso, title, url in milestone_data.devMetrics[
             dev
         ].issueTimings:
             if closed_iso is None:
@@ -104,6 +104,7 @@ def writeCycleLeadTimeChart(
                     "lead": round(lead, 1),
                     "issue": issue_num,
                     "title": title,
+                    "url": url,
                 }
             )
         points.sort(key=lambda p: p["x"])
@@ -291,7 +292,7 @@ def _generate_chart_html(
             rawData.developers.forEach((dev, i) => {{
                 if (!selectedDevs.has(dev)) return;
                 rawData.chartData[dev].forEach(p => {{
-                    pts.push({{ x: p.x, y: p[metric], dev, issue: p.issue, title: p.title, colorIdx: i }});
+                    pts.push({{ x: p.x, y: p[metric], dev, issue: p.issue, title: p.title, url: p.url, colorIdx: i }});
                 }});
             }});
             pts.sort((a, b) => a.x.localeCompare(b.x));
@@ -312,7 +313,7 @@ def _generate_chart_html(
 
         function scatterDataset(pts) {{
             return {{
-                data: pts.map(p => ({{ x: new Date(addHours(p.x, jitter(p.issue)) + 'T12:00:00Z'), y: p.y, issue: p.issue, title: p.title, dev: p.dev }})),
+                data: pts.map(p => ({{ x: new Date(addHours(p.x, jitter(p.issue)) + 'T12:00:00Z'), y: p.y, issue: p.issue, title: p.title, dev: p.dev, url: p.url }})),
                 showLine: false,
                 pointRadius: 5,
                 pointHoverRadius: 7,
@@ -412,6 +413,22 @@ def _generate_chart_html(
                     responsive: true,
                     maintainAspectRatio: false,
                     parsing: false,
+                    onClick: (evt, elements, chart) => {{
+                        for (const el of elements) {{
+                            const raw = chart.data.datasets[el.datasetIndex].data[el.index];
+                            if (raw && raw.url) {{
+                                window.open(raw.url, '_blank');
+                                return;
+                            }}
+                        }}
+                    }},
+                    onHover: (evt, elements, chart) => {{
+                        const overDot = elements.some(el => {{
+                            const raw = chart.data.datasets[el.datasetIndex].data[el.index];
+                            return raw && raw.url;
+                        }});
+                        evt.native.target.style.cursor = overDot ? 'pointer' : 'default';
+                    }},
                     scales: {{
                         x: {{
                             type: 'time',

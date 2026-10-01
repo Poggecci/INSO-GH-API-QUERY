@@ -483,7 +483,7 @@ def getTeamMetricsForMilestone(
         shouldCountOpenIssues=shouldCountOpenIssues,
     )
 
-    devIssueTimings: dict[str, list[tuple[int | None, float, float, str, str]]] = {
+    devIssueTimings: dict[str, list[tuple[int | None, float, float, str, str, str | None]]] = {
         dev: [] for dev in developers
     }
     devPointsTimeline: dict[str, list[tuple[str, float]]] = {
@@ -557,7 +557,7 @@ def getTeamMetricsForMilestone(
                 # track cycle/lead time per developer (closed issues only: open issues have no closure date to plot)
                 if closed_date_iso is not None:
                     devIssueTimings[dev].append(
-                        (issue.number, cycle_time_hours, lead_time_hours, closed_date_iso, issue.title)
+                        (issue.number, cycle_time_hours, lead_time_hours, closed_date_iso, issue.title, issue.url)
                     )
                 # track cumulative points timeline (closed date, points earned)
                 closed_date = (issue.closedAt or issue.createdAt).isoformat()
