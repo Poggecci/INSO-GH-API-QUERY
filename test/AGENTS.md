@@ -11,6 +11,7 @@
 - `test/utils/test_issues.py` — unit tests for `shouldCountIssue`, `decay`, `calculateIssueScores`, `applyIssuePreProcessingHooks`
 - `test/utils/test_discussions.py` — unit tests for discussion parsing, week indexing, participation tracking, and penalty calculation
 - `test/utils/test_autoExtractMilestone.py` — unit tests for milestone auto-extraction logic
+- `test_charts_module.py` — regression tests: charts module exposes all writer functions and the entry-point module imports cleanly (added after the scatter rework silently dropped `writeCumulativeTimelineChart`, which only surfaced as an ImportError in student repos' Actions runs)
 
 ## Local Contracts
 
