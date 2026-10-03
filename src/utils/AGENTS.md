@@ -25,6 +25,7 @@
 - `shouldCountIssue` filters by milestone match, closure by manager, urgency/difficulty population, and open-issue flag
 - `whoShouldGetBonus` returns `None` if multiple valid 🎉 reactions exist (penalizes ambiguity)
 - `applyIssuePreProcessingHooks` uses `exec()` — hooks must come from trusted sources only
+- Effective closer (`closedBy`) is the **last** ClosedEvent chronologically, not the first: issues may be closed, reopened, and closed again by different actors, and the final close matches the issue's current CLOSED state and `closedAt`
 - `calculateWeeklyDiscussionPenalties` applies exponentially increasing penalties per missed week: week 1 = 1pt, week 2 = 2pt, week 3 = 4pt, week 4 = 8pt (formula: 2^(week_index)), capped at 100
 - `get_milestone_start` defaults to 08:00, `get_milestone_end` defaults to 20:00 in `America/Puerto_Rico` timezone
 
