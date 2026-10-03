@@ -128,8 +128,10 @@ def parseIssue(*, issue_dict: dict) -> Issue:
                         created_at=created_at,
                     )
                 )
-                if closedBy is None:
-                    closedBy = actor
+                # The effective closer is the LAST ClosedEvent: an issue may be
+                # closed, reopened, and closed again by different actors, and the
+                # final close is what matches the issue's current state and closedAt
+                closedBy = actor
 
     # Fallback: if no ClosedEvent in timeline, try the old approach
     if closedBy is None and len(content.get("timelineItems", {}).get("nodes", [])) > 0:

@@ -791,3 +791,74 @@ def test_issues_points_percent_by_label(mock_runGraphqlQuery, mock_getProject, l
 
 if __name__ == "__main__":
     pytest.main()
+
+mock_gh_res_issue_reclosed_by_manager = {
+    "organization": {
+        "projectV2": {
+            "title": "sample-team",
+            "items": {
+                "pageInfo": {"endCursor": "end-cursor", "hasNextPage": False},
+                "nodes": [
+                    {
+                        "content": {
+                            "url": "https://github.com/org/repo/issues/66",
+                            "number": 66,
+                            "title": "Issue closed by dev, reopened, closed by manager",
+                            "author": {"login": "dev1"},
+                            "createdAt": "2023-01-01T00:00:00Z",
+                            "closed": True,
+                            "closedAt": "2023-01-03T00:00:00Z",
+                            "milestone": {"title": "v1.0"},
+                            "assignees": {"nodes": [{"login": "dev1"}]},
+                            "labels": {"nodes": []},
+                            "reactions": {"nodes": []},
+                            "comments": {"nodes": []},
+                            "timelineItems": {
+                                "nodes": [
+                                    {"actor": {"login": "dev1"}},  # first close by non-manager
+                                    {"actor": {"login": "dev1"}},  # churn: close again
+                                    {"actor": {"login": "manager1"}},  # close
+                                    {"actor": {"login": "manager1"}},  # reopen
+                                    {"actor": {"login": "manager1"}},  # final close by manager
+                                ]
+                            },
+                        },
+                        "Urgency": {"number": 3},
+                        "Difficulty": {"number": 2},
+                        "Modifier": {"number": 1},
+                    }
+                ],
+            },
+        }
+    }
+}
+
+
+@patch("src.generateTeamMetrics.getProject")
+@patch("src.generateTeamMetrics.runGraphqlQuery")
+def test_issue_reclosed_by_manager_is_counted(
+    mock_runGraphqlQuery, mock_getProject, logger
+):
+    """An issue closed by a non-manager, then reopened and finally closed by a
+    manager, must be counted (regression for the effective-closer bug found
+    with real issue #66 in uprm-inso4101-2026-2027-s1 group 2)."""
+    mock_getProject.return_value = mock_project
+    mock_runGraphqlQuery.return_value = mock_gh_res_issue_reclosed_by_manager
+
+    result = getTeamMetricsForMilestone(
+        org="sample-org",
+        team="sample-team",
+        milestone="v1.0",
+        members=["dev1"],
+        managers=["manager1"],
+        startDate=datetime(2023, 1, 1, tzinfo=pytz.UTC),
+        endDate=datetime(2023, 12, 31, tzinfo=pytz.UTC),
+        useDecay=False,
+        sprints=1,
+        minTasksPerSprint=0,
+        milestoneGrade=90,
+        logger=logger,
+    )
+
+    expected_score = 3 * 2 + 1  # Urgency * Difficulty + Modifier, no decay
+    assert result.devMetrics["dev1"].pointsClosed == pytest.approx(expected_score)
