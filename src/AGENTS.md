@@ -16,11 +16,16 @@
 
 ## Local Contracts
 
-- `generateMilestoneMetricsForActions.py` — primary entry point for GitHub Actions; reads v2.0 config, outputs Markdown reports
+- `generateMilestoneMetricsForActions.py` — primary entry point for GitHub Actions; reads v2.0 config, outputs Markdown reports.
+  Writes each report body to `<report>.md.tmp`, prepends `FAILURE_BANNER` when that milestone raised, then renames in place.
+  Any milestone failure exits the process with code 1 after all reports and the index page are written, so a failed
+  Actions run turns red instead of committing a zeroed report
 - `exportMetricsForCourseMilestone.py` — local professor run; reads v1.0 local config, outputs CSV files
 - `exportMetricsForLectureTopicTasks.py` — standalone lecture topic task CSV exporter for local professor run
 - `exportMetricsForDiscussionParticipation.py` — standalone discussion participation CSV exporter for local professor run
-- `generateTeamMetrics.py` — core metrics engine; fetches issues via GraphQL, calculates scores, sprint completion, LTT metrics, and cycle/lead time per developer concurrently
+- `generateTeamMetrics.py` — core metrics engine; fetches issues via GraphQL, calculates scores, sprint completion, LTT metrics, and cycle/lead time per developer concurrently.
+  The project-items query pages at `first: 50`; larger pages (`first: 100`) exceed GitHub GraphQL's per-query node
+  cap and fail with `RESOURCE_LIMITS_EXCEEDED`, which is not the hourly point quota and cannot be fixed with a stronger PAT
 - `getProject.py`, `getMilestones.py`, `getTeamMembers.py`, `getTeams.py` — GitHub GraphQL API fetchers
 - `generateLectureTopicTaskMetrics.py` — wrapper that fetches processed issues and delegates to LTT metric calculation
 - GraphQL queries are inline strings in the modules that use them

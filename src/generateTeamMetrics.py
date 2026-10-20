@@ -33,7 +33,7 @@ query QueryProjectItemsForTeam(
         projectV2(number: $projectNumber
         ) {
             title
-            items(first: 100, after: $nextPage) {
+            items(first: 50, after: $nextPage) {
                 pageInfo {
                     endCursor
                     hasNextPage

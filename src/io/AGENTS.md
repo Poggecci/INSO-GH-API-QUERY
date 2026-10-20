@@ -17,6 +17,8 @@
 - `writeWeeklyDiscussionParticipationToMarkdown` — appends discussion participation table with penalties
 - `writePointPercentByLabelToMarkdown` — appends per-label point percentage table
 - `writeLogsToMarkdown` — appends log messages table from log file
+- `FAILURE_BANNER` — module-level format string (`{milestone}`, `{error}`) prepended to a report when metrics
+  generation raised for that milestone; keeps the failure notice formatting in the output layer
 - All functions except `writeMilestoneToMarkdown` append to the file (`mode="a"`)
 - Output filename pattern: `{StrippedMilestoneName}-{Team}-{Organization}.md`
 

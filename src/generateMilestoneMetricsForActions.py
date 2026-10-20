@@ -7,6 +7,7 @@ from typing import Any
 from dotenv import load_dotenv
 from src.generateTeamMetrics import getTeamMetricsForMilestone
 from src.io.markdown import (
+    FAILURE_BANNER,
     writeLogsToMarkdown,
     writeMilestoneToMarkdown,
     writePointPercentByLabelToMarkdown,
@@ -71,6 +72,7 @@ def generateMetricsFromV2Config(
 
     print("Milestones: ", ", ".join(milestones.keys()))
     chart_files: list[tuple[str, str]] = []
+    failures: list[tuple[str, Exception]] = []
     for milestone, mData in milestones.items():
         logger = logging.getLogger(milestone)
         logger.setLevel(verbosity)
@@ -124,27 +126,28 @@ def generateMetricsFromV2Config(
             )
         except Exception as e:
             logger.exception(e)
+            failures.append((milestone, e))
         strippedMilestoneName = milestone.replace(" ", "")
         output_markdown_path = f"{strippedMilestoneName}-{team}-{organization}.md"
-        writeMilestoneToMarkdown(
-            milestone_data=team_metrics, md_file_path=output_markdown_path
-        )
+        # Write the body to a temp file so the failure banner can be prepended later
+        report_path = f"{output_markdown_path}.tmp"
+        writeMilestoneToMarkdown(milestone_data=team_metrics, md_file_path=report_path)
         writeSprintTaskCompletionToMarkdown(
             milestone_data=team_metrics,
-            md_file_path=output_markdown_path,
+            md_file_path=report_path,
             minTasksPerSprint=config.get("minTasksPerSprint", 1),
         )
         writeWeeklyDiscussionParticipationToMarkdown(
             participation=discussionParticipation,
             weeks=getWeeks(milestoneStart=startDate, milestoneEnd=endDate),
-            md_file_path=output_markdown_path,
+            md_file_path=report_path,
             logger=logger,
         )
         writePointPercentByLabelToMarkdown(
-            milestone_data=team_metrics, md_file_path=output_markdown_path
+            milestone_data=team_metrics, md_file_path=report_path
         )
         writeLogsToMarkdown(
-            log_file_path=logFileName, md_file_path=output_markdown_path
+            log_file_path=logFileName, md_file_path=report_path
         )
         output_chart_path = f"{strippedMilestoneName}-{team}-{organization}.html"
         writeCycleLeadTimeChart(
@@ -156,7 +159,7 @@ def generateMetricsFromV2Config(
         pages_base_url = os.environ.get("PAGES_BASE_URL", "")
         if pages_base_url:
             chart_url = getChartUrl(pages_base_url, output_chart_path)
-            with open(output_markdown_path, mode="a") as md_file:
+            with open(report_path, mode="a") as md_file:
                 md_file.write(f"\n## 📊 Interactive Charts\n\n")
                 md_file.write(f"[View Cycle Time & Lead Time Charts]({chart_url})\n")
             logger.info(f"Chart link added to Markdown report: {chart_url}")
@@ -169,11 +172,25 @@ def generateMetricsFromV2Config(
         )
         if pages_base_url:
             timeline_url = getChartUrl(pages_base_url, output_timeline_path)
-            with open(output_markdown_path, mode="a") as md_file:
+            with open(report_path, mode="a") as md_file:
                 md_file.write(f"[View Cumulative Contribution Timeline]({timeline_url})\n")
             logger.info(f"Timeline chart link added to Markdown report: {timeline_url}")
         chart_files.append((milestone, output_chart_path))
         chart_files.append((f"{milestone} - Timeline", output_timeline_path))
+
+        # Assemble the final report: failure banner first (if any), then the body.
+        failure = next((err for m, err in failures if m == milestone), None)
+        with open(output_markdown_path, mode="w") as final_report:
+            if failure is not None:
+                final_report.write(
+                    FAILURE_BANNER.format(
+                        milestone=milestone,
+                        error=f"{type(failure).__name__}: {failure}",
+                    )
+                )
+            with open(report_path, mode="r") as body:
+                final_report.write(body.read())
+        os.remove(report_path)
 
     # Generate index page listing all chart files
     if chart_files:
@@ -182,6 +199,14 @@ def generateMetricsFromV2Config(
             index_file_path="index.html",
             logger=logging.getLogger(__name__),
         )
+
+    if failures:
+        print(
+            f"ERROR: metrics generation failed for {len(failures)} milestone(s): "
+            + ", ".join(m for m, _ in failures),
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
