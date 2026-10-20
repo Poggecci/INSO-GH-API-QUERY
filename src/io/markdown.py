@@ -126,6 +126,21 @@ def writePointPercentByLabelToMarkdown(
             )
 
 
+# Prepended to a milestone report when metrics generation raised, so a zeroed
+# report cannot be mistaken for real student scores.
+FAILURE_BANNER = """> # ⚠️ METRICS GENERATION FAILED
+>
+> The metrics for **{milestone}** could not be generated. The tables below are
+> incomplete and must not be interpreted as student scores.
+>
+> **Error:** `{error}`
+>
+> See `# Metrics Generation Logs` at the bottom of this report for the full
+> traceback, then re-run the workflow.
+
+"""
+
+
 def writeLogsToMarkdown(log_file_path: str, md_file_path: str):
     with open(log_file_path, mode="r") as log_file:
         with open(md_file_path, mode="a") as md_file:
